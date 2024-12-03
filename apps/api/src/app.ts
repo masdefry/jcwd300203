@@ -5,11 +5,10 @@ import express, {
   Request,
   Response,
   NextFunction,
-  Router,
 } from 'express';
 import cors from 'cors';
 import { PORT } from './config';
-import { SampleRouter } from './routers/sample.router';
+import router from './routers/index';
 
 export default class App {
   private app: Express;
@@ -27,37 +26,38 @@ export default class App {
     this.app.use(urlencoded({ extended: true }));
   }
 
+  private routes(): void {
+    // Register main router
+    this.app.use(router);
+  }
+
   private handleError(): void {
-    // not found
+    // Not found handler
     this.app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path.includes('/api/')) {
-        res.status(404).send('Not found !');
+        res.status(404).json({ error: 'Not found!' });
       } else {
         next();
       }
     });
-
-    // error
+  
+    // General error handler
     this.app.use(
       (err: Error, req: Request, res: Response, next: NextFunction) => {
         if (req.path.includes('/api/')) {
-          console.error('Error : ', err.stack);
-          res.status(500).send('Error !');
+          console.error('Error:', err);
+  
+          // Send a JSON response with error details for API requests
+          res.status(500).json({
+            error: 'An internal server error occurred.',
+            message: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+          });
         } else {
-          next();
+          next(err); // Pass to other non-API error handlers if necessary
         }
-      },
+      }
     );
-  }
-
-  private routes(): void {
-    const sampleRouter = new SampleRouter();
-
-    this.app.get('/api', (req: Request, res: Response) => {
-      res.send(`Hello, Purwadhika Student API!`);
-    });
-
-    this.app.use('/api/samples', sampleRouter.getRouter());
   }
 
   public start(): void {
@@ -66,3 +66,7 @@ export default class App {
     });
   }
 }
+
+// // Start the app
+// const server = new App();
+// server.start();
