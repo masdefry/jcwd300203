@@ -10,10 +10,16 @@
     "test": "npx cypress verify & cypress run --component"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.62.2",
+    "axios": "^1.7.8",
+    "cross-env": "^7.0.3",
+    "formik": "^2.4.6",
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
-    "cross-env": "^7.0.3"
+    "react-toastify": "^10.0.6",
+    "yup": "^1.4.0",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",
