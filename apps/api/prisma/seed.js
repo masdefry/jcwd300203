@@ -3,124 +3,195 @@ const prisma = new PrismaClient()
 
 // Variable to store tenants seed
 const tenants = [
-    {
-      name: "John Doe",
-      email: "john.doe@example.com",
-      password: "securepassword123", // Ensure you hash passwords in production
-      profileImage: "https://example.com/images/john_doe.jpg",
-      IdCardImage: "https://example.com/images/john_doe_id.jpg",
-      resetPasswordToken: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      password: "anothersecurepassword", // Ensure you hash passwords in production
-      profileImage: "https://example.com/images/jane_smith.jpg",
-      IdCardImage: "https://example.com/images/jane_smith_id.jpg",
-      resetPasswordToken: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      password: "yetanotherpassword", // Ensure you hash passwords in production
-      profileImage: "https://example.com/images/bob_johnson.jpg",
-      IdCardImage: "https://example.com/images/bob_johnson_id.jpg",
-      resetPasswordToken: "resetTokenExample123", // Example of a reset token
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
+  {
+    name: "Adi Putra",
+    username: "adi_putra",
+    email: "adi.putra@example.com",
+    password: "11111111",
+    profileImage: "https://example.com/images/adi_putra.jpg",
+    IdCardImage: "https://example.com/images/adi_putra_id.jpg",
+    resetPasswordToken: null,
+    role: "tenant",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    name: "Siti Aisyah",
+    username: "siti_aisyah",
+    email: "siti.aisyah@example.com",
+    password: "11111111",
+    profileImage: "https://example.com/images/siti_aisyah.jpg",
+    IdCardImage: "https://example.com/images/siti_aisyah_id.jpg",
+    resetPasswordToken: null,
+    role: "tenant",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    name: "Rizki Pratama",
+    username: "rizki_pratama",
+    email: "rizki.pratama@example.com",
+    password: "11111111", 
+    profileImage: "https://example.com/images/rizki_pratama.jpg",
+    IdCardImage: "https://example.com/images/rizki_pratama_id.jpg",
+    resetPasswordToken: "reset",
+    role: "tenant",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 // variable to store properties seed
 var properties = [
-    {
-        name: "Ocean View Apartments",
-        address: "123 Seaside Lane, Sydney, Australia",
-        roomCapacity: 20,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tenantId: 1,
-    },
-    {
-        name: "Urban Oasis Hotel",
-        address: "45 City Center Road, Melbourne, Australia",
-        roomCapacity: 50,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tenantId: 2,
-    },
-    {
-        name: "Mountain Retreat Lodge",
-        address: "78 Hillside Drive, Brisbane, Australia",
-        roomCapacity: 15,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        tenantId: 3,
-    }, 
-]
+  {
+    name: "Pantai Sumatera Residences",
+    address: "Jl. Tepi Pantai No. 45, Padang, Sumatra Barat, Indonesia",
+    roomCapacity: 20,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 1,
+  },
+  {
+    name: "Hutan Kalimantan Lodge",
+    address: "Jl. Rimba Tropis No. 12, Pontianak, Kalimantan Barat, Indonesia",
+    roomCapacity: 30,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 2,
+  },
+  {
+    name: "Danau Sulawesi Retreat",
+    address: "Jl. Pinggir Danau No. 8, Manado, Sulawesi Utara, Indonesia",
+    roomCapacity: 15,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 3,
+  },
+  {
+    name: "Pegunungan Papua Resort",
+    address: "Jl. Puncak Jaya No. 77, Jayapura, Papua, Indonesia",
+    roomCapacity: 25,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 1,
+  },
+  {
+    name: "Puncak Jawa Villa",
+    address: "Jl. Puncak Gunung No. 90, Bandung, Jawa Barat, Indonesia",
+    roomCapacity: 50,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 2,
+  },
+  {
+    name: "Sawah Bali Retreat",
+    address: "Jl. Tegallalang No. 101, Ubud, Bali, Indonesia",
+    roomCapacity: 18,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 3,
+  },
+  {
+    name: "Pantai Lombok Paradise",
+    address: "Jl. Pantai Kuta No. 33, Lombok Tengah, Nusa Tenggara Barat, Indonesia",
+    roomCapacity: 10,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    tenantId: 1,
+  },
+];
 
 // Variable to store PropertyRoomType seeds
 const propertyRoomTypes = [
-    {
-      name: "Standard Room",
-      price: 100.00, 
-      propertyId: 1, 
-      qty: 10, 
-    },
-    {
-      name: "Deluxe Room",
-      price: 150.00, 
-      propertyId: 1, 
-      qty: 5, 
-    },
-    {
-      name: "Suite",
-      price: 250.00, 
-      propertyId: 2, 
-      qty: 3, 
-    },
-    {
-      name: "Family Room",
-      price: 200.00, 
-      propertyId: 3, 
-      qty: 7, 
-    },
+  {
+    name: "Kamar Standar",
+    price: 1200000, 
+    propertyId: 1,
+    qty: 10,
+  },
+  {
+    name: "Kamar Deluxe",
+    price: 1800000,
+    propertyId: 2,
+    qty: 8,
+  },
+  {
+    name: "Suite Premium",
+    price: 3000000,
+    propertyId: 3,
+    qty: 5,
+  },
+  {
+    name: "Villa Private",
+    price: 5000000,
+    propertyId: 4,
+    qty: 2,
+  },
+  {
+    name: "Kamar Keluarga",
+    price: 2500000,
+    propertyId: 5,
+    qty: 7,
+  },
+  {
+    name: "Kamar Romantis",
+    price: 4000000,
+    propertyId: 6,
+    qty: 3,
+  },
+  {
+    name: "Kamar Pantai",
+    price: 2000000,
+    propertyId: 7,
+    qty: 6,
+  },
 ];
 
-// variable to store room seeds
+// Variable to store room seeds
 const rooms = [
-    {
-      guestCapacity: 2,
-      propertyRoomTypeId: 1, 
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      guestCapacity: 4,
-      propertyRoomTypeId: 1, 
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      guestCapacity: 3,
-      propertyRoomTypeId: 2, 
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      guestCapacity: 5,
-      propertyRoomTypeId: 2, 
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
+  {
+    guestCapacity: 2,
+    propertyRoomTypeId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    guestCapacity: 4,
+    propertyRoomTypeId: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    guestCapacity: 3,
+    propertyRoomTypeId: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    guestCapacity: 5,
+    propertyRoomTypeId: 4,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    guestCapacity: 4,
+    propertyRoomTypeId: 5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    guestCapacity: 2,
+    propertyRoomTypeId: 6,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    guestCapacity: 6,
+    propertyRoomTypeId: 7,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
-
-// variable to store propertyRoomType seed
-
 
 async function main(){
     // Temporarily disable foreign key constraints
