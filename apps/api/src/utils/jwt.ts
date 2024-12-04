@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken"
 
 interface ICreateTokenParams{
-    id: string | undefined,
+    id: number | undefined,
     role: string | undefined
 }
 
