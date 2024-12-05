@@ -111,6 +111,7 @@ model Booking {
   customerId Int
   status     Status[]
   room_qty   Int
+  expiredIn  DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
