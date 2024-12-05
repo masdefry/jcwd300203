@@ -1,10 +1,11 @@
-import { loginCustomer, loginTenant} from "@/controllers/auth.controller";
+import { loginCustomer, loginTenant, registerCustomer} from "@/controllers/auth.controller";
 import { errorHandling } from "@/middlewares/validator/error.handling";
 import { Router } from "express";
 
 const router = Router();
 
-router.post('/login/user',errorHandling,loginCustomer);
-router.post('/login/customer',errorHandling,loginTenant);
+router.post('/register/customer',errorHandling,registerCustomer);
+router.post('/login/customer',errorHandling,loginCustomer);
+router.post('/login/tenant',errorHandling,loginTenant);
 
 export default router;
