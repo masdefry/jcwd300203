@@ -1,5 +1,40 @@
-const {PrismaClient} = require("@prisma/client")
+import bcrypt from 'bcrypt';
+import {PrismaClient} from '@prisma/client'
+
+export const hashPassword = async (password) => {
+    const saltRounds = 15
+    return await bcrypt.hash(password, saltRounds)
+}
+
 const prisma = new PrismaClient()
+// Variable to store customer seeds
+
+var customers = [
+  {
+    name: "Ucup uwuw",
+    username: "ucupslebew",
+    email: "ucup@gmail.com", 
+    password: await hashPassword("11111111")
+  },
+  {
+    name: "Acong Madura",
+    username: "acongmadura",
+    email: "acong@gmail.com",
+    password: await hashPassword("11111111")
+  },
+  {
+    name: "Udin Petot",
+    username: "udinpetot",
+    email: "udinpetot@gmail.com",
+    password: await hashPassword("11111111")
+  },
+  {
+    name: "Ahmad Bejo",
+    username: "ahmadbejo",
+    email: "ahmadbejo@gmail.com",
+    password: await hashPassword("11111111")
+  }
+]
 
 // Variable to store tenants seed
 const tenants = [
@@ -7,7 +42,8 @@ const tenants = [
     name: "Adi Putra",
     username: "adi_putra",
     email: "adi.putra@example.com",
-    password: "11111111",
+
+    password: await hashPassword("11111111"),
     profileImage: "https://example.com/images/adi_putra.jpg",
     IdCardImage: "https://example.com/images/adi_putra_id.jpg",
     resetPasswordToken: null,
@@ -19,7 +55,7 @@ const tenants = [
     name: "Siti Aisyah",
     username: "siti_aisyah",
     email: "siti.aisyah@example.com",
-    password: "11111111",
+    password: await hashPassword("11111111"),
     profileImage: "https://example.com/images/siti_aisyah.jpg",
     IdCardImage: "https://example.com/images/siti_aisyah_id.jpg",
     resetPasswordToken: null,
@@ -31,7 +67,7 @@ const tenants = [
     name: "Rizki Pratama",
     username: "rizki_pratama",
     email: "rizki.pratama@example.com",
-    password: "11111111", 
+    password: await hashPassword("11111111"), 
     profileImage: "https://example.com/images/rizki_pratama.jpg",
     IdCardImage: "https://example.com/images/rizki_pratama_id.jpg",
     resetPasswordToken: "reset",
@@ -195,36 +231,43 @@ const rooms = [
 
 async function main(){
     // Temporarily disable foreign key constraints
-    await prisma.$executeRaw`SET session_replication_role = 'replica'`;
+     await prisma.$executeRaw`SET session_replication_role = 'replica'`;
     
     // truncate selected schemas before seeding
-    await prisma.room.deleteMany({})
-    await prisma.propertyRoomType.deleteMany({})
-    await prisma.tenant.deleteMany({})
-    await prisma.property.deleteMany({})
-
+     await prisma.customer.deleteMany({})
+     await prisma.room.deleteMany({})
+     await prisma.propertyRoomType.deleteMany({})
+     await prisma.tenant.deleteMany({})
+     await prisma.property.deleteMany({})
+  
     // Re-enable foreign key constraints
-    await prisma.$executeRaw`SET session_replication_role = 'origin'`;
-
+     await prisma.$executeRaw`SET session_replication_role = 'origin'`;
+  
+    // Seed customers
+    for (const customer of customers) {
+      await prisma.customer.create({ data: customer });
+   }
+  
     // Seed tenants
     for (const tenant of tenants) {
-        await prisma.tenant.create({ data: tenant });
+         await prisma.tenant.create({ data: tenant });
     }
-
+  
     // Seed properties
     for (const property of properties) {
-        await prisma.property.create({ data: property });
+         await prisma.property.create({ data: property });
     }
-
+  
     // Seed propertyRoomTypes
     for (const propertyRoomType of propertyRoomTypes) {
-        await prisma.propertyRoomType.create({ data: propertyRoomType });
+         await prisma.propertyRoomType.create({ data: propertyRoomType });
     }
-
+  
     // Seed rooms
     for (const room of rooms) {
-        await prisma.room.create({ data: room });
+         await prisma.room.create({ data: room });
     } 
+  
 }
 
 main().catch((error) => {
