@@ -42,6 +42,7 @@ const tenants = [
     name: "Adi Putra",
     username: "adi_putra",
     email: "adi.putra@example.com",
+
     password: await hashPassword("11111111"),
     profileImage: "https://example.com/images/adi_putra.jpg",
     IdCardImage: "https://example.com/images/adi_putra_id.jpg",
