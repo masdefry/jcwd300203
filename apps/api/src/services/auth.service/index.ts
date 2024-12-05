@@ -1,33 +1,40 @@
 import { prisma } from "@/connection";
-import { Ilogin } from "./types";
+import { ILogin, IRegisterCustomer } from "./types";
 import { comparePassword } from "@/utils/hash.password";
 
-export const registerCustomerService = async() => {
-    
+export const registerCustomerService = async({email, username, password, name}: IRegisterCustomer) => {
+    await prisma.customer.create({
+        data: {
+            email: email,
+            username: username,
+            password: password,
+            name: name,
+            resetPasswordToken: null
+        }
+    })
 }
 
 export const registerTenantService = async() => {
-    
+
 }
 
-export const loginCustomerService = async({emailOrUsername}: Ilogin) => {
+export const loginCustomerService = async({emailOrUsername}: ILogin) => {
     const where: { email?: string; username?: string } = {};
 
     // Determine if the input is an email or username
     if (emailOrUsername.includes('@')) {
-        where.email = emailOrUsername; // If it's an email
+        where.email = emailOrUsername; 
     } else {
-        where.username = emailOrUsername; // Otherwise, treat it as a username
+        where.username = emailOrUsername; 
     }
 
-    // Use the constructed where object in the findUnique call
     return await prisma.customer.findFirst({
         where: where 
     });
     
 }
 
-export const loginTenantService = async({emailOrUsername}: Ilogin) => {
+export const loginTenantService = async({emailOrUsername}: ILogin) => {
     const where: { email?: string; username?: string } = {};
 
     if (emailOrUsername.includes('@')) {

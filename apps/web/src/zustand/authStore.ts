@@ -8,7 +8,8 @@ const authStore = create(persist((set) => ({
     role: '',
     profileImage: '',
     isVerified: null,
-    totalPoint: null,
+    
+    setAuth: ({ token, name, role, email, profileImage }: any) => set({ token, name, role, email, profileImage })
 }),
 {
     name: 'authToken',
