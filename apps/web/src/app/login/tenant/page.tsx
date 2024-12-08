@@ -1,25 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
-import * as Yup from 'yup'
+import { loginTenantSchema } from '@/components/schemas/login/tenant/LoginTenantschema'
 import { useMutation } from '@tanstack/react-query'
 import instance from '@/utils/axiosInstance'
 import { useRouter } from 'next/navigation'
 import authStore from '@/zustand/authStore'
 import { errorHandler } from '@/utils/errorHandler'
-import { FaGoogle, FaFacebookF } from "react-icons/fa";
 import { toast } from 'react-toastify'
 
 
-const validationSchema = Yup.object({
-  email: Yup.string()
-    .required('Required'),
-  password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Required'),
-})
-
-export default function LoginForm() {
+const LoginForm = () => {
    const router = useRouter();
    const [isSubmitting, setIsSubmitting] = useState(false);
    const setAuth = authStore((state) => state.setAuth);
@@ -61,7 +52,7 @@ export default function LoginForm() {
 
           <Formik 
             initialValues={{ email: '', password: '' }}
-            validationSchema={validationSchema}
+            validationSchema={loginTenantSchema}
             onSubmit={(values) => {
                 setIsSubmitting(true)
                 mutateLoginUser({emailOrUsername: values.email , password: values.password})
@@ -117,3 +108,5 @@ export default function LoginForm() {
     </div>
   )
 }
+
+export default LoginForm

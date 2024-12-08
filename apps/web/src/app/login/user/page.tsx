@@ -1,24 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
-import * as Yup from 'yup'
+import { loginUserSchema } from '@/components/schemas/login/user/LoginUserSchema'
 import { useMutation } from '@tanstack/react-query'
 import instance from '@/utils/axiosInstance'
 import { useRouter } from 'next/navigation'
 import authStore from '@/zustand/authStore'
 import { errorHandler } from '@/utils/errorHandler'
-import { FaGoogle, FaFacebookF } from "react-icons/fa";
+import { FaGoogle, FaGithub } from "react-icons/fa";
 import { toast } from 'react-toastify';
-import { auth, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup } from '@/utils/firebaseConfig';
+import { auth, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from '@/utils/firebaseConfig';
 import { AuthProvider } from 'firebase/auth'
-
-const validationSchema = Yup.object({
-  email: Yup.string()
-    .required('Required'),
-  password: Yup.string()
-    .min(6, 'Password must be at least 6 characters')
-    .required('Required'),
-})
 
 export default function LoginForm() {
    const router = useRouter();
@@ -92,7 +84,7 @@ export default function LoginForm() {
 
           <Formik 
             initialValues={{ email: '', password: '' }}
-            validationSchema={validationSchema}
+            validationSchema={loginUserSchema}
             onSubmit={(values) => {
                 setIsSubmitting(true)
                 mutateLoginUser({emailOrUsername: values.email , password: values.password})
@@ -169,14 +161,14 @@ export default function LoginForm() {
             </button>
             <button
               disabled={isSubmitting}
-              onClick={() => handleSocialLogin(new FacebookAuthProvider())} 
+              onClick={() => handleSocialLogin(new GithubAuthProvider())} 
               className="w-full px-4 py-3 border border-gray-200 rounded-lg transition-all duration-200 ease-in-out
                 disabled:opacity-50 disabled:cursor-not-allowed
                 hover:bg-gray-50 hover:shadow-md active:transform active:scale-[0.99]
                 flex items-center gap-3 text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-gray-200"
             >
-              <FaFacebookF className="text-blue-600 text-xl" />
-              <span className="flex-1 text-center">Continue with Facebook</span>
+              <FaGithub className="text-black text-xl" />
+              <span className="flex-1 text-center">Continue with Github</span>
             </button>
           </div>
         </div>

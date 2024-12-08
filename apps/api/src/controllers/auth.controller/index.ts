@@ -1,31 +1,116 @@
 import { Request, Response, NextFunction } from "express";
 import { comparePassword, hashPassword } from "@/utils/hash.password";
-import { loginCustomerService, loginTenantService, registerCustomerService } from "@/services/auth.service";
+import { changeCustomerPasswordService, changeEmailService, changeTenantPasswordService, keepLoginService, loginCustomerService, loginTenantService, registerCustomerService, registerTenantService, requestChangeEmailService, requestResetPasswordService, requestVerifyCustomerService, resetPasswordService, verifyCustomerService, verifyEmailCustomerService, verifyEmailTenantService } from "@/services/auth.service";
 import { createToken } from "@/utils/jwt";
 import { prisma } from "@/connection";
 import { generateUsername } from "@/utils/generate.username";
+import { RequestWithFiles } from "./types";
+
+export const verifyEmailCustomer = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {email} = req.body;
+
+        await verifyEmailCustomerService({email})
+
+        res.status(200).json({
+            error: false,
+            message: 'A verification email has been sent, please check your email',
+            data: {}
+        }) 
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next (error);
+    }
+}
+
+export const verifyEmailTenant = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {email} = req.body;
+
+        await verifyEmailTenantService({email})
+
+        res.status(200).json({
+            error: false,
+            message: 'A verification email has been sent, please check your email',
+            data: {}
+        }) 
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next (error);
+    }
+}
+
 export const registerCustomer = async(req: Request, res: Response, next: NextFunction) => {
     try {
-        const {email, username, password, name} = req.body;
-        if (!email || !password || !username || !name) throw {message: 'Input cannot be blank', status: 406};
+        const {username, password, name} = req.body;
+        const {authorization} = req.headers;
 
+        if (!password || !username || !name) throw {message: 'Input cannot be blank', status: 406};
+
+        
         const hashedPassword = await hashPassword(password);
 
-        await registerCustomerService({email, username, password: hashedPassword, name})
+        const user = await registerCustomerService({resetPasswordToken: authorization?.split(' ')[1],username, password: hashedPassword, name})
 
         res.status(201).json({
             error: false,
             message: 'Successfully registered, please login',
             data: {
-                email: email,
-                name: name,
-                username: username
+                email: user.email,
+                name: user.name,
+                username: user.username
             }
         })
     } catch (error) {
         next(error)
     }
 }
+
+export const registerTenant = async (req: RequestWithFiles, res: Response, next: NextFunction) => {
+    try {
+        const { username, password, name } = req.body;
+        const { authorization } = req.headers;
+
+        const verificationToken = authorization?.split(' ')[1]
+        
+        const profileImage = req.files?.profileImage?.[0];  
+        const idCardImage = req.files?.idCardImage?.[0];  
+
+        if (!username || !password || !name) {
+            throw { message: 'Input cannot be blank', status: 406 };
+        }
+       
+        const hashedPassword = await hashPassword(password);
+
+        const profileImageName = profileImage?.filename;
+        const idCardImageName = idCardImage?.filename;
+
+        const tenant = await registerTenantService({username, password: hashedPassword, name, profileImage: profileImageName, idCardImage: idCardImageName, resetPasswordToken: verificationToken})
+
+        res.status(201).json({
+         error: false,   
+         message: 'Tenant registered successfully',
+         data: {
+            email: tenant.email,
+            name: tenant.name,
+         } 
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 
 export const loginCustomer = async(req: Request, res: Response, next: NextFunction) => {
@@ -35,7 +120,7 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
 
         const user = await loginCustomerService({emailOrUsername, password})
 
-        const verifyPassword = comparePassword(password, user!.password)
+        const verifyPassword = await comparePassword(password, user!.password)
         if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
         
         const token = await createToken({id: user?.id, role: user?.role})
@@ -50,7 +135,14 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
                 profilePicture: user?.profileImage
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
         next(error);
     }
 }
@@ -77,7 +169,14 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
                 profilePicture: user?.profileImage
             }
         })
-    } catch (error) {
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
         next (error);
     }
 }
@@ -107,7 +206,7 @@ export const loginWithSocialMedia = async(req: Request, res: Response, next: Nex
             })
         }
 
-        const token = createToken({id: findUser?.id, role: findUser?.role})
+        const token = createToken({id: findUser?.id, role: findUser?.role});
 
         res.status(200).json({
             error: false,
@@ -121,5 +220,216 @@ export const loginWithSocialMedia = async(req: Request, res: Response, next: Nex
         })
     } catch (error) {
         next (error)
+    }
+}
+
+export const keepLogin = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+    const {usersId, authorizationRole} = req.body
+
+    const user = await keepLoginService({usersId, authorizationRole})
+
+    res.status(200).json({
+        error: false,
+        message: 'account is logged in',
+        data: {
+            name: user?.name,
+            email: user?.email,
+            verified: "isVerified" in user! ? user.isVerified : null,
+            profileImage: user?.profileImage,
+            username: user?.username
+        }
+    })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const requestResetPassword = async(req: Request, res: Response, next: NextFunction) => {
+   try {
+    const {email} = req.body
+
+    await requestResetPasswordService({email})
+
+    res.status(200).json({
+        error: false,
+        message: 'A verification email has been sent, please check your email',
+        data: {}
+    })    
+   } catch (error) {
+       next(error)
+   }
+}
+
+export const resetPassword = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { authorization } = req.headers;
+        const { password } = req.body;
+
+        const token = authorization?.split(' ')[1]
+        const hashedPassword = await hashPassword(password)
+
+        await resetPasswordService({resetPasswordToken: token, password: hashedPassword})
+
+        res.status(200).json({
+            error: false,
+            message: 'Password updated',
+            data: {}
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const changeCustomerPassword = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {usersId, password, newPassword} = req.body
+
+        await changeCustomerPasswordService({usersId, password, newPassword})
+
+        res.status(200).json({
+            error: false,
+            message: 'Password successfully changed',
+            data: {}
+        })
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next(error)
+    }
+}
+
+export const changeTenantPassword = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {usersId, password, newPassword} = req.body
+
+        await changeTenantPasswordService({usersId, password, newPassword})
+
+        res.status(200).json({
+            error: false,
+            message: 'Password successfully changed',
+            data: {}
+        })
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next(error)
+    }
+}
+
+export const requestChangeEmail = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {usersId, authorizationRole, newEmail} = req.body
+
+        await requestChangeEmailService({usersId, authorizationRole, newEmail})
+
+        res.status(200).json({
+            error: false,
+            message: `Email verification sended to ${newEmail}, please check your inbox`,
+            data: {}
+        })
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next(error)
+    }
+}
+
+export const changeEmail = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { usersId, authorizationRole } = req.body;
+        
+        const tokenWithBearer = req.headers['newemailtoken'];
+    
+        if (!tokenWithBearer) {
+          throw { message: 'Token not provided', status: 400 };
+        }
+    
+        const tokenString = Array.isArray(tokenWithBearer) ? tokenWithBearer.join(' ') : tokenWithBearer;
+    
+        const tokenParts = tokenString.split(' '); 
+        if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+          throw { message: 'Invalid token format', status: 406 };
+        }
+        const token = tokenParts[1]; 
+    
+        if (!token || token === '') {
+          throw { message: 'Invalid token, please try again', status: 406 };
+        }
+    
+        await changeEmailService({ usersId, authorizationRole, token });
+
+        res.status(200).json({
+            error: false,
+            message: 'Email successfully updated',
+            data: {}
+        })
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next(error)
+    }
+}
+
+export const requestVerifyCustomer = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {usersId} = req.body
+
+        await requestVerifyCustomerService({usersId})
+    
+        res.status(200).json({
+            error: false,
+            message: 'A verification link sended, please check your email',
+            data: {}
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const verifyCustomer = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {usersId} = req.body
+
+        const customToken = Array.isArray(req.headers['x-verify-token']) ? req.headers['x-verify-token'][0] : req.headers['x-verify-token']; 
+
+        if (!customToken || customToken === '') throw {message: 'Invalid token', status: 406}
+
+        await verifyCustomerService({usersId, customToken})
+
+        res.status(200).json({
+            error: false,
+            message: 'Account verification succeeded',
+            data: {}
+        })
+    } catch (error: any) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: true,
+                message: error.message,
+                data: {}
+            });
+        }
+        next(error)
     }
 }
