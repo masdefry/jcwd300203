@@ -27,7 +27,8 @@ model Tenant {
   properties         Property[]
   profileImage       String?
   IdCardImage        String?
-  resetPasswordToken String?
+  resetPasswordToken String?    @unique
+  tokenExpiry        DateTime? 
   role               String     @default("tenant")
 
   createdAt DateTime @default(now())
@@ -40,8 +41,10 @@ model Customer {
   email              String   @unique
   username           String   @unique 
   isGoogle           Boolean  @default(false)
+  isVerified         Boolean  @default(false) 
   profileImage       String?
-  resetPasswordToken String?
+  resetPasswordToken String?  @unique
+  tokenExpiry        DateTime? 
   password           String
   role               String   @default("customer")
   createdAt          DateTime @default(now())
