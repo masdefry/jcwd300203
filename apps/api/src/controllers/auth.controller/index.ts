@@ -433,3 +433,5 @@ export const verifyCustomer = async(req: Request, res: Response, next: NextFunct
         next(error)
     }
 }
+
+// CONFLICT SOLVE
