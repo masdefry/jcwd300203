@@ -53,7 +53,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!isLoading) {
             if (authRoutes.includes(pathname) && isValidToken(token)) {
-                toast.error('You are already logged in');
+                setErrorMessage('You are already logged in');
                 router.push('/');
                 return;
             }

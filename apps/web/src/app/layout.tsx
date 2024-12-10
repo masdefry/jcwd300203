@@ -42,11 +42,11 @@ export default function RootLayout({
 
       <body className={inter.className}>
         <Provider store={store}>
-          <AuthProvider>
             <ReactQueryProvider>
+          <AuthProvider>
             {children}
-            </ReactQueryProvider>
           </AuthProvider>
+            </ReactQueryProvider>
           <ToastContainer />
         </Provider>
         <ScrollToTop/>

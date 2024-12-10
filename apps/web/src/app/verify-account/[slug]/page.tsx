@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { errorHandler } from '@/utils/errorHandler';
 import authStore from '@/zustand/authStore';
 
-const ConfirmVerifyAccountPage = ({ params }: any) => {
+const ConfirmVerifyAccountPage = () => {
   const pathname = usePathname();
   const token = pathname.split('/')[2]; 
   const [isSubmitting, setIsSubmitting] = useState(false);

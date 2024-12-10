@@ -28,3 +28,10 @@ export interface ChangeEmailTokenPayload extends JwtPayload{
         newEmail: string ;
     }
 }
+
+export interface IDecodeRefreshToken extends JwtPayload{
+    data: {
+        id: number;
+        role: string;
+    }
+}
