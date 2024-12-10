@@ -34,9 +34,7 @@ instance.interceptors.response.use(
             const setAuthLogout = authStore.getState().setAuthLogout
             setAuthLogout()
             handleLogout()
-            toast.error("Session expired",{
-                position: "top-right"
-            })
+            toast.error("Session expired")
             setTimeout(() => {
             window.location.href = '/' 
             },1000)

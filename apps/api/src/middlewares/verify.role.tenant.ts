@@ -1,6 +1,6 @@
 import { NextFunction, Response, Request } from 'express';
 
-export const verifyRole = async(req: Request, res: Response, next: NextFunction) => {
+export const verifyRoleTenant = async(req: Request, res: Response, next: NextFunction) => {
     try {
         const {authorizationRole} = req.body
 
@@ -8,7 +8,7 @@ export const verifyRole = async(req: Request, res: Response, next: NextFunction)
 
         next()
     } catch (error) {
-        // Menuju ke Centralized Error
+        
         next(error)
     }
 }
