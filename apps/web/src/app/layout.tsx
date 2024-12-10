@@ -12,6 +12,10 @@ import ScrollToTop from "@/components/common/ScrollTop";
 import "../../public/assets/scss/index.scss"
 import {Provider} from "react-redux"
 import {store} from "./store/store"
+import ReactQueryProvider from '@/providers/TanstackProvider';
+import AuthProvider from '@/providers/AuthProvider';
+
+import React from 'react';
 
 if (typeof window !== "undefined") {
   require("bootstrap/dist/js/bootstrap");
@@ -38,10 +42,13 @@ export default function RootLayout({
 
       <body className={inter.className}>
         <Provider store={store}>
-          {children}
+          <AuthProvider>
+            <ReactQueryProvider>
+            {children}
+            </ReactQueryProvider>
+          </AuthProvider>
           <ToastContainer />
         </Provider>
-        
         <ScrollToTop/>
       </body>
     </html>
