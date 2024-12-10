@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
-import { loginUserSchema } from '@/components/schemas/login/user/LoginUserSchema'
+import { loginUserSchema } from '@/app/components/schemas/login/user/LoginUserSchema'
 import { useMutation } from '@tanstack/react-query'
 import instance from '@/utils/axiosInstance'
 import { useRouter } from 'next/navigation'

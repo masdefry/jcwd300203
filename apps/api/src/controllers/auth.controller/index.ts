@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { comparePassword, hashPassword } from "@/utils/hash.password";
 import { changeCustomerPasswordService, changeEmailService, changeTenantPasswordService, keepLoginService, loginCustomerService, loginTenantService, registerCustomerService, registerTenantService, requestChangeEmailService, requestResetPasswordService, requestVerifyCustomerService, resetPasswordService, verifyCustomerService, verifyEmailCustomerService, verifyEmailTenantService } from "@/services/auth.service";
-import { createToken } from "@/utils/jwt";
+import { createRefreshToken, createToken, decodeRefreshToken } from "@/utils/jwt";
 import { prisma } from "@/connection";
 import { generateUsername } from "@/utils/generate.username";
 import { RequestWithFiles } from "./types";
+import { JwtPayload } from "jsonwebtoken";
+import { IDecodeRefreshToken } from "@/services/auth.service/types";
 
 export const verifyEmailCustomer = async(req: Request, res: Response, next: NextFunction) => {
     try {
@@ -21,7 +23,7 @@ export const verifyEmailCustomer = async(req: Request, res: Response, next: Next
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -44,7 +46,7 @@ export const verifyEmailTenant = async(req: Request, res: Response, next: NextFu
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -123,8 +125,16 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
         const verifyPassword = await comparePassword(password, user!.password)
         if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
         
-        const token = await createToken({id: user?.id, role: user?.role})
-        
+        const token = await createToken({id: user?.id, role: user?.role});
+        const refreshToken = await createRefreshToken({id: user?.id, role: user?.role});
+
+        res.cookie('refreshToken', refreshToken ,{
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000, // 1 Day
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        })
+
         res.status(200).json({
             error: false,
             message: 'Successfully logged in',
@@ -139,7 +149,7 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -158,6 +168,14 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
         if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
         
         const token = await createToken({id: user?.id, role: user?.role})
+        const refreshToken = await createRefreshToken({id: user?.id, role: user?.role});
+
+        res.cookie('refreshToken', refreshToken ,{
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000, // 1 Day
+            sameSite: 'strict'
+        })
 
         res.status(200).json({
             error: false,
@@ -173,7 +191,7 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -296,7 +314,7 @@ export const changeCustomerPassword = async(req: Request, res: Response, next: N
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -319,7 +337,7 @@ export const changeTenantPassword = async(req: Request, res: Response, next: Nex
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -342,7 +360,7 @@ export const requestChangeEmail = async(req: Request, res: Response, next: NextF
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -383,7 +401,7 @@ export const changeEmail = async(req: Request, res: Response, next: NextFunction
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }
@@ -401,6 +419,46 @@ export const requestVerifyCustomer = async(req: Request, res: Response, next: Ne
             error: false,
             message: 'A verification link sended, please check your email',
             data: {}
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const refreshToken = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const refreshToken: string = req.cookies.refreshToken;
+
+        console.log(refreshToken);
+
+        if (!refreshToken) throw {msg: 'Session expired', status: 406};
+
+        const decoded: any = await decodeRefreshToken(refreshToken);
+        
+        const {id, role} = decoded.data
+
+        console.log(decoded.data);
+
+        const user = await (prisma.customer.findUnique({
+            where: {
+                id: id,
+                role: role
+            }
+        }))||(prisma.tenant.findUnique({
+            where: {
+                id: id,
+                role: role
+            }
+        }))
+
+        if(!user) throw {msg: 'Invalid credentials', status: 404};
+
+        const newToken = await createToken({id, role})
+
+        res.status(200).json({
+            error: false,
+            message: 'Token refreshed',
+            data: {token: newToken}
         })
     } catch (error) {
         next(error)
@@ -426,7 +484,7 @@ export const verifyCustomer = async(req: Request, res: Response, next: NextFunct
         if (error.status) {
             return res.status(error.status).json({
                 error: true,
-                message: error.message,
+                msg: error.msg,
                 data: {}
             });
         }

@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { format } from "date-fns"
 import { CalendarIcon, Check, ChevronsUpDown, MapPin, Search, Star, Users } from 'lucide-react'
 import Image from "next/image"
-import HeroCarousel from '@/components/landing/HeroCarousel'
+import HeroCarousel from '@/app/components/landing/HeroCarousel'
 import { Formik, Form, Field, FormikHelpers } from 'formik'
 import * as Yup from 'yup'
 
@@ -131,7 +131,6 @@ export default function Home() {
                         )}
                       </div>
 
-                      {/* Date Select */}
                       <div className="space-y-2">
                         <div className="relative">
                           <Field
@@ -223,7 +222,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Properties Section - Unchanged */}
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-12">

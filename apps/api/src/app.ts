@@ -7,6 +7,7 @@ import express, {
   NextFunction,
 } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser'
 import { PORT } from './config';
 import router from './routers/index';
 import { startScheduler } from './utils/scheduler';
@@ -22,8 +23,14 @@ export default class App {
   }
 
   private configure(): void {
-    this.app.use(cors());
+    this.app.use(
+      cors({
+        origin: process.env.CLIENT_URL || 'http://localhost:3000', // Replace with your frontend URL
+        credentials: true, // Allow cookies
+      })
+    );  
     this.app.use(json());
+    this.app.use(cookieParser());
     this.app.use(urlencoded({ extended: true }));
   }
 
