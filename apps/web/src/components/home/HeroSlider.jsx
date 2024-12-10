@@ -3,9 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Slider from "react-slick";
-import GlobalHeroFilter from "../common/GlobalHeroFilter";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBed, faCalendarAlt, faUsers, faSearch } from "@fortawesome/free-solid-svg-icons";
+import SearchForm from "./SearchForm"
 
 const HeroSlider = () => {
   const settings = {
@@ -115,69 +113,7 @@ const HeroSlider = () => {
                       Book Now
                     </Link> */}
                     {/* Search Option Form */}
-                    <div className="search-bar-container bg-white p-3 rounded shadow-lg parag mt-4">
-                      <form className="row g-2 align-items-center">
-                        {/* Destination Input */}
-                        <div className="col-lg-4 col-md-6">
-                          <div className="input-group">
-                            <span className="input-group-text bg-light">
-                              <FontAwesomeIcon icon={faBed} />
-                            </span>
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Where are you going?"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Check-in & Check-out Dates */}
-                        <div className="col-lg-4 col-md-6">
-                          <div className="input-group">
-                            <span className="input-group-text bg-light">
-                              <FontAwesomeIcon icon={faCalendarAlt} />
-                            </span>
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Check-in Date — Check-out Date"
-                              readOnly
-                            />
-                          </div>
-                        </div>
-
-                        {/* Number of Guests */}
-                        <div className="col-lg-3 col-md-6">
-                          <div className="input-group">
-                            <span className="input-group-text bg-light">
-                              <FontAwesomeIcon icon={faUsers} />
-                            </span>
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="2 adults • 0 children • 1 room"
-                              readOnly
-                            />
-                          </div>
-                        </div>
-
-                        <div className="col-lg-auto">
-                          <button
-                            type="submit"
-                            className="btn rounded-circle d-flex align-items-center justify-content-center"
-                            style={{
-                              width: "50px",
-                              height: "50px",
-                              backgroundColor: "#ff5a5f",
-                              border: "none",
-                              color: "#fff",
-                            }} // Updated background color and removed border
-                          >
-                            <FontAwesomeIcon icon={faSearch} />
-                          </button>
-                        </div>
-                      </form>
-                    </div>
+                    {SearchForm()}
                   </div>
 
                   <div className="col-md-5 col-lg-4">
