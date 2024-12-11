@@ -17,11 +17,11 @@ export const verifyEmailCustomerService = async({email}: {email: string}) => {
     
     if(findUser) {
         if(findUser.email && findUser.password !== '' && findUser.name !== '' && findUser.username !== ''){
-            throw {message: 'User already existed, please register with another email', status: 406}
+            throw {msg: 'User already existed, please register with another email', status: 406}
         }
         try {
             jwt.verify(findUser.resetPasswordToken || '', 'abc5dasar');
-            throw { message: 'A verification link has already been sent. Please check your email.', status: 400 };
+            throw { msg: 'A verification link has already been sent. Please check your email.', status: 400 };
           } catch (error) {
             await prisma.customer.delete({
               where: { email },
@@ -68,11 +68,11 @@ export const verifyEmailTenantService = async({email}: {email: string}) => {
 
     if(findUser) {
         if(findUser.email && findUser.password !== '' && findUser.name !== '' && findUser.username !== ''){
-            throw {message: 'User already existed, please register with another email', status: 406}
+            throw {msg: 'User already existed, please register with another email', status: 406}
         }
         try {
             jwt.verify(findUser.resetPasswordToken || '', 'abc5dasar');
-            throw { message: 'A verification link has already been sent. Please check your email.', status: 400 };
+            throw { msg: 'A verification link has already been sent. Please check your email.', status: 400 };
           } catch (error) {
             await prisma.tenant.delete({
               where: { email },
@@ -154,7 +154,7 @@ export const loginCustomerService = async({emailOrUsername}: ILogin) => {
         where: where as any
     });
 
-    if(!user) throw {message: 'User not found', status: 404};
+    if(!user) throw {msg: 'User not found', status: 404};
 
     return user;
 
@@ -173,7 +173,7 @@ export const loginTenantService = async({emailOrUsername}: ILogin) => {
         where: where as any
     });
 
-    if(!user) throw {message: 'User not found', status: 404};
+    if(!user) throw {msg: 'User not found', status: 404};
 
     return user;
 }
@@ -195,7 +195,7 @@ export const keepLoginService = async({usersId, authorizationRole}: {usersId: nu
         }
     })
 
-    if(!findTenant) throw {message: 'user not found', status: 406}
+    if(!findTenant) throw {msg: 'user not found', status: 406}
 
     if(findTenant) return findTenant
 }
@@ -217,7 +217,7 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
 
     const user = customer || tenant
 
-    if(!user) throw {message: 'Invalid email, please try with a valid email', status: 404}
+    if(!user) throw {msg: 'Invalid email, please try with a valid email', status: 404}
 
     let resetPasswordToken = user.resetPasswordToken
     let tokenExpiry = user.tokenExpiry
@@ -278,7 +278,7 @@ export const resetPasswordService = async({resetPasswordToken, password}: {reset
 
     const user = customer || tenant
 
-    if(!user) throw {message: 'Invalid or expired link, please request a new one', status: 406}
+    if(!user) throw {msg: 'Invalid or expired link, please request a new one', status: 406}
 
     if(user == customer){
         await prisma.customer.update({
@@ -312,10 +312,10 @@ export const changeCustomerPasswordService = async({usersId, password, newPasswo
         }
     })
 
-    if(!user) throw {message: 'Something went wrong', status: 406}
+    if(!user) throw {msg: 'Something went wrong', status: 406}
 
     const isComparePassword = await comparePassword(password, user!.password)
-    if(!isComparePassword) throw {message: 'False password, please try again', status: 406};
+    if(!isComparePassword) throw {msg: 'False password, please try again', status: 406};
 
     const hashedPassword = await hashPassword(newPassword)
 
@@ -336,10 +336,10 @@ export const changeTenantPasswordService = async({usersId, password, newPassword
         }
     })
 
-    if(!user) throw {message: 'Something went wrong', status: 406}
+    if(!user) throw {msg: 'Something went wrong', status: 406}
 
     const isComparePassword = await comparePassword(password, user!.password)
-    if(!isComparePassword) throw {message: 'False password, please try again', status: 406};
+    if(!isComparePassword) throw {msg: 'False password, please try again', status: 406};
 
     const hashedPassword = await hashPassword(newPassword)
 
@@ -366,7 +366,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
         }
     }))
 
-    if(!user) throw {message: 'Session expired', status: 404}
+    if(!user) throw {msg: 'Session expired', status: 404}
 
     const newEmailExists = (await prisma.customer.findUnique({
         where: {
@@ -378,7 +378,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
         }
     }))
 
-    if(newEmailExists) throw {message: 'Email is already used, please use another email', status: 400}
+    if(newEmailExists) throw {msg: 'Email is already used, please use another email', status: 400}
 
     const changeEmailToken = jwt.sign({
         data: {
@@ -431,7 +431,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
 
 export const changeEmailService = async({usersId, authorizationRole, token}: {usersId: number; authorizationRole: string; token: string;}) => {
     const decoded = jwt.verify(token, 'abc5dasar') as ChangeEmailTokenPayload;
-    if (!decoded || !decoded?.data?.newEmail) throw { message: 'Token expired or invalid', status: 406};
+    if (!decoded || !decoded?.data?.newEmail) throw { msg: 'Token expired or invalid', status: 406};
 
     const {newEmail} = decoded?.data
 
@@ -448,7 +448,7 @@ export const changeEmailService = async({usersId, authorizationRole, token}: {us
         }
     }))
 
-    if(newEmailExists) throw {message: 'Email is already in use', status: 406}
+    if(newEmailExists) throw {msg: 'Email is already in use', status: 406}
 
     const updateEmail = (await prisma.customer.update({
         where: {
@@ -472,7 +472,7 @@ export const changeEmailService = async({usersId, authorizationRole, token}: {us
         }
     }))
 
-    if(!updateEmail) throw {message: 'User not found or unauthorized', status: 406}
+    if(!updateEmail) throw {msg: 'User not found or unauthorized', status: 406}
 }
 
 export const requestVerifyCustomerService = async({usersId}: {usersId: number}) => {
@@ -490,9 +490,9 @@ export const requestVerifyCustomerService = async({usersId}: {usersId: number}) 
             email: true
         }
     })
-    if(!user) throw {message: 'Something went wrong', status: 404}
+    if(!user) throw {msg: 'Something went wrong', status: 404}
 
-    if (user?.resetPasswordToken && user.tokenExpiry && user.tokenExpiry > currentTime) throw {message: `The verification email sent to ${user.email} is still valid`, status:400}; 
+    if (user?.resetPasswordToken && user.tokenExpiry && user.tokenExpiry > currentTime) throw {msg: `The verification email sent to ${user.email} is still valid`, status:400}; 
 
     const verifyAccountToken = await createToken({id: user?.id, role: user?.role})
     const expiry = addHours(currentTime, 1)
@@ -525,7 +525,7 @@ export const requestVerifyCustomerService = async({usersId}: {usersId: number}) 
 export const verifyCustomerService = async({usersId, customToken}: {usersId: number, customToken: string}) => {
     const decoded = jwt.decode(customToken) as JwtPayload
     const currentTime = new Date ()
-    if(!decoded || !decoded.data || !decoded.data.id || !decoded.data.role) throw {message: 'Invalid or expired token', status: 406}
+    if(!decoded || !decoded.data || !decoded.data.id || !decoded.data.role) throw {msg: 'Invalid or expired token', status: 406}
 
     const user = await prisma.customer.findUnique({
         where: {
@@ -533,9 +533,9 @@ export const verifyCustomerService = async({usersId, customToken}: {usersId: num
         }
     })
 
-    if (!user) throw {message: 'User not found', status: 406}
+    if (!user) throw {msg: 'User not found', status: 406}
 
-    if(user.tokenExpiry && user.tokenExpiry < currentTime) throw {message: 'Link invalid, please request another one', status: 406}
+    if(user.tokenExpiry && user.tokenExpiry < currentTime) throw {msg: 'Link invalid, please request another one', status: 406}
 
     await prisma.customer.update({
         where: {
