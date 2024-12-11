@@ -11,17 +11,17 @@
     "postprepare": "bash -c 'chmod ug+x .husky/*'"
   },
   "devDependencies": {
-    "@commitlint/cli": "^18.4.2",
-    "@commitlint/config-conventional": "^18.4.2",
+    "@commitlint/cli": "^17.4.4",
+    "@commitlint/config-conventional": "^17.4.4",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
     "eslint": "^8.48.0",
     "husky": "^8.0.0",
     "lint-staged": "^15.1.0",
     "prettier": "^3.1.0",
     "tsc-alias": "^1.8.10",
     "tsconfig": "*",
-    "turbo": "latest",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1"
+    "turbo": "latest"
   },
   "name": "finpro-nextjs-express-prisma",
   "packageManager": "npm@8.15.0",
