@@ -1,4 +1,4 @@
-import { changeCustomerPassword, changeEmail, changeTenantPassword, keepLogin, loginCustomer, loginTenant, loginWithSocialMedia, registerCustomer, registerTenant, requestChangeEmail, requestResetPassword, resetPassword, verifyEmailCustomer, verifyEmailTenant} from "@/controllers/auth.controller";
+import { changeCustomerPassword, changeEmail, changeTenantPassword, keepLogin, loginCustomer, loginTenant, loginWithSocialMedia, refreshToken, registerCustomer, registerTenant, requestChangeEmail, requestResetPassword, resetPassword, verifyEmailCustomer, verifyEmailTenant} from "@/controllers/auth.controller";
 import { errorHandling } from "@/middlewares/validator/error.handling";
 import { uploadRegisterTenant } from "@/middlewares/uploadRegisterTenant";
 import { Router } from "express";
@@ -22,6 +22,7 @@ router.patch('/password/tenant',verifyToken, verifyRoleTenant, changeTenantPassw
 router.post('/request/email', verifyToken, requestChangeEmail);
 router.patch('/email', verifyToken, changeEmail);
 router.post('/request/verify/customer', verifyToken, verifyRoleCustomer, errorHandling);
-router.patch('/verify/customer', verifyToken, verifyRoleCustomer, errorHandling)
+router.patch('/verify/customer', verifyToken, verifyRoleCustomer, errorHandling);
+router.post('/refresh-token', refreshToken)
 
 export default router;
