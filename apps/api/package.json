@@ -17,7 +17,6 @@
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
     "@types/date-fns": "^2.5.3",
-    "@types/express-validator": "^2.20.33",
     "@types/handlebars": "^4.0.40",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
@@ -46,6 +45,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/express-validator": "^2.20.33",
     "prisma": "^6.0.1",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0"
