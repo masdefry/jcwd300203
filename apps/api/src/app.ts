@@ -5,11 +5,11 @@ import express, {
   Request,
   Response,
   NextFunction,
-  Router,
 } from 'express';
 import cors from 'cors';
 import { PORT } from './config';
-import { SampleRouter } from './routers/sample.router';
+import cookieParser from 'cookie-parser';
+import router from './routers';
 
 export default class App {
   private app: Express;
@@ -22,47 +22,59 @@ export default class App {
   }
 
   private configure(): void {
-    this.app.use(cors());
+    this.app.use(
+      cors({
+        origin: process.env.CLIENT_URL || 'http://localhost:3000', 
+        credentials: true, 
+      })
+    );  
     this.app.use(json());
+    this.app.use(cookieParser());
     this.app.use(urlencoded({ extended: true }));
   }
 
   private handleError(): void {
-    // not found
+    // Not found handler
     this.app.use((req: Request, res: Response, next: NextFunction) => {
       if (req.path.includes('/api/')) {
-        res.status(404).send('Not found !');
+        res.status(404).json({ error: 'Not found!' });
       } else {
         next();
       }
     });
 
-    // error
+    interface ErrorHandler extends Error{
+      msg: string;
+      status: number;
+    }
+  
+    // General error handler
     this.app.use(
-      (err: Error, req: Request, res: Response, next: NextFunction) => {
+      (err: ErrorHandler, req: Request, res: Response, next: NextFunction) => {
         if (req.path.includes('/api/')) {
-          console.error('Error : ', err.stack);
-          res.status(500).send('Error !');
+          console.error('Error:', err);
+  
+          // Send a JSON response with error details for API requests
+          res.status(500).json({
+            error: 'An internal server error occurred.',
+            message: err.msg || 'Something went wrong',
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+          });
         } else {
-          next();
+          next(err); 
         }
-      },
+      }
     );
   }
 
   private routes(): void {
-    const sampleRouter = new SampleRouter();
-
-    this.app.get('/api', (req: Request, res: Response) => {
-      res.send(`Hello, Purwadhika Student API!`);
-    });
-
-    this.app.use('/api/samples', sampleRouter.getRouter());
+    // Register main router
+    this.app.use(router);
   }
 
   public start(): void {
     this.app.listen(PORT, () => {
-      console.log(`  ➜  [API] Local:   http://localhost:${PORT}/`);
+      console.log(`  ➜ [ ϟϟ API ϟϟ ] Local: http://localhost:${PORT}/`);
     });
   }
 }

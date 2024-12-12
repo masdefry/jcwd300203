@@ -1,21 +1,178 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("FINPRO_DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model Sample {
-  id        Int      @id @default(autoincrement())
-  name      String
-  code      String   @unique
+enum BookingStatus {
+  WAITING_FOR_PAYMENT
+  WAITING_FOR_CONFIRMATION
+  CONFIRMED
+  CANCELED
+}
+
+model Tenant {
+  id                 Int        @id @default(autoincrement())
+  name               String
+  email              String     @unique
+  username           String     @unique 
+  password           String
+  properties         Property[]
+  profileImage       String?
+  IdCardImage        String?
+  resetPasswordToken String?    @unique
+  tokenExpiry        DateTime? 
+  role               String     @default("tenant")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  email              String   @unique
+  username           String   @unique 
+  isGoogle           Boolean  @default(false)
+  isVerified         Boolean  @default(false) 
+  profileImage       String?
+  resetPasswordToken String?  @unique
+  tokenExpiry        DateTime? 
+  password           String
+  role               String   @default("customer")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  bookings Booking[]
+  reviews  Review[]
+}
+
+model Property {
+  id           Int                @id @default(autoincrement())
+  name         String
+  mainImage     String 
+  address      String
+  roomCapacity Int
+  images       PropertyImage[]
+  facilities   PropFacility[]
+  roomTypes    PropertyRoomType[]
+  reviews      Review[]
+  bookings     Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model PropertyImage {
+  id         Int      @id @default(autoincrement())
+  url        String
+  propertyId Int
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Room {
+  id                 Int              @id @default(autoincrement())
+  guestCapacity      Int
+  images             RoomImage[]
+  facilities         RoomFacility[]
+  propertyRoomTypeId Int
+  propertyRoomType   PropertyRoomType @relation(fields: [propertyRoomTypeId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("samples") // if you want to use snake_case format
+  Booking Booking[]
+}
+
+model RoomImage {
+  id     Int    @id @default(autoincrement())
+  url    String
+  roomId Int
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Booking {
+  id           Int      @id @default(autoincrement())
+  checkInDate  DateTime
+  checkOutDate DateTime
+
+  roomId     Int
+  propertyId Int
+  customerId Int
+  status     Status[]
+  room_qty   Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room     Room     @relation(fields: [roomId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
+}
+
+model Status {
+  id     Int           @id @default(autoincrement())
+  Status BookingStatus
+
+  // FK to booking Id
+  bookingId Int
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model PropertyRoomType {
+  id         Int      @id @default(autoincrement())
+  name       String
+  price      Decimal
+  propertyId Int
+  property   Property @relation(fields: [propertyId], references: [id])
+  qty        Int
+
+  Room Room[]
+}
+
+model PropFacility {
+  id         Int        @id @default(autoincrement())
+  name       String
+  icon       String?
+  properties Property[]
+}
+
+model RoomFacility {
+  id    Int     @id @default(autoincrement())
+  name  String
+  icon  String?
+  rooms Room[]
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  rating     Int
+  comment    String   @db.Text
+  createdAt  DateTime @default(now())
+  customerId Int
+  propertyId Int
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  property Property @relation(fields: [propertyId], references: [id])
 }
