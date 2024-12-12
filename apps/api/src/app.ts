@@ -10,6 +10,7 @@ import cors from 'cors';
 import { PORT } from './config';
 import cookieParser from 'cookie-parser';
 import router from './routers';
+import { startScheduler } from './utils/scheduler';
 
 export default class App {
   private app: Express;
@@ -68,13 +69,13 @@ export default class App {
   }
 
   private routes(): void {
-    // Register main router
     this.app.use(router);
   }
 
   public start(): void {
     this.app.listen(PORT, () => {
       console.log(`  ➜ [ ϟϟ API ϟϟ ] Local: http://localhost:${PORT}/`);
+      startScheduler();
     });
   }
 }
