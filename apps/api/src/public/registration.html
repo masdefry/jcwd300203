@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complete Your Registration</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f2f5;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .email-container {
+        background-color: #ffffff;
+        max-width: 600px;
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        text-align: center;
+      }
+      .email-header {
+        background-color: #4caf50;
+        color: white;
+        padding: 25px 0;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .email-content {
+        padding: 30px 20px;
+        color: #333333;
+        line-height: 1.6;
+      }
+      .btn {
+        display: inline-block;
+        padding: 14px 24px;
+        margin: 25px 0;
+        color: white;
+        background-color: #4caf50;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      .btn:hover {
+        background-color: #45a049;
+      }
+      .footer {
+        font-size: 14px;
+        color: #777777;
+        padding: 15px;
+        background-color: #f0f2f5;
+      }
+      @media screen and (max-width: 600px) {
+        .email-header {
+          font-size: 24px;
+          padding: 20px 0;
+        }
+        .btn {
+          padding: 12px 18px;
+          font-size: 16px;
+        }
+        .email-content {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        Complete Your Registration
+      </div>
+      <div class="email-content">
+        <p style="font-weight: 600;">Hi , {{name}}</p>
+        <p>Thank you for signing up! Please click the button below to proceed with your registration and verify your email address.</p>
+        <p>Please keep in mind, this link would only be available for 1 hour</p>
+        <a href="{{url}}" class="btn">Proceed with Registration</a>
+        <p>If you did not create this account, please ignore this email.</p>
+        <p>Thank you,<br />The RentUp Team</p>
+      </div>
+      <div class="footer">
+        &copy; 2024 RentUp. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>
