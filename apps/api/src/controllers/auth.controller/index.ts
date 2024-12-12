@@ -5,8 +5,6 @@ import { createRefreshToken, createToken, decodeRefreshToken } from "@/utils/jwt
 import { prisma } from "@/connection";
 import { generateUsername } from "@/utils/generate.username";
 import { RequestWithFiles } from "./types";
-import { JwtPayload } from "jsonwebtoken";
-import { IDecodeRefreshToken } from "@/services/auth.service/types";
 
 export const verifyEmailCustomer = async(req: Request, res: Response, next: NextFunction) => {
     try {
@@ -438,8 +436,6 @@ export const refreshToken = async(req: Request, res: Response, next: NextFunctio
         const decoded: any = await decodeRefreshToken(refreshToken);
         
         const {id, role} = decoded.data
-
-        console.log(decoded.data);
 
         const user = await (prisma.customer.findUnique({
             where: {

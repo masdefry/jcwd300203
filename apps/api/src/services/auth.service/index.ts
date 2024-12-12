@@ -7,6 +7,7 @@ import { transporter } from "@/utils/transporter";
 import { addHours, addMinutes, isBefore } from 'date-fns';
 import { comparePassword, hashPassword } from "@/utils/hash.password";
 import { createToken } from "@/utils/jwt";
+import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } from "@/utils/jwt";
 
 export const verifyEmailCustomerService = async({email}: {email: string}) => {
     const findUser = await prisma.customer.findUnique({
@@ -20,7 +21,7 @@ export const verifyEmailCustomerService = async({email}: {email: string}) => {
             throw {msg: 'User already existed, please register with another email', status: 406}
         }
         try {
-            jwt.verify(findUser.resetPasswordToken || '', 'abc5dasar');
+            jwt.verify(findUser.resetPasswordToken || '', ACCESS_TOKEN_SECRET);
             throw { msg: 'A verification link has already been sent. Please check your email.', status: 400 };
           } catch (error) {
             await prisma.customer.delete({
@@ -29,7 +30,7 @@ export const verifyEmailCustomerService = async({email}: {email: string}) => {
           }
     }
     
-    const verifyEmailToken = jwt.sign({data: {email: email} }, 'abc5dasar', {expiresIn: '1h'});
+    const verifyEmailToken = jwt.sign({data: {email: email} }, ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
     const expirationTime = new Date();
     expirationTime.setHours(expirationTime.getHours() + 1);
 
@@ -71,7 +72,7 @@ export const verifyEmailTenantService = async({email}: {email: string}) => {
             throw {msg: 'User already existed, please register with another email', status: 406}
         }
         try {
-            jwt.verify(findUser.resetPasswordToken || '', 'abc5dasar');
+            jwt.verify(findUser.resetPasswordToken || '', ACCESS_TOKEN_SECRET);
             throw { msg: 'A verification link has already been sent. Please check your email.', status: 400 };
           } catch (error) {
             await prisma.tenant.delete({
@@ -80,7 +81,7 @@ export const verifyEmailTenantService = async({email}: {email: string}) => {
           }
     }
     
-    const verifyEmailToken = jwt.sign({data: {email: email} }, 'abc5dasar', {expiresIn: '1h'});
+    const verifyEmailToken = jwt.sign({data: {email: email} }, ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
     const expirationTime = new Date();
     expirationTime.setHours(expirationTime.getHours() + 1);
 
@@ -225,7 +226,7 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
     const currentTime = new Date ()
 
     if (!resetPasswordToken && !tokenExpiry) {
-        resetPasswordToken = jwt.sign({ data: { email } }, 'abc5dasar', { expiresIn: '5m' });
+        resetPasswordToken = jwt.sign({ data: { email } }, ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
         tokenExpiry = addMinutes(currentTime, 5);
 
         if (user === customer) {
@@ -383,7 +384,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
     const changeEmailToken = jwt.sign({
         data: {
             newEmail
-        }}, 'abc5dasar', {expiresIn: '1h'});
+        }}, ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
     
     const expirationTime = new Date();
     expirationTime.setHours(expirationTime.getHours() + 1);   
@@ -430,7 +431,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
 }
 
 export const changeEmailService = async({usersId, authorizationRole, token}: {usersId: number; authorizationRole: string; token: string;}) => {
-    const decoded = jwt.verify(token, 'abc5dasar') as ChangeEmailTokenPayload;
+    const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET) as ChangeEmailTokenPayload;
     if (!decoded || !decoded?.data?.newEmail) throw { msg: 'Token expired or invalid', status: 406};
 
     const {newEmail} = decoded?.data
