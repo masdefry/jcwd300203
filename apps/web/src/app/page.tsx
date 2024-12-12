@@ -1,95 +1,151 @@
 import Image from 'next/image'
 import styles from './page.module.css'
+import Header from '@/components/home/Header'
+import MobileMenu from '@/components/common/header/MobileMenu'
+import PopupSignInUp from '@/components/common/PopupSignInUp'
+import HeroSlider from '@/components/home/HeroSlider'
+import FeaturedProperties from '@/components/home/FeaturedProperties'
+import FindProperties from '@/components/home/FindProperties'
+import WhyChoose from '@/components/common/WhyChoose'
+import Blogs from '@/components/common/Blogs'
+import Partners from '@/components/common/Partners'
+import CallToAction from '@/components/common/CallToAction'
+import Footer from '@/components/common/footer/Footer'
+import CopyrightFooter from '@/components/common/footer/CopyrightFooter'
+import Wrapper from '@/components/layout/Wrapper'
 
 export default function Home() {
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <Wrapper>
+      {/* <!-- Main Header Nav --> */}
+      <Header />
+
+      {/* <!--  Mobile Menu --> */}
+      <MobileMenu />
+
+      {/* <!-- Modal --> */}
+      <PopupSignInUp />
+
+      {/* <!-- Home Design --> */}
+      <section className="p0">
+        <div className="container-fluid p0">
+          <div className="home8-slider">
+            <div className="bs_carousel ">
+              <HeroSlider />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+      {/* <!-- Feature Properties --> */}
+      <section id="feature-property" className="feature-property bgc-f7">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-6 offset-lg-3">
+              <div className="main-title text-center mb40">
+                <h2>Featured Properties</h2>
+                <p>Handpicked properties by our team.</p>
+              </div>
+            </div>
+            <div className="col-lg-12">
+              <div className="feature_property_slider gutter-x15">
+                <FeaturedProperties />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+      {/* <!-- Property Cities --> */}
+      <section id="property-city" className="property-city pb30">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-6 offset-lg-3">
+              <div className="main-title text-center">
+                <h2>Find Properties in These Cities</h2>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <FindProperties />
+          </div>
+        </div>
+      </section>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
+      {/* <!-- Why Chose Us --> */}
+      <section id="why-chose" className="whychose_us bgc-f7 pb30">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-6 offset-lg-3">
+              <div className="main-title text-center">
+                <h2>Why Choose Us</h2>
+                <p>We provide full service at every step.</p>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <WhyChoose />
+          </div>
+        </div>
+      </section>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
+      {/* <!-- Our Blog --> */}
+      <section className="our-blog bgc-f7 pb30">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-6 offset-lg-3">
+              <div className="main-title text-center">
+                <h2>Articles & Tips</h2>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <Blogs />
+          </div>
+        </div>
+      </section>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+      {/* <!-- Our Partners --> */}
+      <section id="our-partners" className="our-partners">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-6 offset-lg-3">
+              <div className="main-title text-center">
+                <h2>Our Partners</h2>
+                <p>We only work with the best companies around the globe</p>
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <Partners />
+          </div>
+        </div>
+      </section>
+
+      {/* <!-- Start Call to Action --> */}
+      <section className="start-partners bgc-thm pt50 pb50">
+        <div className="container">
+          <CallToAction />
+        </div>
+      </section>
+
+      {/* <!-- Our Footer --> */}
+      <section className="footer_one">
+        <div className="container">
+          <div className="row">
+            <Footer />
+          </div>
+        </div>
+      </section>
+
+      {/* <!-- Our Footer Bottom Area --> */}
+      <section className="footer_middle_area pt40 pb40">
+        <div className="container">
+          <CopyrightFooter />
+        </div>
+      </section>
+    </Wrapper>
   )
 }
