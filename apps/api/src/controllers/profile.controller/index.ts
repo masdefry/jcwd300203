@@ -1,4 +1,4 @@
-import { editCustomerProfileService, getCustomerProfileService, getTenantProfileService } from "@/services/profile.service";
+import { editCustomerProfileService, editTenantProfileService, getCustomerProfileService, getTenantProfileService } from "@/services/profile.service";
 import { Request, Response, NextFunction } from "express";
 import { RequestWithFiles } from "../auth.controller/types";
 import { IEditCustomerProfile } from "@/services/profile.service/types";
@@ -40,7 +40,8 @@ export const getTenantProfile = async(req: Request, res: Response, next: NextFun
                 email: user?.email,
                 username: user?.username,
                 role: user?.role,
-                profileImage: user?.profileImage
+                profileImage: user?.profileImage,
+                idCardImage: user?.IdCardImage
             }
         })
     } catch (error) {
@@ -67,7 +68,17 @@ export const editCustomerProfile = async(req: RequestWithFiles, res: Response, n
 
 export const editTenantProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        
+        const {usersId, name, username} = req.body
+
+        const uploadedImage = req.files
+
+        await editTenantProfileService({usersId, name, username, uploadedImage} as IEditCustomerProfile)
+
+        res.status(200).json({
+            error: false,
+            message: 'Profile retrieved',
+            data: {}
+        })
     } catch (error) {
         next(error);
     }

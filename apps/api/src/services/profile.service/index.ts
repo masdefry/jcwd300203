@@ -1,5 +1,5 @@
 import { prisma } from "@/connection";
-import { IEditCustomerProfile } from "./types";
+import { IEditCustomerProfile, IEditTenantProfile } from "./types";
 import { deleteFiles } from "@/utils/delete.files";
 
 export const getCustomerProfileService = async({usersId}: {usersId: number}) => {
@@ -9,7 +9,7 @@ export const getCustomerProfileService = async({usersId}: {usersId: number}) => 
         }
     })
 
-    if(!user) throw {message: 'Session expired', status: 404}
+    if(!user) throw {msg: 'Session expired', status: 404}
 
     return user
 }
@@ -21,7 +21,7 @@ export const getTenantProfileService = async({usersId}: {usersId: number}) => {
         }
     })
 
-    if(!user) throw {message: 'Session expired', status: 404}
+    if(!user) throw {msg: 'Session expired', status: 404}
 
     return user
 }
@@ -36,16 +36,14 @@ export const editCustomerProfileService = async({usersId, name, username, upload
         }
     })
 
-    if(!oldProfileImage) throw {message: 'Something went wrong', status: 404}
-
     if (uploadedImage?.profileImage?.[0]){
         const newImage = uploadedImage.profileImage[0].filename
 
-        if(oldProfileImage.profileImage){
+        if(oldProfileImage!.profileImage){
             deleteFiles({
                 uploadedImage: {
                     images: [{
-                        path: `src/public/images/profileImage/${oldProfileImage.profileImage}`
+                        path: `src/public/images/${oldProfileImage!.profileImage}`
                     }]
                 }
             })
@@ -79,7 +77,7 @@ export const editCustomerProfileService = async({usersId, name, username, upload
             }
         })
 
-        if (checkUsername) throw {message: 'Username is already used, please choose another one', status: 406}
+        if (checkUsername) throw {msg: 'Username is already used, please choose another one', status: 406}
 
         await prisma.customer.update({
             where: {
@@ -93,6 +91,90 @@ export const editCustomerProfileService = async({usersId, name, username, upload
 
 }
 
-export const editTenantProfileService = async() => {
-    
+export const editTenantProfileService = async({usersId, name, username, uploadedImage}: IEditTenantProfile) => {
+    const tenant = await prisma.tenant.findUnique({
+        where: {
+            id: usersId
+        },
+        select: {
+            profileImage: true,
+            IdCardImage: true
+        }
+    })
+
+    if(!tenant) throw {msg: 'Something went wrong', status: 404}
+
+    if (uploadedImage?.idCardImage?.[0]){
+        const newIdCard = uploadedImage.idCardImage[0].filename
+
+        if(tenant.IdCardImage){
+            deleteFiles({
+                uploadedImage: {
+                    images: [{ path: `src/public/images/${tenant.IdCardImage}` }],
+                },
+            });
+        }
+
+        await prisma.tenant.update({
+            where: {
+                id: usersId
+            },
+            data: {
+                IdCardImage: newIdCard
+            }
+        })
+    }
+
+    if (uploadedImage?.profileImage?.[0]){
+        const newProfilePicture = uploadedImage.profileImage[0].filename
+
+        if(tenant.profileImage){
+            deleteFiles({
+                uploadedImage: {
+                    images: [{
+                        path: `src/public/images/${tenant.profileImage}`
+                    }]
+                }
+            })
+        }
+
+        await prisma.tenant.update({
+            where: {
+                id: usersId
+            },
+            data: {
+                profileImage: newProfilePicture
+            }
+        })
+    }
+
+    if (name){
+        await prisma.tenant.update({
+            where: {
+                id: usersId
+            },
+            data: {
+                name: name
+            }
+        })
+    }
+
+    if (username){
+        const checkUsername = await prisma.tenant.findUnique({
+            where: {
+                username: username
+            }
+        })
+
+        if (checkUsername) throw {msg: 'Username is already used, please choose another one', status: 406}
+
+        await prisma.tenant.update({
+            where: {
+                id: usersId
+            },
+            data: {
+                username: username
+            }
+        })
+    }
 }
