@@ -48,7 +48,7 @@ model Property {
   mainImage    String 
   address      String
   city         String 
-  category     String
+  category     String?
   roomCapacity Int
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
@@ -136,7 +136,7 @@ model PropFacility {
   id         Int        @id @default(autoincrement())
   name       String
   icon       String?
-  
+
   Property Property[]
 }
 

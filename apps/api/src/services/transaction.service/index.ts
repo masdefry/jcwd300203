@@ -35,7 +35,7 @@ export const createRoomReservationService = async ({
   paymentMethod,
 }: RoomReservationParams) => {
   // Check room availability
-  const room = await prisma.propertyRoomType.findUnique({
+  const room = await prisma.roomType.findUnique({
     where: { id: roomId },
   });
 
@@ -76,7 +76,7 @@ export const createRoomReservationService = async ({
   });
 
   // Decrease the available room count
-  await prisma.propertyRoomType.update({
+  await prisma.roomType.update({
     where: { id: roomId },
     data: { qty: { decrement: room_qty } },
   });

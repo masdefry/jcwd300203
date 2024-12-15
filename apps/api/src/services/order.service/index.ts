@@ -129,10 +129,15 @@ export const cancelUserOrderService = async ({ tenantId, bookingId }: { tenantId
     include: { property: true },
   });
 
-  if (!booking || booking.property.tenantId !== tenantId) {
+  if (!booking) {
+    throw { msg: "Booking not found", status: 404 };
+  }
+
+  if (booking.property.tenantId !== tenantId) {
     throw { msg: "Unauthorized: You can only cancel your own property's orders", status: 403 };
   }
 
+  // Update the booking status to "CANCELED"
   const canceledBooking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
