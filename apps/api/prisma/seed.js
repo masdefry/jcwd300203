@@ -7,8 +7,8 @@ export const hashPassword = async (password) => {
 };
 
 const prisma = new PrismaClient();
-// Variable to store customer seeds
 
+// Variable to store customer seeds
 var customers = [
   {
     id: 1,
@@ -50,7 +50,6 @@ const tenants = [
     password: await hashPassword('11111111'),
     profileImage: 'https://example.com/images/adi_putra.jpg',
     IdCardImage: 'https://example.com/images/adi_putra_id.jpg',
-    resetPasswordToken: null,
     role: 'tenant',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -63,7 +62,6 @@ const tenants = [
     password: await hashPassword('11111111'),
     profileImage: 'https://example.com/images/siti_aisyah.jpg',
     IdCardImage: 'https://example.com/images/siti_aisyah_id.jpg',
-    resetPasswordToken: null,
     role: 'tenant',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -76,7 +74,6 @@ const tenants = [
     password: await hashPassword('11111111'),
     profileImage: 'https://example.com/images/rizki_pratama.jpg',
     IdCardImage: 'https://example.com/images/rizki_pratama_id.jpg',
-    resetPasswordToken: 'reset',
     role: 'tenant',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -86,8 +83,11 @@ const tenants = [
 // variable to store properties seed
 var properties = [
   {
+    id: 1,
     name: 'Pantai Sumatera Residences',
     address: 'Jl. Tepi Pantai No. 45, Padang, Sumatra Barat, Indonesia',
+    city: 'Padang',
+    category: 'Apartement',
     roomCapacity: 20,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -95,8 +95,11 @@ var properties = [
     tenantId: 1,
   },
   {
+    id: 2,
     name: 'Hutan Kalimantan Lodge',
     address: 'Jl. Rimba Tropis No. 12, Pontianak, Kalimantan Barat, Indonesia',
+    city: 'Pontianak',
+    category: 'Villa',
     roomCapacity: 30,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -104,8 +107,11 @@ var properties = [
     tenantId: 2,
   },
   {
+    id: 3,
     name: 'Danau Sulawesi Retreat',
     address: 'Jl. Pinggir Danau No. 8, Manado, Sulawesi Utara, Indonesia',
+    city: 'Manado',
+    category: 'Villa',
     roomCapacity: 15,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -113,8 +119,11 @@ var properties = [
     tenantId: 3,
   },
   {
+    id: 4,
     name: 'Pegunungan Papua Resort',
     address: 'Jl. Puncak Jaya No. 77, Jayapura, Papua, Indonesia',
+    city: 'Jayapura',
+    category: 'Hotel',
     roomCapacity: 25,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -122,8 +131,11 @@ var properties = [
     tenantId: 1,
   },
   {
+    id: 5,
     name: 'Puncak Jawa Villa',
     address: 'Jl. Puncak Gunung No. 90, Bandung, Jawa Barat, Indonesia',
+    city: 'Bandung',
+    category: 'Villa',
     roomCapacity: 50,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -131,8 +143,11 @@ var properties = [
     tenantId: 2,
   },
   {
+    id: 6,
     name: 'Sawah Bali Retreat',
     address: 'Jl. Tegallalang No. 101, Ubud, Bali, Indonesia',
+    city: 'Bali',
+    category: 'Hotel',
     roomCapacity: 18,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -140,9 +155,11 @@ var properties = [
     tenantId: 3,
   },
   {
+    id: 7,
     name: 'Pantai Lombok Paradise',
-    address:
-      'Jl. Pantai Kuta No. 33, Lombok Tengah, Nusa Tenggara Barat, Indonesia',
+    address:'Jl. Pantai Kuta No. 33, Lombok Tengah, Nusa Tenggara Barat, Indonesia',
+    city: 'Lombok',
+    category: 'Villa',
     roomCapacity: 10,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     createdAt: new Date(),
@@ -211,154 +228,273 @@ const bookings = [
 ];
 
 // Variable to store PropertyRoomType seeds
+// Integrated Room Data for Each Property
 const propertyRoomTypes = [
+  // Property 1
   {
     id: 1,
     name: 'Kamar Standar',
     price: 1200000,
-    propertyId: 1,
     qty: 10,
+    guestCapacity: 2,
+    propertyId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     id: 2,
     name: 'Kamar Deluxe',
     price: 1800000,
-    propertyId: 2,
     qty: 8,
+    guestCapacity: 4,
+    propertyId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     id: 3,
     name: 'Suite Premium',
     price: 3000000,
-    propertyId: 3,
     qty: 5,
+    guestCapacity: 3,
+    propertyId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
+
+  // Property 2
   {
     id: 4,
     name: 'Villa Private',
     price: 5000000,
-    propertyId: 4,
     qty: 2,
+    guestCapacity: 5,
+    propertyId: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     id: 5,
     name: 'Kamar Keluarga',
     price: 2500000,
-    propertyId: 5,
     qty: 7,
+    guestCapacity: 4,
+    propertyId: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     id: 6,
     name: 'Kamar Romantis',
     price: 4000000,
-    propertyId: 6,
     qty: 3,
+    guestCapacity: 2,
+    propertyId: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
+
+  // Property 3
   {
     id: 7,
     name: 'Kamar Pantai',
     price: 2000000,
-    propertyId: 7,
     qty: 6,
+    guestCapacity: 6,
+    propertyId: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 8,
+    name: 'Kamar Deluxe',
+    price: 1800000,
+    qty: 8,
+    guestCapacity: 4,
+    propertyId: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 9,
+    name: 'Suite Premium',
+    price: 3000000,
+    qty: 5,
+    guestCapacity: 3,
+    propertyId: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+
+  // Property 4
+  {
+    id: 10,
+    name: 'Kamar Standar',
+    price: 1200000,
+    qty: 10,
+    guestCapacity: 2,
+    propertyId: 4,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 11,
+    name: 'Villa Private',
+    price: 5000000,
+    qty: 2,
+    guestCapacity: 5,
+    propertyId: 4,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 12,
+    name: 'Kamar Keluarga',
+    price: 2500000,
+    qty: 7,
+    guestCapacity: 4,
+    propertyId: 4,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+
+  // Property 5
+  {
+    id: 13,
+    name: 'Kamar Deluxe',
+    price: 1800000,
+    qty: 8,
+    guestCapacity: 4,
+    propertyId: 5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 14,
+    name: 'Suite Premium',
+    price: 3000000,
+    qty: 5,
+    guestCapacity: 3,
+    propertyId: 5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 15,
+    name: 'Kamar Pantai',
+    price: 2000000,
+    qty: 6,
+    guestCapacity: 6,
+    propertyId: 5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
 ];
 
-// Variable to store room seeds
-const rooms = [
-  {
-    id: 1,
-    guestCapacity: 2,
-    propertyRoomTypeId: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 2,
-    guestCapacity: 4,
-    propertyRoomTypeId: 2,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 3,
-    guestCapacity: 3,
-    propertyRoomTypeId: 3,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 4,
-    guestCapacity: 5,
-    propertyRoomTypeId: 4,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 5,
-    guestCapacity: 4,
-    propertyRoomTypeId: 5,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 6,
-    guestCapacity: 2,
-    propertyRoomTypeId: 6,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 7,
-    guestCapacity: 6,
-    propertyRoomTypeId: 7,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+// Helper function to generate a range of dates
+function generateDateRange(startDate, days) {
+  const range = [];
+  for (let i = 0; i < days; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i);
+    range.push(date);
+  }
+  return range;
+}
+
+// Generate specific date ranges
+const today = new Date();
+const next3Days = generateDateRange(today, 3); // 3 days from today
+const christmasRange = generateDateRange(new Date('2024-12-25'), 4); // Dec 25-28
+const newYearRange = [new Date('2024-12-31')]; // New Year's Eve
+
+// Flexible Prices for each PropertyRoomType
+const flexiblePrices = [];
+
+// Generate flexible prices for each date and PropertyRoomType
+for (const roomType of propertyRoomTypes) {
+  const basePrice = roomType.price;
+  const roomTypeId = roomType.id;
+  // Add flexible prices for the next 3 days
+  next3Days.forEach((date) => {
+    flexiblePrices.push({
+      customPrice: Math.round(basePrice * 0.9),
+      customDate: date,
+      roomTypeId: roomTypeId,
+    });
+  });
+
+  // Add flexible prices for the Christmas range
+  christmasRange.forEach((date) => {
+    flexiblePrices.push({
+      customPrice: Math.round(basePrice * 1.2),
+      customDate: date,
+      roomTypeId: roomTypeId,
+    });
+  });
+
+  // Add flexible price for New Year's Eve
+  newYearRange.forEach((date) => {
+    flexiblePrices.push({
+      customPrice: Math.round(basePrice * 1.5),
+      customDate: date,
+      roomTypeId: roomTypeId,
+    });
+  });
+}
 
 async function main() {
-  // Temporarily disable foreign key constraints
-  await prisma.$executeRaw`SET session_replication_role = 'replica'`;
 
-  // truncate selected schemas before seeding
-  await prisma.customer.deleteMany({});
-  await prisma.room.deleteMany({});
-  await prisma.propertyRoomType.deleteMany({});
-  await prisma.tenant.deleteMany({});
-  await prisma.property.deleteMany({});
-  await prisma.booking.deleteMany({});
+    // Temporarily disable foreign key constraints
+    await prisma.$executeRaw`SET session_replication_role = 'replica'`;
+  
+    // truncate selected schemas before seeding
+    await prisma.customer.deleteMany({});
+    // await prisma.room.deleteMany({});
+    await prisma.roomType.deleteMany({});
+    await prisma.tenant.deleteMany({});
+    await prisma.property.deleteMany({});
+    await prisma.booking.deleteMany({});
+    await prisma.flexiblePrice.deleteMany({});
+  
+    // Re-enable foreign key constraints
+    await prisma.$executeRaw`SET session_replication_role = 'origin'`;
+  
+    // Seed customers
+    for (const customer of customers) {
+      await prisma.customer.create({ data: customer });
+    }
+  
+    // Seed tenants
+    for (const tenant of tenants) {
+      await prisma.tenant.create({ data: tenant });
+    }
+  
+    // Seed properties
+    for (const property of properties) {
+      await prisma.property.create({ data: property });
+    }
+  
+    // Seed propertyRoomTypes
+    for (const propertyRoomType of propertyRoomTypes) {
+      await prisma.roomType.create({ data: propertyRoomType });
+    }
+  
+    // Seed rooms
+    // for (const room of rooms) {
+    //   await prisma.room.create({ data: room });
+    // }
+    
+    // Seed Booking
+    for (const booking of bookings) {
+      await prisma.booking.create({ data: booking });
+    }
 
-  // Re-enable foreign key constraints
-  await prisma.$executeRaw`SET session_replication_role = 'origin'`;
+    // Seed flexible prices
+    for (const flexiblePrice of flexiblePrices) {
+      await prisma.flexiblePrice.create({ data: flexiblePrice });
+    }
 
-  // Seed customers
-  for (const customer of customers) {
-    await prisma.customer.create({ data: customer });
-  }
-
-  // Seed tenants
-  for (const tenant of tenants) {
-    await prisma.tenant.create({ data: tenant });
-  }
-
-  // Seed properties
-  for (const property of properties) {
-    await prisma.property.create({ data: property });
-  }
-
-  // Seed propertyRoomTypes
-  for (const propertyRoomType of propertyRoomTypes) {
-    await prisma.propertyRoomType.create({ data: propertyRoomType });
-  }
-
-  // Seed rooms
-  for (const room of rooms) {
-    await prisma.room.create({ data: room });
-  }
-
-  for (const booking of bookings) {
-    await prisma.booking.create({ data: booking });
-  }
 }
 
 main().catch((error) => {

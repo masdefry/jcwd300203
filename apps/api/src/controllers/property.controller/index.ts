@@ -1,4 +1,4 @@
-import { getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService } from "@/services/property.service";
+import { deletePropertyService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
 import { parseCustomDate } from "@/utils/parse.date";
 
@@ -64,6 +64,32 @@ export const getPropertyDetailsTenant = async(req: Request, res: Response, next:
             error: false,
             message: 'Property found',
             data: data
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createProperty = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {} = req.body;
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const deleteProperty = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {usersId, authorizationRole} = req.body;
+        const {id} = req.params;
+
+        await deletePropertyService({usersId, authorizationRole, id})
+
+        res.status(200).json({
+            error: false,
+            message: 'Property deleted',
+            data: {}
         })
     } catch (error) {
         next(error)

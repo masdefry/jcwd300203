@@ -4,3 +4,7 @@ export interface IEditCustomerProfile {
     usersId: number;
     uploadedImage: { [fieldname: string]: Express.Multer.File[] | any};
 }
+
+export interface IEditTenantProfile extends IEditCustomerProfile{
+    
+}

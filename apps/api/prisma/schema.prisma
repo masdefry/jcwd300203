@@ -45,8 +45,10 @@ model Customer {
 model Property {
   id           Int                @id @default(autoincrement())
   name         String
-  mainImage    String
+  mainImage    String 
   address      String
+  city         String 
+  category     String
   roomCapacity Int
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
@@ -54,7 +56,8 @@ model Property {
   bookings     Booking[]
   tenant       Tenant             @relation(fields: [tenantId], references: [id])
   images       PropertyImage[]
-  roomTypes    PropertyRoomType[]
+  facilities   PropFacility[]
+  roomTypes    RoomType[]
   reviews      Review[]
   facilities   PropFacility[]     @relation("PropFacilityToProperty")
 }
@@ -67,22 +70,12 @@ model PropertyImage {
   property   Property @relation(fields: [propertyId], references: [id])
 }
 
-model Room {
-  id                 Int              @id @default(autoincrement())
-  guestCapacity      Int
-  propertyRoomTypeId Int
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  Booking            Booking[]
-  propertyRoomType   PropertyRoomType @relation(fields: [propertyRoomTypeId], references: [id])
-  images             RoomImage[]
-  facilities         RoomFacility[]   @relation("RoomToRoomFacility")
-}
-
 model RoomImage {
-  id        Int      @id @default(autoincrement())
-  url       String
-  roomId    Int
+  id     Int    @id @default(autoincrement())
+  url    String
+  roomId Int
+  room   RoomType   @relation(fields: [roomId], references: [id])
+
   createdAt DateTime @default(now())
   room      Room     @relation(fields: [roomId], references: [id])
 }
@@ -112,14 +105,33 @@ model Status {
   booking   Booking       @relation(fields: [bookingId], references: [id])
 }
 
-model PropertyRoomType {
-  id         Int      @id @default(autoincrement())
-  name       String
-  price      Decimal
-  propertyId Int
-  qty        Int
-  property   Property @relation(fields: [propertyId], references: [id])
-  Room       Room[]
+model RoomType {
+  id           Int           @id @default(autoincrement())
+  name         String
+  price        Decimal
+  qty          Int           // Total quantity of this room type
+  guestCapacity Int          // Maximum number of guests for this room type
+  propertyId   Int
+  property     Property      @relation(fields: [propertyId], references: [id])
+  
+  images       RoomImage[]
+  facilities   RoomFacility[]
+  flexiblePrice FlexiblePrice[]
+  bookings     Booking[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model FlexiblePrice {
+  id             Int      @id @default(autoincrement())
+  roomTypeId     Int     
+  customDate     DateTime 
+  customPrice    Decimal  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  roomType       RoomType @relation(fields: [roomTypeId], references: [id])
 }
 
 model PropFacility {
@@ -133,7 +145,7 @@ model RoomFacility {
   id    Int     @id @default(autoincrement())
   name  String
   icon  String?
-  rooms Room[]  @relation("RoomToRoomFacility")
+  rooms RoomType[]
 }
 
 model Review {
