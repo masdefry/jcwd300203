@@ -9,7 +9,7 @@ if (!fs.existsSync(proofOfPaymentDirectory)) {
   fs.mkdirSync(proofOfPaymentDirectory, { recursive: true });
 }
 
-// Multer configuration for proof of payment
+// Configure Multer
 const uploadMulter = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
@@ -32,33 +32,4 @@ const uploadMulter = multer({
   },
 });
 
-// middleware for proof of payment uploader
-export const proofOfPaymentUploader = (req: Request, res: Response, next: NextFunction) => {
-    const uploaded = uploadMulter.single("file"); // Handle a single file upload
-  
-    uploaded(req, res, function (err) {
-      try {
-        if (err) {
-          console.error(err);
-          throw { msg: err.message };
-        }
-  
-        // Validate if the file exists
-        if (!req.file) {
-          throw { msg: "File not found" };
-        }
-        
-        // console.log("Uploaded file details:", req.file); // Log file details
-        // console.log("File path:", req.file.path); // Log file path
-
-        // Attach the file path to the request body
-        req.body.filePath = req.file.path;
-  
-        // Proceed to the next middleware or controller
-        next();
-      } catch (err) {
-        console.error(err);
-        next(err);
-      }
-    });
-};  
+export const proofOfPaymentUploader = uploadMulter.single("file");

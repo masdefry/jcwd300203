@@ -19,6 +19,12 @@ interface UploadPaymentProofParams {
   file: Express.Multer.File;
 }
 
+interface ConfirmPaymentParams {
+  tenantId: number;
+  bookingId: number;
+  action: "approve" | "reject";
+}
+
 export const createRoomReservationService = async ({
   customerId,
   propertyId,
@@ -39,9 +45,9 @@ export const createRoomReservationService = async ({
 
   // Retrieve the latest `id` from the `Booking` table
   const latestBooking = await prisma.booking.findFirst({
-    orderBy: { id: "desc" }, // Get the booking with the highest `id`
+    orderBy: { id: "desc" },
   });
-  const nextId = latestBooking ? latestBooking.id + 1 : 1; // If no booking exists, start with `1`
+  const nextId = latestBooking ? latestBooking.id + 1 : 1;
 
   // Create the booking
   const booking = await prisma.booking.create({
@@ -100,6 +106,7 @@ export const uploadPaymentProofService = async ({ bookingId, userId, file }: Upl
   const updatedBooking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
+      proofOfPayment: file.filename,
       status: {
         create: {
           Status: "WAITING_FOR_CONFIRMATION",
@@ -110,3 +117,46 @@ export const uploadPaymentProofService = async ({ bookingId, userId, file }: Upl
 
   return updatedBooking;
 };
+
+// confirm payment service
+export const confirmPaymentService = async ({tenantId, bookingId, action}: ConfirmPaymentParams) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { property: true, status: true },
+  })
+
+  if (!booking || booking.property.tenantId !== tenantId) {
+    throw { msg: "Unauthorized: You can only confirm/reject your own property's orders", status: 403 };
+  }
+
+  if (!booking.proofOfPayment) {
+    throw { msg: "No proof of payment uploaded for this booking", status: 400 };
+  }
+  
+  // approve transaction
+  if (action === "approve") {
+    const updatedBooking = await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: { create: { Status: BookingStatus.CONFIRMED } },
+      },
+    });
+
+    // TODO: Send email to the user with booking details and usage rules
+    return updatedBooking;
+  } 
+  
+  // reject transaction
+  else {
+    // Update status back to "Canceled"
+    const updatedBooking = await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        proofOfPayment: null,
+        status: { create: { Status: BookingStatus.WAITING_FOR_PAYMENT } },
+      },
+    });
+
+    return updatedBooking;
+  }
+}

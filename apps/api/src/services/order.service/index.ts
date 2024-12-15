@@ -1,15 +1,21 @@
 import { prisma } from "@/connection"
+import { BookingStatus } from "@prisma/client";
 
 interface GetOrderListParams {
-    userId: number;
-    date?: string; // Optional filter by date
-    orderNumber?: string; // Optional filter by order number
-    status?: string; // Optional filter by status
+  userId: number;
+  date?: string;
+  orderNumber?: string;
+  status?: string;
 }
 
 interface CancelOrderParams {
-    bookingId: number;
-    userId: number;
+  bookingId: number;
+  userId: number;
+}
+
+interface GetTenantOrderParams {
+  tenantId: number,
+  status: string
 }
   
 export const getOrderListService = async ({ userId, date, orderNumber, status }: GetOrderListParams) => {
@@ -37,20 +43,44 @@ export const getOrderListService = async ({ userId, date, orderNumber, status }:
       };
     }
   
-    // Fetch orders
+    // Fetch orders with proof of payment
     const orders = await prisma.booking.findMany({
       where: filters,
       include: {
-        status: true, // Include statuses
+        status: true,
+        property: true,
+        room: true,
       },
-      orderBy: {
-        createdAt: "desc", // Latest orders first
-      },
-    });
+    }); 
   
     return orders;
 };
 
+
+// get tenant order list service
+export const getTenantOrderListService = async ({tenantId, status}: GetTenantOrderParams) => {
+  const filters: any = {property: {tenantId}}
+  
+  if (status) {
+    filters.status = {
+      some: {Status: status},
+    };
+  }
+  
+  const orders = await prisma.booking.findMany({
+    where: filters,
+    include: {
+      status: true,
+      property: true,
+      customer: true
+    },
+    orderBy: {createdAt: "desc"}
+  })
+  
+  return orders
+}
+
+// cancel order service for user
 export const cancelOrderService = async ({ bookingId, userId }: CancelOrderParams) => { 
     // Fetch the booking
     const booking = await prisma.booking.findUnique({
@@ -66,10 +96,10 @@ export const cancelOrderService = async ({ bookingId, userId }: CancelOrderParam
       throw { msg: "Unauthorized: You can only cancel your own bookings", status: 403 };
     }
   
-    // // Check if proof of payment has been uploaded (nanti)
-    // if (booking.proofOfPayment) {
-    //   throw { msg: "Cannot cancel: Proof of payment has already been uploaded", status: 400 };
-    // }
+    // Check if proof of payment has been uploaded
+    if (booking.proofOfPayment) {
+      throw { msg: "Cannot cancel: Proof of payment has already been uploaded", status: 400 };
+    }
     
     // Check if payment deadline has passed
     const paymentDeadline = new Date(booking.createdAt.getTime() + 60 * 60 * 1000); // 1 hour from booking creation    
@@ -83,11 +113,32 @@ export const cancelOrderService = async ({ bookingId, userId }: CancelOrderParam
       data: {
         status: {
           create: {
-            Status: "CANCELED",
+            Status: BookingStatus.CANCELED,
           },
         },
       },
     });
   
     return canceledBooking;
+};
+
+// cancel order service for tenant
+export const cancelUserOrderService = async ({ tenantId, bookingId }: { tenantId: number; bookingId: number }) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { property: true },
+  });
+
+  if (!booking || booking.property.tenantId !== tenantId) {
+    throw { msg: "Unauthorized: You can only cancel your own property's orders", status: 403 };
+  }
+
+  const canceledBooking = await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: { create: { Status: BookingStatus.CANCELED } },
+    },
+  });
+
+  return canceledBooking;
 };

@@ -95,6 +95,7 @@ model Booking {
   propertyId   Int
   customerId   Int
   room_qty     Int
+  proofOfPayment String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   customer     Customer @relation(fields: [customerId], references: [id])

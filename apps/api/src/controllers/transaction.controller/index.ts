@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createRoomReservationService, uploadPaymentProofService} from "@/services/transaction.service";
-import { getOrderListService } from "@/services/order.service";
+import { createRoomReservationService, uploadPaymentProofService, confirmPaymentService} from "@/services/transaction.service";
 import { parseCustomDate } from "@/utils/parse.date";
 
 /**
@@ -8,7 +7,7 @@ import { parseCustomDate } from "@/utils/parse.date";
  * @param req
  * @param res 
  * @param next 
- */
+*/
 export const createRoomReservation = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { customerId, propertyId, roomId, checkInDate, checkOutDate, room_qty, paymentMethod } = req.body;
@@ -56,18 +55,20 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
 export const uploadPaymentProof = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { bookingId } = req.params;
-    const { userId, filePath } = req.body;
+    const { userId } = req.body;
 
-    // Validate request
-    if (!filePath) {
-      throw { msg: "File path not provided", status: 400 };
-    }
+    // validate file
+    const file = req.file;
+    if (!file){
+      throw {msg: "no file uploaded", status: 400}
+
+    } 
 
     // Call the service
     const result = await uploadPaymentProofService({
       bookingId: Number(bookingId),
       userId: Number(userId),
-      file: filePath
+      file 
     });
 
     res.status(200).json({
@@ -79,3 +80,22 @@ export const uploadPaymentProof = async (req: Request, res: Response, next: Next
     next(error);
   }
 };
+
+// confirm payment or reject payment
+export const confirmPayment = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { tenantId, action } = req.body; // "approve" or "reject"
+    const { bookingId } = req.params;    
+    
+    const result = await confirmPaymentService({tenantId: Number(tenantId), bookingId: Number(bookingId), action});
+
+    res.status(200).json({
+      error: false,
+      message: `Payment ${action} successfully`,
+      data: result
+    })
+
+  } catch (error) {
+    next(error) 
+  }
+}
