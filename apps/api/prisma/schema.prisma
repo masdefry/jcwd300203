@@ -59,7 +59,6 @@ model Property {
   facilities   PropFacility[]
   roomTypes    RoomType[]
   reviews      Review[]
-  facilities   PropFacility[]     @relation("PropFacilityToProperty")
 }
 
 model PropertyImage {
@@ -77,7 +76,6 @@ model RoomImage {
   room   RoomType   @relation(fields: [roomId], references: [id])
 
   createdAt DateTime @default(now())
-  room      Room     @relation(fields: [roomId], references: [id])
 }
 
 model Booking {
@@ -93,7 +91,7 @@ model Booking {
   updatedAt    DateTime @updatedAt
   customer     Customer @relation(fields: [customerId], references: [id])
   property     Property @relation(fields: [propertyId], references: [id])
-  room         Room     @relation(fields: [roomId], references: [id])
+  room         RoomType     @relation(fields: [roomId], references: [id])
   status       Status[]
 }
 
@@ -138,7 +136,8 @@ model PropFacility {
   id         Int        @id @default(autoincrement())
   name       String
   icon       String?
-  properties Property[] @relation("PropFacilityToProperty")
+  
+  Property Property[]
 }
 
 model RoomFacility {
