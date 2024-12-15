@@ -138,9 +138,11 @@ model RoomFacility {
 
 model Review {
   id         Int      @id @default(autoincrement())
-  rating     Int
+  rating     Int      
   comment    String
+  reply      String?
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   customerId Int
   propertyId Int
   customer   Customer @relation(fields: [customerId], references: [id])
