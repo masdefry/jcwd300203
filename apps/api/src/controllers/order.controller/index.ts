@@ -6,7 +6,7 @@ import { BookingStatus } from "@prisma/client";
 // get order list
 export const getOrderList = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { userId } = req.body;
+      const { usersId, authorizationRole } = req.body;
       const { date, orderNumber, status } = req.query;
   
       // Cast query parameters to strings or undefined
@@ -15,7 +15,7 @@ export const getOrderList = async (req: Request, res: Response, next: NextFuncti
       const parsedStatus = typeof status === "string" ? status : undefined;
    
       // Call service to get orders
-      const orders = await getOrderListService({ userId, date: parsedDate, orderNumber: parsedOrderNumber, status: parsedStatus });
+      const orders = await getOrderListService({ usersId, authorizationRole, date: parsedDate, orderNumber: parsedOrderNumber, status: parsedStatus });
   
       res.status(200).json({
         error: false,
@@ -30,10 +30,10 @@ export const getOrderList = async (req: Request, res: Response, next: NextFuncti
 // get tenant order list
 export const getTenantOrderList = async(req: Request, res: Response, next: NextFunction ) => {
   try {
-    const { tenantId } = req.body
+    const { usersId } = req.body
     const { status } = req.query
     
-    const orders = await getTenantOrderListService({ tenantId: Number(tenantId), status: status as string }) 
+    const orders = await getTenantOrderListService({ usersId: Number(usersId), status: status as string }) 
     
     res.status(200).json({
       error: false,
@@ -46,7 +46,7 @@ export const getTenantOrderList = async(req: Request, res: Response, next: NextF
   }
 }
 
-// order reminder controller
+
 export const sendOrderReminders = async() => {
   const today = new Date();
   const reminderDate = new Date(today.getTime() + 24 * 60 * 60 * 1000); // 1 day later
@@ -69,10 +69,10 @@ export const sendOrderReminders = async() => {
 export const cancelOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { bookingId } = req.params; // The ID of the booking to cancel
-      const { userId } = req.body; // Logged-in user's ID
+      const { usersId } = req.body; // Logged-in user's ID
   
       // Call service to cancel the order
-      const result = await cancelOrderService({ bookingId: Number(bookingId), userId: Number(userId) });
+      const result = await cancelOrderService({ bookingId: Number(bookingId), usersId: Number(usersId) });
   
       res.status(200).json({
         error: false,
@@ -87,10 +87,10 @@ export const cancelOrder = async (req: Request, res: Response, next: NextFunctio
 // cancel order service for tenant
 export const cancelUserOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { tenantId } = req.body;
+    const { usersId } = req.body;
     const { bookingId } = req.params;
 
-    const result = await cancelUserOrderService({ tenantId: Number(tenantId), bookingId: Number(bookingId) });
+    const result = await cancelUserOrderService({ usersId: Number(usersId), bookingId: Number(bookingId) });
 
     res.status(200).json({
       error: false,

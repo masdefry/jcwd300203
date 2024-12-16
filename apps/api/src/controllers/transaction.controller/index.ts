@@ -10,12 +10,11 @@ import { parseCustomDate } from "@/utils/parse.date";
 */
 export const createRoomReservation = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { customerId, propertyId, roomId, checkInDate, checkOutDate, room_qty, paymentMethod } = req.body;
+    const { usersId, propertyId, roomId, checkInDate, checkOutDate, room_qty, paymentMethod } = req.body;
 
     // Validate request body
-    if (!customerId || !propertyId || !roomId || !checkInDate || !checkOutDate || !room_qty) {
-      throw { msg: "All fields are required", status: 400 };
-    }
+    if (!usersId || !propertyId || !roomId || !checkInDate || !checkOutDate || !room_qty) throw { msg: "All fields are required", status: 400 };
+  
 
     // Convert incoming `YYYY-MM-DD` to `DD/MM/YYYY` for compatibility with `parseCustomDate`
     const formattedCheckInDate = checkInDate.split('-').reverse().join('/');
@@ -32,7 +31,7 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
 
     // Call service to create the booking
     const booking = await createRoomReservationService({
-      customerId,
+      usersId,
       propertyId,
       roomId,
       checkInDate: parsedCheckInDate,
@@ -55,7 +54,7 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
 export const uploadPaymentProof = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { bookingId } = req.params;
-    const { userId } = req.body;
+    const { usersId } = req.body;
 
     // validate file
     const file = req.file;
@@ -67,7 +66,7 @@ export const uploadPaymentProof = async (req: Request, res: Response, next: Next
     // Call the service
     const result = await uploadPaymentProofService({
       bookingId: Number(bookingId),
-      userId: Number(userId),
+      usersId: Number(usersId),
       file 
     });
 
@@ -84,10 +83,10 @@ export const uploadPaymentProof = async (req: Request, res: Response, next: Next
 // confirm payment or reject payment
 export const confirmPayment = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { tenantId, action } = req.body; // "approve" or "reject"
+    const { usersId, action } = req.body; // "approve" or "reject"
     const { bookingId } = req.params;    
     
-    const result = await confirmPaymentService({tenantId: Number(tenantId), bookingId: Number(bookingId), action});
+    const result = await confirmPaymentService({usersId: Number(usersId), bookingId: Number(bookingId), action});
 
     res.status(200).json({
       error: false,

@@ -2,7 +2,8 @@ import { prisma } from "@/connection"
 import { BookingStatus } from "@prisma/client";
 
 interface GetOrderListParams {
-  userId: number;
+  usersId: number;
+  authorizationRole: string;
   date?: string;
   orderNumber?: string;
   status?: string;
@@ -10,18 +11,18 @@ interface GetOrderListParams {
 
 interface CancelOrderParams {
   bookingId: number;
-  userId: number;
+  usersId: number;
 }
 
 interface GetTenantOrderParams {
-  tenantId: number,
+  usersId: number,
   status: string
 }
   
-export const getOrderListService = async ({ userId, date, orderNumber, status }: GetOrderListParams) => {
+export const getOrderListService = async ({ usersId, authorizationRole, date, orderNumber, status }: GetOrderListParams) => {
     // Build query filters
     const filters: any = {
-      customerId: userId,
+      customerId: usersId,
     };
   
     if (date) {
@@ -58,8 +59,8 @@ export const getOrderListService = async ({ userId, date, orderNumber, status }:
 
 
 // get tenant order list service
-export const getTenantOrderListService = async ({tenantId, status}: GetTenantOrderParams) => {
-  const filters: any = {property: {tenantId}}
+export const getTenantOrderListService = async ({usersId, status}: GetTenantOrderParams) => {
+  const filters: any = {property: {usersId}}
   
   if (status) {
     filters.status = {
@@ -81,7 +82,7 @@ export const getTenantOrderListService = async ({tenantId, status}: GetTenantOrd
 }
 
 // cancel order service for user
-export const cancelOrderService = async ({ bookingId, userId }: CancelOrderParams) => { 
+export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderParams) => { 
     // Fetch the booking
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -92,7 +93,7 @@ export const cancelOrderService = async ({ bookingId, userId }: CancelOrderParam
       throw { msg: "Booking not found", status: 404 };
     }
   
-    if (booking.customerId !== userId) {
+    if (booking.customerId !== usersId) {
       throw { msg: "Unauthorized: You can only cancel your own bookings", status: 403 };
     }
   
@@ -123,9 +124,9 @@ export const cancelOrderService = async ({ bookingId, userId }: CancelOrderParam
 };
 
 // cancel order service for tenant
-export const cancelUserOrderService = async ({ tenantId, bookingId }: { tenantId: number; bookingId: number }) => {
+export const cancelUserOrderService = async ({ usersId, bookingId }: { usersId: number; bookingId: number }) => {
   const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
+    where: {id: bookingId},
     include: { property: true },
   });
 
@@ -133,7 +134,7 @@ export const cancelUserOrderService = async ({ tenantId, bookingId }: { tenantId
     throw { msg: "Booking not found", status: 404 };
   }
 
-  if (booking.property.tenantId !== tenantId) {
+  if (booking.property.tenantId !== usersId) {
     throw { msg: "Unauthorized: You can only cancel your own property's orders", status: 403 };
   }
 
