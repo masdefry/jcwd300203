@@ -1,10 +1,13 @@
 import { Router } from "express";
 import { addReview, replyToReview } from "@/controllers/review.controller";
+import { verifyToken } from "@/middlewares/verify.token";
+import { verifyRoleCustomer } from "@/middlewares/verify.role.customer";
+import { verifyRoleTenant } from "@/middlewares/verify.role.tenant";
 
 const router = Router();
 
 // add review router
-router.post("/", addReview)
-router.post("/:reviewId/reply",replyToReview)
+router.post("/",verifyToken, verifyRoleCustomer, addReview)
+router.post("/:reviewId/reply",verifyToken, verifyRoleTenant,replyToReview)
 
 export default router;

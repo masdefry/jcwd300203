@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 
 interface RoomReservationParams {
-  customerId: number;
+  usersId: number;
   propertyId: number;
   roomId: number;
   checkInDate: Date;
@@ -15,18 +15,18 @@ interface RoomReservationParams {
 
 interface UploadPaymentProofParams {
   bookingId: number;
-  userId: number;
+  usersId: number;
   file: Express.Multer.File;
 }
 
 interface ConfirmPaymentParams {
-  tenantId: number;
+  usersId: number;
   bookingId: number;
   action: "approve" | "reject";
 }
 
 export const createRoomReservationService = async ({
-  customerId,
+  usersId,
   propertyId,
   roomId,
   checkInDate,
@@ -34,15 +34,23 @@ export const createRoomReservationService = async ({
   room_qty,
   paymentMethod,
 }: RoomReservationParams) => {
-  // Check room availability
+  const findUser = await prisma.customer.findUnique({
+    where: {
+      id: usersId
+    },
+    select: {
+      isVerified: true,
+      id: true
+    }
+  })
+
+  if(!findUser || !findUser.isVerified) throw {msg: 'Please verify your account first', status: 406}
   const room = await prisma.roomType.findUnique({
     where: { id: roomId },
   });
 
-  if (!room || room.qty < room_qty) {
-    throw { msg: "Not enough rooms available", status: 400 };
-  }
-
+  if (!room || room.qty < room_qty) throw { msg: "Not enough rooms available", status: 400 };
+  
   // Retrieve the latest `id` from the `Booking` table
   const latestBooking = await prisma.booking.findFirst({
     orderBy: { id: "desc" },
@@ -53,7 +61,7 @@ export const createRoomReservationService = async ({
   const booking = await prisma.booking.create({
     data: {
       id: nextId,
-      customerId,
+      customerId: usersId,
       propertyId,
       roomId,
       checkInDate,
@@ -84,9 +92,9 @@ export const createRoomReservationService = async ({
   return booking;
 };
 
-export const uploadPaymentProofService = async ({ bookingId, userId, file }: UploadPaymentProofParams) => {
-  // Convert userId to a number
-  userId = Number(userId);
+export const uploadPaymentProofService = async ({ bookingId, usersId, file }: UploadPaymentProofParams) => {
+  // Convert usersId to a number
+  usersId = Number(usersId);
 
   // Validate booking ownership and status
   const booking = await prisma.booking.findUnique({
@@ -94,7 +102,7 @@ export const uploadPaymentProofService = async ({ bookingId, userId, file }: Upl
     include: { status: true },
   });
 
-  if (!booking || booking.customerId !== userId) {
+  if (!booking || booking.customerId !== usersId) {
     throw { msg: "Unauthorized or invalid booking", status: 403 };
   }
 
@@ -119,19 +127,15 @@ export const uploadPaymentProofService = async ({ bookingId, userId, file }: Upl
 };
 
 // confirm payment service
-export const confirmPaymentService = async ({tenantId, bookingId, action}: ConfirmPaymentParams) => {
+export const confirmPaymentService = async ({usersId, bookingId, action}: ConfirmPaymentParams) => {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { property: true, status: true },
   })
 
-  if (!booking || booking.property.tenantId !== tenantId) {
-    throw { msg: "Unauthorized: You can only confirm/reject your own property's orders", status: 403 };
-  }
+  if (!booking || booking.property.tenantId !== usersId) throw { msg: "Unauthorized: You can only confirm/reject your own property's orders", status: 403 };
 
-  if (!booking.proofOfPayment) {
-    throw { msg: "No proof of payment uploaded for this booking", status: 400 };
-  }
+  if (!booking.proofOfPayment) throw { msg: "No proof of payment uploaded for this booking", status: 400 };
   
   // approve transaction
   if (action === "approve") {
