@@ -453,56 +453,77 @@ for (const roomType of propertyRoomTypes) {
 
 async function main() {
 
-    // Temporarily disable foreign key constraints
-    await prisma.$executeRaw`SET session_replication_role = 'replica'`;
-  
-    // truncate selected schemas before seeding
-    await prisma.status.deleteMany({});
-    await prisma.booking.deleteMany({});
-    await prisma.flexiblePrice.deleteMany({});
-    await prisma.roomType.deleteMany({});
-    await prisma.property.deleteMany({});
-    await prisma.tenant.deleteMany({});
-    await prisma.customer.deleteMany({});
-  
-    // Re-enable foreign key constraints
-    await prisma.$executeRaw`SET session_replication_role = 'origin'`;
-  
-    // Seed customers
-    for (const customer of customers) {
-      await prisma.customer.create({ data: customer });
-    }
-  
-    // Seed tenants
-    for (const tenant of tenants) {
-      await prisma.tenant.create({ data: tenant });
-    }
-  
-    // Seed properties
-    for (const property of properties) {
-      await prisma.property.create({ data: property });
-    }
-  
-    // Seed propertyRoomTypes
-    for (const propertyRoomType of propertyRoomTypes) {
-      await prisma.roomType.create({ data: propertyRoomType });
-    }
-  
-    // Seed rooms
-    // for (const room of rooms) {
-    //   await prisma.room.create({ data: room });
-    // }
-    
-    // Seed Booking
-    for (const booking of bookings) {
-      await prisma.booking.create({ data: booking });
-    }
+  // Temporarily disable foreign key constraints
+  await prisma.$executeRaw`SET session_replication_role = 'replica'`;
 
-    // Seed flexible prices
-    for (const flexiblePrice of flexiblePrices) {
-      await prisma.flexiblePrice.create({ data: flexiblePrice });
-    }
+  // truncate selected schemas before seeding
+  await prisma.status.deleteMany({});
+  await prisma.booking.deleteMany({});
+  await prisma.flexiblePrice.deleteMany({});
+  await prisma.roomType.deleteMany({});
+  await prisma.property.deleteMany({});
+  await prisma.tenant.deleteMany({});
+  await prisma.customer.deleteMany({});
 
+  // Re-enable foreign key constraints
+  await prisma.$executeRaw`SET session_replication_role = 'origin'`;
+
+  // Seed customers
+  for (const customer of customers) {
+    await prisma.customer.create({ data: customer });
+  }
+
+  // Seed tenants
+  for (const tenant of tenants) {
+    await prisma.tenant.create({ data: tenant });
+  }
+
+  // Seed properties
+  for (const property of properties) {
+    await prisma.property.create({ data: property });
+  }
+
+  // Seed propertyRoomTypes
+  for (const propertyRoomType of propertyRoomTypes) {
+    await prisma.roomType.create({ data: propertyRoomType });
+  }
+
+  // Seed rooms
+  // for (const room of rooms) {
+  //   await prisma.room.create({ data: room });
+  // }
+  
+  // Seed flexible prices
+  for (const flexiblePrice of flexiblePrices) {
+    await prisma.flexiblePrice.create({ data: flexiblePrice });
+  }  
+
+  // Seed Booking
+  for (const booking of bookings) {
+    // Step 1: Find flexible pricing for the check-in date and room type
+    const flexiblePrice = await prisma.flexiblePrice.findFirst({
+      where: {
+        customDate: booking.checkInDate,
+        roomTypeId: booking.roomId, // Assuming roomId matches roomType.id
+      },
+    });
+
+    // Step 2: Fetch default room price if no flexible price exists
+    const roomType = await prisma.roomType.findUnique({
+      where: { id: booking.roomId },
+    });
+
+    // Step 3: Set the price dynamically
+    const price = flexiblePrice ? flexiblePrice.customPrice : roomType.price;
+
+    // Step 4: Add the price to the booking
+    await prisma.booking.create({
+      data: {
+        ...booking,
+        price: price, // Populate the price dynamically
+      },
+    });
+  }
 }
 
 main().catch((error) => {
