@@ -90,10 +90,10 @@ model Booking {
   price        Decimal?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  expiryDate     DateTime  @default(dbgenerated("(now() + interval '1 hour')"))
+  expiryDate   DateTime @default(dbgenerated("(now() + interval '1 hour')")) 
   customer     Customer @relation(fields: [customerId], references: [id])
   property     Property @relation(fields: [propertyId], references: [id])
-  room         RoomType     @relation(fields: [roomId], references: [id])
+  room         RoomType @relation(fields: [roomId], references: [id])
   status       Status[]
 }
 

@@ -1,5 +1,6 @@
 import { prisma } from "@/connection"
 import { BookingStatus } from "@prisma/client"; // Import Prisma enum type
+import cron from "node-cron";
 import path from "path";
 import fs from "fs";
 
@@ -132,6 +133,49 @@ export const createRoomReservationService = async ({
   return booking;
 };
 
+/**
+ * Scheduler: Cancel expired bookings automatically.
+ * Runs every minute to check for expired bookings.
+ */
+export const scheduleBookingCleanup = () => {
+  cron.schedule("*/1 * * * *", async () => {
+    console.log("Running booking cleanup task...");
+
+    try {
+      // Fetch bookings that have expired, no proof of payment, and are NOT already cancelled
+      const expiredBookings = await prisma.booking.findMany({
+        where: {
+          proofOfPayment: null,
+          expiryDate: { lte: new Date() },
+          status: {
+            none: { Status: BookingStatus.CANCELED },
+          },
+        },
+        include: { status: true },
+      });
+
+      console.log(expiredBookings)
+
+      for (const booking of expiredBookings) {
+        // Add a CANCELED status for the booking
+        await prisma.status.create({
+          data: {
+            bookingId: booking.id,
+            Status: BookingStatus.CANCELED,
+          },
+        });
+
+        console.log(`Booking ID ${booking.id} has been cancelled.`);
+      }
+
+      console.log("Booking cleanup task completed.");
+    } catch (error) {
+      console.error("Error running booking cleanup task:", error);
+    }
+  });
+};
+
+// upload payment proof
 export const uploadPaymentProofService = async ({ bookingId, usersId, file }: UploadPaymentProofParams) => {
   // Convert usersId to a number
   usersId = Number(usersId);
