@@ -4,6 +4,7 @@ import { parseCustomDate } from "@/utils/parse.date";
 
 export  const getPropertiesList = async(req: Request, res: Response, next: NextFunction) => {
     try {
+
         const properties = await getPropertiesListService()
 
         res.status(200).json({

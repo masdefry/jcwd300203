@@ -1,12 +1,84 @@
 import { prisma } from "@/connection"
 
 export const getPropertiesListService = async() => {
-    return await prisma.property.findMany({
-        include: {
-            images: true,
-            facilities: true
+    const currentDate = new Date();
+
+    const properties = await prisma.property.findMany({
+      include: {
+        facilities: true,
+        roomTypes: {
+          include: {
+            bookings: {
+              where: {
+                status: {
+                  some: {
+                    Status: {
+                      in: [
+                        "WAITING_FOR_PAYMENT",
+                        "WAITING_FOR_CONFIRMATION",
+                        "CONFIRMED",
+                      ]
+                    }
+                  }
+                },
+                AND: [
+                  { checkInDate: { lte: currentDate } },
+                  { checkOutDate: { gte: currentDate } },
+                ]
+              },
+              select: {
+                room_qty: true,
+              }
+            },
+            flexiblePrice: {
+              where: {
+                customDate: currentDate, 
+              },
+              select: {
+                customPrice: true,
+              }
+            }
+          }
         }
+      }
+    });
+
+    const formattedProperties = properties.map((property) => {
+      let isAvailable : boolean = false;
+      let isAlmostFullyBooked : boolean = false;
+      let price : number | null = null
+
+      property.roomTypes.forEach((roomType) => {
+        const totalBookedRooms = roomType.bookings.reduce(
+          (sum: number, booking: {room_qty: number}) => sum + booking.room_qty, 0
+        )
+
+        const isRoomAvailable: boolean = totalBookedRooms < roomType.qty;
+        const isRoomAlmostBooked: boolean = totalBookedRooms >= roomType.qty * 0.85;
+
+        if(isRoomAvailable) isAvailable = true;
+
+        if(isRoomAlmostBooked) isAlmostFullyBooked = true;
+
+        const flexiblePrice = roomType.flexiblePrice[0]?.customPrice;
+        const roomPrice = flexiblePrice
+        ? Number(flexiblePrice.toFixed(2)) 
+        : Number(roomType.price.toFixed(2)); 
+        if(price === null || roomPrice < price) price = roomPrice;
+      })
+      return {
+        id: property.id,
+        name: property.name,
+        address: property.address,
+        city: property.city,
+        mainImage: property.mainImage,
+        facilities: property.facilities,
+        price: price || 0,
+        isAvailable,
+        isAlmostFullyBooked
+      }
     })
+    return formattedProperties;
 }
 
 export const getPropertyDetailsService = async({id, parsedCheckIn, parsedCheckOut}:{id: string, parsedCheckIn: Date, parsedCheckOut: Date}) => {
