@@ -44,7 +44,7 @@ export const createRoomReservationService = async ({
     }
   })
 
-  if(!findUser || !findUser.isVerified) throw {msg: 'Please verify your account first', status: 406}
+  if(!findUser) throw {msg: 'Please verify your account first', status: 406}
   
   // Check for custom price
   const customPrice = await prisma.flexiblePrice.findFirst({
@@ -92,9 +92,16 @@ export const createRoomReservationService = async ({
   if (room.qty - alreadyBookedQty < room_qty)
     throw { msg: "Not enough rooms available", status: 400 };
 
+  // Manually generate the next ID
+  const latestBooking = await prisma.booking.findFirst({
+    orderBy: { id: "desc" },
+  });
+  const nextId = latestBooking ? latestBooking.id + 1 : 1;
+
   // Create the booking
   const booking = await prisma.booking.create({
     data: {
+      id: nextId,
       customerId: usersId,
       propertyId,
       roomId,
