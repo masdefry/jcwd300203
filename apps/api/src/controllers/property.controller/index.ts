@@ -4,7 +4,7 @@ import { parseCustomDate } from "@/utils/parse.date";
 
 export  const getPropertiesList = async(req: Request, res: Response, next: NextFunction) => {
     try {
-        const {search, checkIn, checkOut, guest} = req.query
+        const {search, checkIn, checkOut, guest, sortBy, sortOrder, page, limit} = req.query
 
         if (checkIn && typeof checkIn !== "string") throw { msg: "Invalid date", status: 406 };
         if (checkOut && typeof checkOut !== "string") throw { msg: "Invalid date", status: 406 };
@@ -15,9 +15,30 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
 
         const parsedCheckIn = checkIn ? parseCustomDate(checkIn) : undefined;
         const parsedCheckOut = checkOut ? parseCustomDate(checkOut) : undefined;
+        const guestCount = guest ? Number(guest) : undefined 
 
+        const pageNumber = page ? parseInt(page as string, 10) : 1
+        const pageSize = limit ? parseInt(limit as string, 10) : 10
+        const offset = (pageNumber - 1) * pageSize;
 
-        const properties = await getPropertiesListService({parsedCheckIn, parsedCheckOut, search: search || undefined, guest: guest || undefined})
+        const allowedSortBy = ['name', 'price'];
+        const allowedSortOrder = ['asc', 'desc'];
+
+        const validSort = allowedSortBy.includes(sortBy as string) ? (sortBy as string) : 'name'
+        const validSortOrder = allowedSortOrder.includes (sortOrder as string) ? (sortOrder as string) : 'asc'
+
+        console.log({
+            parsedCheckIn,
+            parsedCheckOut,
+            search,
+            guestCount,
+            offset,
+            pageSize,
+            sortBy: validSort,
+            sortOrder: validSortOrder
+        });
+
+        const properties = await getPropertiesListService({parsedCheckIn, parsedCheckOut, search: search || undefined, guest: guest || undefined, offset, pageSize, sortBy: validSort, sortOrder: validSortOrder})
 
         res.status(200).json({
             error: false,
