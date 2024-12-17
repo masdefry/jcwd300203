@@ -1,15 +1,39 @@
 import { prisma } from "@/connection"
 
-export const getPropertiesListService = async() => {
+export const getPropertiesListService = async({parsedCheckIn, parsedCheckOut, search, guest}: {parsedCheckIn: Date | undefined, parsedCheckOut: Date | undefined, search: string | undefined, guest: string | undefined}) => {
+    const guestCount = Number(guest)
+
     const currentDate = new Date();
 
     const properties = await prisma.property.findMany({
+      where: {
+        ...(search
+          ? {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { address: { contains: search, mode: "insensitive" } },
+              { city: { contains: search, mode: "insensitive" } },
+            ],
+          } : {}
+        )
+      },
       include: {
         facilities: true,
         roomTypes: {
+          where: {
+            ...(guestCount ? { guestCapacity: { gte: guestCount } } : {}),
+          },
           include: {
             bookings: {
               where: {
+                ...(parsedCheckIn && parsedCheckOut
+                  ? {
+                      AND: [
+                        { checkInDate: { lt: parsedCheckOut } },
+                        { checkOutDate: { gt: parsedCheckIn } },
+                      ],
+                    }
+                  : {}),
                 status: {
                   some: {
                     Status: {
@@ -32,7 +56,9 @@ export const getPropertiesListService = async() => {
             },
             flexiblePrice: {
               where: {
-                customDate: currentDate, 
+                ...(parsedCheckIn && parsedCheckOut
+                  ? { customDate: { gte: parsedCheckIn, lte: parsedCheckOut } }
+                  : {customDate: currentDate}),
               },
               select: {
                 customPrice: true,

@@ -154,7 +154,7 @@ export const scheduleBookingCleanup = () => {
         include: { status: true },
       });
 
-      console.log(expiredBookings)
+      // console.log(expiredBookings)
 
       for (const booking of expiredBookings) {
         // Add a CANCELED status for the booking

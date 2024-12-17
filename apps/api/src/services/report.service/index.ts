@@ -1,12 +1,13 @@
 // services/report.service.ts
 import { prisma } from "@/connection";
+import { BookingStatus } from "@prisma/client";
 
-export const getSalesReport = async ({ usersId, startDate, endDate, sortBy }: any) => {
+export const getSalesReportService = async ({ tenantId, startDate, endDate, sortBy }: any) => {
   const where: any = {
-    property: { tenantId: usersId },
+    property: { tenantId: tenantId },
     status: {
-      some: {Status: "CONFIRMED"}
-    }
+      some: { Status: BookingStatus.CONFIRMED }, // Only confirmed bookings
+    },
   };
 
   // Validate and parse startDate and endDate
@@ -20,9 +21,9 @@ export const getSalesReport = async ({ usersId, startDate, endDate, sortBy }: an
     const parsedEndDate = new Date(endDate);
     if (isNaN(parsedEndDate.getTime())) throw { msg: "Invalid end date", status: 400 };
     where.createdAt = { ...where.createdAt, lte: parsedEndDate };
-  } 
+  }
 
-  // Fetch and group bookings
+  // Fetch bookings with confirmed status and calculate total revenue
   const bookings = await prisma.booking.findMany({
     where,
     include: {
@@ -31,27 +32,37 @@ export const getSalesReport = async ({ usersId, startDate, endDate, sortBy }: an
       status: true,
     },
     orderBy: {
-      createdAt: sortBy || "asc", // Sort by date or total sales
+      createdAt: sortBy || "asc", // Sort by createdAt or other criteria
     },
   });
 
+  // Calculate total revenue from the bookings
+  const totalRevenue = bookings.reduce((sum, booking) => sum + Number(booking.price || 0), 0);
+
   // Format the result
-  return bookings.map((booking) => ({
+  const formattedBookings = bookings.map((booking) => ({
     propertyName: booking.property.name,
     customer: booking.customer.name,
     checkIn: booking.checkInDate,
     checkOut: booking.checkOutDate,
     totalRooms: booking.room_qty,
     status: booking.status.map((s) => s.Status).join(", "),
+    revenue: Number(booking.price || 0), // Individual booking revenue
   }));
+
+  // Return formatted bookings along with total revenue
+  return {
+    totalRevenue,
+    bookings: formattedBookings,
+  }; 
 };
 
 // services/report.service.ts
-export const getPropertyReport = async ({ usersId }: { usersId: number }) => {
+export const getPropertyReportService = async ({ tenantId }: { tenantId: number }) => {
     // Fetch all bookings for tenant's properties
     const bookings = await prisma.booking.findMany({
       where: {
-        property: { tenantId: usersId },
+        property: { tenantId: tenantId },
       },
       select: {
         checkInDate: true,

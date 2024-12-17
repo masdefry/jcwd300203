@@ -4,8 +4,20 @@ import { parseCustomDate } from "@/utils/parse.date";
 
 export  const getPropertiesList = async(req: Request, res: Response, next: NextFunction) => {
     try {
+        const {search, checkIn, checkOut, guest} = req.query
 
-        const properties = await getPropertiesListService()
+        if (checkIn && typeof checkIn !== "string") throw { msg: "Invalid date", status: 406 };
+        if (checkOut && typeof checkOut !== "string") throw { msg: "Invalid date", status: 406 };
+        if (search && typeof search !== "string") throw { msg: "Invalid search input", status: 406 };
+        if (guest && typeof guest !== "string") throw { msg: "Invalid guest count", status: 406 };
+
+        if (search && !checkIn && !checkOut && !guest) throw {msg: 'Please complete the input', status:400}
+
+        const parsedCheckIn = checkIn ? parseCustomDate(checkIn) : undefined;
+        const parsedCheckOut = checkOut ? parseCustomDate(checkOut) : undefined;
+
+
+        const properties = await getPropertiesListService({parsedCheckIn, parsedCheckOut, search: search || undefined, guest: guest || undefined})
 
         res.status(200).json({
             error: false,

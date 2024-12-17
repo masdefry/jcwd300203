@@ -6,7 +6,7 @@ import { verifyRoleTenant } from "@/middlewares/verify.role.tenant";
 
 const router = Router();
 
-router.get("/sales-report", verifyToken, verifyRoleTenant, salesReport);
+router.get("/sales-report", salesReport);
 router.get("/property-report", verifyToken, verifyRoleTenant, propertyReport);
 
 export default router;
