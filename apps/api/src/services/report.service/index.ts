@@ -1,9 +1,9 @@
 // services/report.service.ts
 import { prisma } from "@/connection";
 
-export const getSalesReport = async ({ tenantId, startDate, endDate, sortBy }: any) => {
+export const getSalesReport = async ({ usersId, startDate, endDate, sortBy }: any) => {
   const where: any = {
-    property: { tenantId },
+    property: { tenantId: usersId },
     status: {
       some: {Status: "CONFIRMED"}
     }
@@ -47,11 +47,11 @@ export const getSalesReport = async ({ tenantId, startDate, endDate, sortBy }: a
 };
 
 // services/report.service.ts
-export const getPropertyReport = async ({ tenantId }: { tenantId: number }) => {
+export const getPropertyReport = async ({ usersId }: { usersId: number }) => {
     // Fetch all bookings for tenant's properties
     const bookings = await prisma.booking.findMany({
       where: {
-        property: { tenantId },
+        property: { tenantId: usersId },
       },
       select: {
         checkInDate: true,
