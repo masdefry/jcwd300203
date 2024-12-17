@@ -1,5 +1,6 @@
 import { prisma } from "@/connection"
 import { BookingStatus } from "@prisma/client"; // Import Prisma enum type
+import cron from "node-cron";
 import path from "path";
 import fs from "fs";
 
@@ -44,14 +45,55 @@ export const createRoomReservationService = async ({
     }
   })
 
-  if(!findUser || !findUser.isVerified) throw {msg: 'Please verify your account first', status: 406}
+  if(!findUser) throw {msg: 'Please verify your account first', status: 406}
+  
+  // Check for custom price
+  const customPrice = await prisma.flexiblePrice.findFirst({
+    where: {
+      roomTypeId: roomId,
+      customDate: {
+        gte: checkInDate,
+        lte: checkOutDate,
+      },
+    },
+    orderBy: { customDate: "desc" },
+  });
+  
+  // Retrieve fallback price from RoomType table
   const room = await prisma.roomType.findUnique({
     where: { id: roomId },
   });
-
-  if (!room || room.qty < room_qty) throw { msg: "Not enough rooms available", status: 400 };
   
-  // Retrieve the latest `id` from the `Booking` table
+  if (!room) throw { msg: "Room not found", status: 404 };
+  
+  // Calculate price: use customPrice or fallback room price
+  const pricePerNight = customPrice ? Number(customPrice.customPrice) : Number(room.price);
+  const numberOfNights = Math.ceil(
+    (new Date(checkOutDate).getTime() - new Date(checkInDate).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const totalPrice = pricePerNight * room_qty * numberOfNights;
+
+  // Check room availability based on "CONFIRMED" and "WAITING_FOR_CONFIRMATION"
+  const overlappingBookings = await prisma.booking.findMany({
+    where: {
+      roomId,
+      OR: [
+        { status: { some: { Status: "CONFIRMED" } } },
+        { status: { some: { Status: "WAITING_FOR_CONFIRMATION" } } },
+      ],
+      AND: [
+        { checkInDate: { lt: checkOutDate } },
+        { checkOutDate: { gt: checkInDate } },
+      ],
+    },
+  });
+
+  const alreadyBookedQty = overlappingBookings.reduce((sum, booking) => sum + booking.room_qty, 0);
+
+  if (room.qty - alreadyBookedQty < room_qty)
+    throw { msg: "Not enough rooms available", status: 400 };
+
+  // Manually generate the next ID
   const latestBooking = await prisma.booking.findFirst({
     orderBy: { id: "desc" },
   });
@@ -67,6 +109,7 @@ export const createRoomReservationService = async ({
       checkInDate,
       checkOutDate,
       room_qty,
+      price: totalPrice,
       status: {
         create: [
           {
@@ -78,9 +121,7 @@ export const createRoomReservationService = async ({
         ],
       },
     },
-    include: {
-      status: true, // Include related statuses in the result
-    },
+    include: { status: true },
   });
 
   // Decrease the available room count
@@ -92,6 +133,49 @@ export const createRoomReservationService = async ({
   return booking;
 };
 
+/**
+ * Scheduler: Cancel expired bookings automatically.
+ * Runs every minute to check for expired bookings.
+ */
+export const scheduleBookingCleanup = () => {
+  cron.schedule("*/1 * * * *", async () => {
+    console.log("Running booking cleanup task...");
+
+    try {
+      // Fetch bookings that have expired, no proof of payment, and are NOT already cancelled
+      const expiredBookings = await prisma.booking.findMany({
+        where: {
+          proofOfPayment: null,
+          expiryDate: { lte: new Date() },
+          status: {
+            none: { Status: BookingStatus.CANCELED },
+          },
+        },
+        include: { status: true },
+      });
+
+      // console.log(expiredBookings)
+
+      for (const booking of expiredBookings) {
+        // Add a CANCELED status for the booking
+        await prisma.status.create({
+          data: {
+            bookingId: booking.id,
+            Status: BookingStatus.CANCELED,
+          },
+        });
+
+        console.log(`Booking ID ${booking.id} has been cancelled.`);
+      }
+
+      console.log("Booking cleanup task completed.");
+    } catch (error) {
+      console.error("Error running booking cleanup task:", error);
+    }
+  });
+};
+
+// upload payment proof
 export const uploadPaymentProofService = async ({ bookingId, usersId, file }: UploadPaymentProofParams) => {
   // Convert usersId to a number
   usersId = Number(usersId);

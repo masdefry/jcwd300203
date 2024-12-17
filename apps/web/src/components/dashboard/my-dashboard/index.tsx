@@ -1,7 +1,7 @@
 import Header from "../../common/header/dashboard/Header";
 import SidebarMenu from "../../common/header/dashboard/SidebarMenu";
 import MobileMenu from "../../common/header/MobileMenu";
-import Activities from "./Activities";
+import PropertyCalendar from "./PropertyCalendar";
 import AllStatistics from "./AllStatistics";
 import StatisticsChart from "./StatisticsChart";
 
@@ -75,7 +75,7 @@ const index = () => {
                 <div className="col-xl-5">
                   <div className="recent_job_activity">
                     <h4 className="title mb-4">Recent Activities</h4>
-                    <Activities />
+                    <PropertyCalendar />
                   </div>
                 </div>
               </div>
