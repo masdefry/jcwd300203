@@ -11,6 +11,7 @@ import { PORT } from './config';
 import cookieParser from 'cookie-parser';
 import router from './routers';
 import { startScheduler } from './utils/scheduler';
+import { scheduleBookingCleanup } from './services/transaction.service';
 
 export default class App {
   private app: Express;
@@ -73,6 +74,9 @@ export default class App {
   }
 
   public start(): void {
+    // schedule booking cleanup
+    scheduleBookingCleanup()
+
     this.app.listen(PORT, () => {
       console.log(`  ➜ [ ϟϟ API ϟϟ ] Local: http://localhost:${PORT}/`);
       startScheduler();

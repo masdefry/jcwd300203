@@ -168,11 +168,16 @@ var properties = [
   },
 ];
 
+// bookings seed
+const now = new Date();
+const pastHourOffset = 60 * 60 * 1000; // 1 hour in milliseconds
+
 const bookings = [
   {
     id: 1,
-    checkInDate: new Date('2024-12-20T14:00:00Z'),
-    checkOutDate: new Date('2024-12-25T12:00:00Z'),
+    checkInDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+    checkOutDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    expiryDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 + pastHourOffset), // 1 hour after checkInDate
     roomId: 1,
     propertyId: 1,
     customerId: 1, // Ucup uwuw
@@ -185,8 +190,9 @@ const bookings = [
   },
   {
     id: 2,
-    checkInDate: new Date('2024-12-22T14:00:00Z'),
-    checkOutDate: new Date('2024-12-24T12:00:00Z'),
+    checkInDate: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
+    checkOutDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+    expiryDate: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000 + pastHourOffset), // 1 hour after checkInDate
     roomId: 2,
     propertyId: 2,
     customerId: 2, // Acong Madura
@@ -199,8 +205,9 @@ const bookings = [
   },
   {
     id: 3,
-    checkInDate: new Date('2024-12-25T14:00:00Z'),
-    checkOutDate: new Date('2024-12-30T12:00:00Z'),
+    checkInDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    checkOutDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+    expiryDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000 + pastHourOffset), // 1 hour after checkInDate
     roomId: 3,
     propertyId: 3,
     customerId: 3, // Udin Petot
@@ -213,8 +220,9 @@ const bookings = [
   },
   {
     id: 4,
-    checkInDate: new Date('2024-12-28T14:00:00Z'),
-    checkOutDate: new Date('2025-01-02T12:00:00Z'),
+    checkInDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+    checkOutDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+    expiryDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + pastHourOffset), // 1 hour after checkInDate
     roomId: 1,
     propertyId: 1,
     customerId: 4, // Ahmad Bejo
@@ -445,56 +453,77 @@ for (const roomType of propertyRoomTypes) {
 
 async function main() {
 
-    // Temporarily disable foreign key constraints
-    await prisma.$executeRaw`SET session_replication_role = 'replica'`;
-  
-    // truncate selected schemas before seeding
-    await prisma.customer.deleteMany({});
-    // await prisma.room.deleteMany({});
-    await prisma.roomType.deleteMany({});
-    await prisma.tenant.deleteMany({});
-    await prisma.property.deleteMany({});
-    await prisma.booking.deleteMany({});
-    await prisma.flexiblePrice.deleteMany({});
-  
-    // Re-enable foreign key constraints
-    await prisma.$executeRaw`SET session_replication_role = 'origin'`;
-  
-    // Seed customers
-    for (const customer of customers) {
-      await prisma.customer.create({ data: customer });
-    }
-  
-    // Seed tenants
-    for (const tenant of tenants) {
-      await prisma.tenant.create({ data: tenant });
-    }
-  
-    // Seed properties
-    for (const property of properties) {
-      await prisma.property.create({ data: property });
-    }
-  
-    // Seed propertyRoomTypes
-    for (const propertyRoomType of propertyRoomTypes) {
-      await prisma.roomType.create({ data: propertyRoomType });
-    }
-  
-    // Seed rooms
-    // for (const room of rooms) {
-    //   await prisma.room.create({ data: room });
-    // }
-    
-    // Seed Booking
-    for (const booking of bookings) {
-      await prisma.booking.create({ data: booking });
-    }
+  // Temporarily disable foreign key constraints
+  await prisma.$executeRaw`SET session_replication_role = 'replica'`;
 
-    // Seed flexible prices
-    for (const flexiblePrice of flexiblePrices) {
-      await prisma.flexiblePrice.create({ data: flexiblePrice });
-    }
+  // truncate selected schemas before seeding
+  await prisma.status.deleteMany({});
+  await prisma.booking.deleteMany({});
+  await prisma.flexiblePrice.deleteMany({});
+  await prisma.roomType.deleteMany({});
+  await prisma.property.deleteMany({});
+  await prisma.tenant.deleteMany({});
+  await prisma.customer.deleteMany({});
 
+  // Re-enable foreign key constraints
+  await prisma.$executeRaw`SET session_replication_role = 'origin'`;
+
+  // Seed customers
+  for (const customer of customers) {
+    await prisma.customer.create({ data: customer });
+  }
+
+  // Seed tenants
+  for (const tenant of tenants) {
+    await prisma.tenant.create({ data: tenant });
+  }
+
+  // Seed properties
+  for (const property of properties) {
+    await prisma.property.create({ data: property });
+  }
+
+  // Seed propertyRoomTypes
+  for (const propertyRoomType of propertyRoomTypes) {
+    await prisma.roomType.create({ data: propertyRoomType });
+  }
+
+  // Seed rooms
+  // for (const room of rooms) {
+  //   await prisma.room.create({ data: room });
+  // }
+  
+  // Seed flexible prices
+  for (const flexiblePrice of flexiblePrices) {
+    await prisma.flexiblePrice.create({ data: flexiblePrice });
+  }  
+
+  // Seed Booking
+  for (const booking of bookings) {
+    // Step 1: Find flexible pricing for the check-in date and room type
+    const flexiblePrice = await prisma.flexiblePrice.findFirst({
+      where: {
+        customDate: booking.checkInDate,
+        roomTypeId: booking.roomId, // Assuming roomId matches roomType.id
+      },
+    });
+
+    // Step 2: Fetch default room price if no flexible price exists
+    const roomType = await prisma.roomType.findUnique({
+      where: { id: booking.roomId },
+    });
+
+    // Step 3: Set the price dynamically
+    const price = flexiblePrice ? flexiblePrice.customPrice : roomType.price;
+
+    // Step 4: Add the price to the booking
+    await prisma.booking.create({
+      data: {
+        ...booking,
+        price: price, // Populate the price dynamically
+      },
+    });
+  }
 }
 
 main().catch((error) => {
