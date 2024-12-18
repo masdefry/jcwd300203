@@ -28,7 +28,6 @@ export const getOrderList = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
-
 // get tenant order list
 export const getTenantOrderList = async(req: Request, res: Response, next: NextFunction ) => {
   try {
