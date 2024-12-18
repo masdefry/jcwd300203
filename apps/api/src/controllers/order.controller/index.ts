@@ -6,24 +6,25 @@ import { BookingStatus } from "@prisma/client";
 // get order list
 export const getOrderList = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { usersId, authorizationRole } = req.body;
-      const { date, orderNumber, status } = req.query;
-  
-      // Cast query parameters to strings or undefined
-      const parsedDate = typeof date === "string" ? date : undefined;
-      const parsedOrderNumber = typeof orderNumber === "string" ? orderNumber : undefined;
-      const parsedStatus = typeof status === "string" ? status : undefined;
-   
-      // Call service to get orders
-      const orders = await getOrderListService({ usersId, authorizationRole, date: parsedDate, orderNumber: parsedOrderNumber, status: parsedStatus });
-  
-      res.status(200).json({
-        error: false,
-        message: "Order list retrieved successfully",
-        data: orders,
-      });
+        const {usersId, authorizationRole } = req.body;
+        const { date, orderNumber, status } = req.query;
+
+        // Call service with query parameters
+        const orders = await getOrderListService({
+            usersId,
+            authorizationRole,
+            date: typeof date === "string" ? date : undefined,
+            orderNumber: typeof orderNumber === "string" ? orderNumber : undefined,
+            status: typeof status === "string" ? status : undefined,
+        });
+
+        res.status(200).json({
+            error: false,
+            message: "Order list retrieved successfully",
+            data: orders,
+        });
     } catch (error) {
-      next(error);
+        next(error);
     }
 };
 
@@ -45,7 +46,6 @@ export const getTenantOrderList = async(req: Request, res: Response, next: NextF
     next(error)
   }
 }
-
 
 export const sendOrderReminders = async() => {
   const today = new Date();

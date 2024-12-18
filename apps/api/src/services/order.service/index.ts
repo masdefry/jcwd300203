@@ -28,7 +28,7 @@ export const getOrderListService = async ({ usersId, authorizationRole, date, or
     if (date) {
       const parsedDate = new Date(date);
       if (!isNaN(parsedDate.getTime())) {
-        filters.checkInDate = { gte: parsedDate }; // Orders with check-in date >= provided date
+        filters.checkInDate = { gte: parsedDate }; 
       }
     }
   
@@ -48,11 +48,21 @@ export const getOrderListService = async ({ usersId, authorizationRole, date, or
     const orders = await prisma.booking.findMany({
       where: filters,
       include: {
-        status: true,
-        property: true,
-        room: true,
+          status: { select: { Status: true } }, // Select status value
+          property: {
+              select: { 
+                  name: true, 
+                  address: true, 
+              },
+          },
+          room: {
+              select: { 
+                  name: true, 
+                  price: true 
+              },
+          },
       },
-    }); 
+  }); 
   
     return orders;
 };

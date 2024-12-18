@@ -36,18 +36,12 @@ export const addReviewService = async ({ usersId, propertyId, comment, rating }:
 
     if (!booking) throw { msg: "You can only review properties you have checked out from", status: 400 };
 
-    // Check if the user has already reviewed this property
-    const existingReview = await prisma.review.findFirst({
-        where: { customerId: usersId, propertyId },
-    });
-
-    if (existingReview) throw { msg: "You have already reviewed this property", status: 400 };
-    
-
-    // Add the review
-    const review = await prisma.review.create({
-        data: { customerId: usersId, propertyId, comment, rating },
-    });
+    // Upsert the review: Update if exists, otherwise create
+    const review = await prisma.review.upsert({
+        where: { customerId_propertyId: { customerId: usersId, propertyId } }, // Unique constraint
+        update: { comment, rating }, // Update existing review
+        create: { customerId: usersId, propertyId, comment, rating }, // Create new review
+    }); 
 
     return review;
 };
