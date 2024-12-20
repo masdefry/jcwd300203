@@ -12,7 +12,7 @@ const MyOrdersPage = () => {
     const fetchOrders = async () => {
       try {
         const response = await instance.get("orders/tenant");
-        setOrders(response.data.data || []); // Assuming `data` contains the orders array
+        setOrders(response.data.data || []);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch orders.");
