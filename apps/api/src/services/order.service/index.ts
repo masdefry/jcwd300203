@@ -69,20 +69,27 @@ export const getOrderListService = async ({ usersId, authorizationRole, date, or
 
 // get tenant order list service
 export const getTenantOrderListService = async ({ usersId, status }: GetTenantOrderParams) => {
-  // Define filters with the correct field name (tenantId instead of usersId)
+  // Define base filters
   const filters: any = {
     property: {
       tenantId: usersId, // Use tenantId as per your schema
     },
-    status: {
-      none: { Status: "CANCELED" }, // Exclude bookings with CANCELED status
-    },
   };
 
-  // Add a status filter if provided
+  // Add a status filter to exclude "CANCELED" and match specific statuses
   if (status) {
     filters.status = {
-      some: { Status: status },
+      some: {
+        AND: [
+          { Status: { not: "CANCELED" } }, // Exclude CANCELED statuses
+          { Status: status }, // Match the provided status
+        ],
+      },
+    };
+  } else {
+    // If no specific status is provided, exclude "CANCELED"
+    filters.status = {
+      some: { Status: { not: "CANCELED" } },
     };
   }
 
@@ -99,7 +106,7 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
     },
   });
 
-  return orders;
+  return orders; 
 };
 
 // cancel order service for user
