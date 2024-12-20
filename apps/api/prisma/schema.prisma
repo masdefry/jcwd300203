@@ -160,6 +160,8 @@ model Review {
   propertyId Int
   customer   Customer @relation(fields: [customerId], references: [id])
   property   Property @relation(fields: [propertyId], references: [id])
+
+  @@unique([customerId, propertyId]) // Composite unique constraint
 }
 
 enum BookingStatus {
