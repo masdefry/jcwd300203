@@ -3,14 +3,19 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBed, faUsers, faSearch } from "@fortawesome/free-solid-svg-icons";
 import CheckInCheckOutField from "./CheckInCheckoutForm";
+import { useRouter } from "next/navigation";
 
 const SearchForm = () => {
   const [formState, setFormState] = useState({
     destination: "",
     dateRange: [null, null] as [Date | null, Date | null],
     guests: "",
+    sortBy: 'name',
+    orderBy: 'asc',
+    page: 1,
+    limit: 10
   });
-
+  const router = useRouter()
   const [guestDropdown, setGuestDropdown] = useState(false);
 
   // Check if all fields are filled
@@ -35,16 +40,17 @@ const SearchForm = () => {
 
     // Construct query parameters
     const queryParams = new URLSearchParams({
-        destination: formState.destination,
-        start_date: formState.dateRange[0]?.toISOString().split("T")[0] || "", // Format as YYYY-MM-DD
-        end_date: formState.dateRange[1]?.toISOString().split("T")[0] || "",
-        guests: formState.guests,
+      search: formState.destination,
+      checkIn: formState.dateRange[0]?.toISOString().split("T")[0] || "",
+      checkOut: formState.dateRange[1]?.toISOString().split("T")[0] || "",
+      guest: formState.guests,
+      sortBy: formState.sortBy,
+      orderBy: formState.orderBy,
+      page: formState.page.toString(),
+      limit: formState.limit.toString(),
     });
 
-    // Navigate or log the constructed URL
-    const searchUrl = `/search?${queryParams.toString()}`;
-    console.log(searchUrl);
-    window.location.href = searchUrl; // Use navigation as per your app logic
+      router.push(`/search?${queryParams.toString()}`);
   };
 
   return (

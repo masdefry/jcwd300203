@@ -57,7 +57,7 @@ export default class App {
           console.error('Error:', err);
   
           // Send a JSON response with error details for API requests
-          res.status(500).json({
+          res.status(err.status || 500).json({
             error: 'An internal server error occurred.',
             message: err.msg || 'Something went wrong',
             stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,

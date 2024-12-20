@@ -135,10 +135,11 @@ export const getPropertyDetailsService = async ({
   parsedCheckOut,
 }: {
   id: string;
-  parsedCheckIn: Date;
-  parsedCheckOut: Date;
+  parsedCheckIn: Date | undefined;
+  parsedCheckOut: Date | undefined;
 }) => {
   const propertyId = Number(id);
+  const currentDate = new Date()
 
   const propertyDetails = await prisma.property.findUnique({
     where: {

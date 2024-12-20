@@ -5,7 +5,8 @@ import { Inter } from 'next/font/google';
 import { ToastContainer } from 'react-toastify'
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css'
-
+import Header from '@/components/home/Header';
+import MobileMenu from '@/components/common/header/MobileMenu';
 // imported from template in GitHub
 import ScrollToTop from '@/components/common/ScrollTop';
 import "../../public/assets/scss/index.scss"

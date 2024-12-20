@@ -1,9 +1,12 @@
 import { deletePropertyService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
-import { parseCustomDate } from "@/utils/parse.date";
+import { parseCustomDate, parseCustomDateList } from "@/utils/parse.date";
 
 export  const getPropertiesList = async(req: Request, res: Response, next: NextFunction) => {
     try {
+        const currentDate = new Date()
+        currentDate.setHours(0, 0, 0, 0)
+
         const {search, checkIn, checkOut, guest, sortBy, sortOrder, page, limit} = req.query
 
         if (checkIn && typeof checkIn !== "string") throw { msg: "Invalid date", status: 406 };
@@ -13,9 +16,17 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
 
         if (search && !checkIn && !checkOut && !guest) throw {msg: 'Please complete the input', status:400}
 
-        const parsedCheckIn = checkIn ? parseCustomDate(checkIn) : undefined;
-        const parsedCheckOut = checkOut ? parseCustomDate(checkOut) : undefined;
+      
+        const parsedCheckIn = checkIn ? parseCustomDateList(checkIn) : undefined;
+        if (parsedCheckIn! < currentDate) throw {msg: 'Invalid Date', status: 406}
+        const parsedCheckOut = checkOut ? parseCustomDateList(checkOut) : undefined;
         const guestCount = guest ? Number(guest) : undefined 
+
+        console.log('checkIn: ',checkIn)
+        console.log('checkOut: ',checkOut)
+
+        console.log('parsed checkin: ',parsedCheckIn)
+        console.log('parsed checkout: ',parsedCheckOut)
 
         const pageNumber = page ? parseInt(page as string, 10) : 1
         const pageSize = limit ? parseInt(limit as string, 10) : 10
@@ -55,12 +66,13 @@ export const getPropertyDetails = async (req: Request, res: Response, next: Next
         const {id} = req.params;
         const {checkIn, checkOut} = req.query;
 
-        if (typeof checkIn !=='string' || typeof checkOut !== 'string') throw {msg: 'Invalid date' ,status: 406}
-
-        const parsedCheckIn = parseCustomDate(checkIn)
-        const parsedCheckOut = parseCustomDate(checkOut);
+        
+        const parsedCheckIn = checkIn ? parseCustomDate(checkIn as any) : undefined
+        const parsedCheckOut = checkOut ? parseCustomDate(checkOut as any) : undefined ;
+        console.log(parsedCheckIn)
+        console.log(parsedCheckOut)
         const data = await getPropertyDetailsService({id, parsedCheckIn, parsedCheckOut})
-
+        
         res.status(200).json({
             error: false,
             message: 'Property founded',
