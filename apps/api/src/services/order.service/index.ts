@@ -67,29 +67,40 @@ export const getOrderListService = async ({ usersId, authorizationRole, date, or
     return orders;
 };
 
-
 // get tenant order list service
-export const getTenantOrderListService = async ({usersId, status}: GetTenantOrderParams) => {
-  const filters: any = {property: {usersId}}
-  
+export const getTenantOrderListService = async ({ usersId, status }: GetTenantOrderParams) => {
+  // Define filters with the correct field name (tenantId instead of usersId)
+  const filters: any = {
+    property: {
+      tenantId: usersId, // Use tenantId as per your schema
+    },
+    status: {
+      none: { Status: "CANCELED" }, // Exclude bookings with CANCELED status
+    },
+  };
+
+  // Add a status filter if provided
   if (status) {
     filters.status = {
-      some: {Status: status},
+      some: { Status: status },
     };
   }
-  
+
+  // Fetch orders using the corrected filters
   const orders = await prisma.booking.findMany({
     where: filters,
     include: {
       status: true,
       property: true,
-      customer: true
+      customer: true,
     },
-    orderBy: {createdAt: "desc"}
-  })
-  
-  return orders
-}
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return orders;
+};
 
 // cancel order service for user
 export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderParams) => { 
