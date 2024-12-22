@@ -100,7 +100,7 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
                 ) && (
                   <button
                     className="bg-red-500 text-white px-2 py-1 rounded"
-                    onClick={() => cancelOrder(order.id, order.customer?.id)}
+                    onClick={() => cancelOrder(order.id, order.customer?.id, order.proofOfPayment)}
                   >
                     Cancel
                   </button>
@@ -113,7 +113,12 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
   );
 };
 
-const cancelOrder = async (bookingId: number, usersId: number) => {
+const cancelOrder = async (bookingId: number, usersId: number, proofOfPayment: string | null) => {
+  if (proofOfPayment) {
+    alert("Cancellation is not allowed since proof of payment has been uploaded.");
+    return;
+  }
+
   const confirmCancel = window.confirm(
     "Are you sure you want to cancel this order?"
   );
