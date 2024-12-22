@@ -67,35 +67,26 @@ export const getOrderListService = async ({ usersId, authorizationRole, date, or
     return orders;
 };
 
-// get tenant order list service
 export const getTenantOrderListService = async ({ usersId, status }: GetTenantOrderParams) => {
-  // Define base filters
-  const filters: any = {
-    property: {
-      tenantId: usersId, // Use tenantId as per your schema
-    },
-  };
-
-  // Add a status filter to exclude "CANCELED" and match specific statuses
-  if (status) {
-    filters.status = {
-      some: {
-        AND: [
-          { Status: { not: "CANCELED" } }, // Exclude CANCELED statuses
-          { Status: status }, // Match the provided status
-        ],
-      },
-    };
-  } else {
-    // If no specific status is provided, exclude "CANCELED"
-    filters.status = {
-      some: { Status: { not: "CANCELED" } },
-    };
-  }
-
-  // Fetch orders using the corrected filters
+  // Fetch bookings while excluding any that have a related status of "CANCELED"
   const orders = await prisma.booking.findMany({
-    where: filters,
+    where: {
+      property: {
+        tenantId: usersId, // Ensure this belongs to the tenant
+      },
+      status: {
+        none: {
+          Status: BookingStatus.CANCELED, 
+        },
+      },
+      ...(status && {
+        status: {
+          some: {
+            Status: BookingStatus[status as keyof typeof BookingStatus],
+          },
+        },
+      }),
+    },
     include: {
       status: true,
       property: true,
@@ -106,8 +97,9 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
     },
   });
 
-  return orders; 
+  return orders;
 };
+
 
 // cancel order service for user
 export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderParams) => { 
