@@ -67,6 +67,7 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
           <th className="border border-gray-300 px-4 py-2">Property</th>
           <th className="border border-gray-300 px-4 py-2">Status</th>
           <th className="border border-gray-300 px-4 py-2">Date</th>
+          <th className="border border-gray-300 px-4 py-2">Proof of Payment</th>
           <th className="border border-gray-300 px-4 py-2">Actions</th>
         </tr>
       </thead>
@@ -88,6 +89,9 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
                 : "N/A"}
             </td>
             <td className="border border-gray-300 px-4 py-2">
+              {order.proofOfPayment || "Not uploaded"}
+            </td>
+            <td className="border border-gray-300 px-4 py-2">
               {order.status &&
                 order.status.some(
                   (status: any) =>
@@ -96,7 +100,7 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
                 ) && (
                   <button
                     className="bg-red-500 text-white px-2 py-1 rounded"
-                    onClick={() => cancelOrder(order.id)}
+                    onClick={() => cancelOrder(order.id, order.customer?.id)}
                   >
                     Cancel
                   </button>
@@ -109,14 +113,20 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
   );
 };
 
-// Cancel order handler
-const cancelOrder = async (orderId: number) => {
+const cancelOrder = async (bookingId: number, usersId: number) => {
+  const confirmCancel = window.confirm(
+    "Are you sure you want to cancel this order?"
+  );
+  if (!confirmCancel) return;
+
   try {
-    const response = await instance.post(`/tenant/${orderId}/cancel`);
+    const response = await instance.post(`/orders/tenant/${bookingId}/cancel`, {
+      usersId,
+    });
     alert(response.data.message);
     window.location.reload();
-  } catch (error) {
-    alert("Failed to cancel the order.");
+  } catch (error: any) {
+    alert(error.response?.data?.message || "Failed to cancel the order.");
   }
 };
 

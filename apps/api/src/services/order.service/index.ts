@@ -72,7 +72,7 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
   const orders = await prisma.booking.findMany({
     where: {
       property: {
-        tenantId: usersId, // Ensure this belongs to the tenant
+        tenantId: usersId,
       },
       status: {
         none: {
