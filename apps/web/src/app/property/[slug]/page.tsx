@@ -374,9 +374,6 @@ export function AvailabilitySection({ roomType }: any) {
     );
   }
   
-  
-  
-  
   interface RoomTypeCarouselProps {
     images: {
       url: string

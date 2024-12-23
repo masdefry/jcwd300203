@@ -158,7 +158,6 @@ export const loginCustomerService = async({emailOrUsername}: ILogin) => {
     if(!user) throw {msg: 'User not found', status: 404};
 
     return user;
-
 }
 
 export const loginTenantService = async({emailOrUsername}: ILogin) => {

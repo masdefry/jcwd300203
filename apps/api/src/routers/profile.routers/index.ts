@@ -13,7 +13,4 @@ router.get('/tenant', verifyToken, verifyRoleTenant, getTenantProfile);
 router.patch('/customer', verifyToken, verifyRoleCustomer, uploadProfile, editCustomerProfile);
 router.patch('/tenant', verifyToken, verifyRoleTenant, uploadRegisterTenant, editTenantProfile);
 
-
-
-
 export default router;

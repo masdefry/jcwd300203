@@ -17,6 +17,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const authLogout = authStore((state: any) => state.setAuthLogout);
     const role = authStore((state: any) => state.role);
     const token = authStore((state: any) => state.token);
+    console.log('Role from zustand:', role)
 
     const isValidToken = (token: string | null | undefined): boolean => !!token && token.trim() !== "";
 
@@ -31,6 +32,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                     profileImage: res?.data?.data?.profileImage,
                     isVerified: res?.data?.data?.verified
                 });
+                console.log('Role from keepauth: ', res?.data?.data?.role)
             } catch (err) {
                 console.log(err);
                 authLogout();

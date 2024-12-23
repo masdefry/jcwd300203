@@ -122,7 +122,10 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
 
         const verifyPassword = await comparePassword(password, user!.password)
         if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
-        
+
+        console.log('Id :', user?.id);
+        console.log('Role :', user?.role);
+
         const token = await createToken({id: user?.id, role: user?.role});
         const refreshToken = await createRefreshToken({id: user?.id, role: user?.role});
 
@@ -139,8 +142,10 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
             data: {
                 token,
                 email: user?.email,
+                role: user?.role,
                 name: user?.name,
-                profilePicture: user?.profileImage
+                profilePicture: user?.profileImage,
+                isVerified: user?.isVerified
             }
         })
     } catch (error: any) {
@@ -164,14 +169,18 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
 
         const verifyPassword = comparePassword(password, user!.password)
         if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
-        
+
+        console.log('Id :', user?.id);
+
+        console.log('Role :', user?.role);
+
         const token = await createToken({id: user?.id, role: user?.role})
         const refreshToken = await createRefreshToken({id: user?.id, role: user?.role});
 
         res.cookie('refreshToken', refreshToken ,{
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000, // 1 Day
+            maxAge: 24 * 60 * 60 * 1000, 
             sameSite: 'strict'
         })
 
@@ -181,6 +190,7 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
             data: {
                 token,
                 email: user?.email,
+                role: user?.role,
                 name: user?.name,
                 profilePicture: user?.profileImage
             }
@@ -223,8 +233,8 @@ export const loginWithSocialMedia = async(req: Request, res: Response, next: Nex
                 }
             })
         }
-
-        const token = createToken({id: dataUser?.id, role: dataUser?.role});
+        
+        const token = createToken({id: dataUser!.id, role: dataUser!.role});
 
         res.status(200).json({
             error: false,
@@ -232,6 +242,7 @@ export const loginWithSocialMedia = async(req: Request, res: Response, next: Nex
             data: {
                 token,
                 email: findUser?.email,
+                role: findUser?.role,
                 name: findUser?.name,
                 profilePicture: findUser?.profileImage
             }
@@ -253,6 +264,7 @@ export const keepLogin = async(req: Request, res: Response, next: NextFunction) 
         data: {
             name: user?.name,
             email: user?.email,
+            role: user?.role,
             verified: "isVerified" in user! ? user.isVerified : null,
             profileImage: user?.profileImage,
             username: user?.username

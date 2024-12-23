@@ -13,7 +13,12 @@ export const verifyToken = async(req: Request, res: Response, next: NextFunction
 
         req.body.usersId = decodedToken?.data?.id
         req.body.authorizationRole = decodedToken?.data?.role
+        
+        console.log('usersId from verifyToken:', req.body.usersId)
+        console.log('authorizationRole from verifyToken:', req.body.authorizationRole)
 
+        console.log('decoded token id: ', decodedToken?.data?.id)
+        console.log('decoded token role: ', decodedToken?.data?.role)
         next()
     } catch (error) {
         console.log(error)

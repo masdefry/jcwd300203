@@ -1,3 +1,4 @@
+'use client';
 import Image from 'next/image'
 import styles from './page.module.css'
 import Header from '@/components/home/Header'
@@ -13,8 +14,12 @@ import CallToAction from '@/components/common/CallToAction'
 import Footer from '@/components/common/footer/Footer'
 import CopyrightFooter from '@/components/common/footer/CopyrightFooter'
 import Wrapper from '@/components/layout/Wrapper'
-
+import authStore from '@/zustand/authStore'
 export default function Home() {
+  const token = authStore((state) => state.token)
+  const role = authStore((state) => state.role)
+  console.log('Token :', token)
+  console.log('Role :', role)
   return (
     <Wrapper>
       {/* <!-- Main Header Nav --> */}
