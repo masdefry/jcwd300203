@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import router from './routers';
 import { startScheduler } from './utils/scheduler';
 import { scheduleBookingCleanup } from './services/transaction.service';
+import path from "path";
 
 export default class App {
   private app: Express;
@@ -76,6 +77,12 @@ export default class App {
   public start(): void {
     // schedule booking cleanup
     scheduleBookingCleanup()
+
+    // Expose the "public" directory
+    const publicDirectory = path.join(__dirname, "public/images/proof-of-payment");
+    console.log(publicDirectory)
+
+    this.app.use("/images", express.static(publicDirectory));
 
     this.app.listen(PORT, () => {
       console.log(`  ➜ [ ϟϟ API ϟϟ ] Local: http://localhost:${PORT}/`);
