@@ -88,7 +88,10 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
       }),
     },
     include: {
-      status: true,
+      status: {
+        orderBy: { createdAt: 'desc' }, // Ensure latest status is prioritized
+        take: 1, // Only fetch the latest status for clarity
+      },
       property: true,
       customer: true,
     },
@@ -99,7 +102,6 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
 
   return orders;
 };
-
 
 // cancel order service for user
 export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderParams) => { 
