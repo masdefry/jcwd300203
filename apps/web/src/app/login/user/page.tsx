@@ -30,7 +30,8 @@ export default function LoginForm() {
                 name: res?.data?.data?.name,
                 role: res?.data?.data?.role,
                 email: res?.data?.data?.email,
-                profileImage: res?.data?.data?.profileImage
+                profileImage: res?.data?.data?.profileImage,
+                isVerified: res?.data?.data?.isVerified
             })
             toast.success(res?.data?.message)
             setIsSubmitting(false)

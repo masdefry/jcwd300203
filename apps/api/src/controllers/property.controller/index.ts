@@ -1,4 +1,4 @@
-import { deletePropertyService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService } from "@/services/property.service";
+import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
 import { parseCustomDate, parseCustomDateList } from "@/utils/parse.date";
 
@@ -118,8 +118,40 @@ export const getPropertyDetailsTenant = async(req: Request, res: Response, next:
 
 export const createProperty = async(req: Request, res: Response, next: NextFunction) => {
     try {
-        const {} = req.body;
+        const {usersId, authorizationRole, name, address, city, category, description, roomCapacity, facilityIds, roomTypes} = req.body;
+        console.log('Initial request body:', req.body);
+        
+        if (!name || !address || !city || !description || !roomCapacity || !roomTypes) throw { msg: 'Missing required fields', status: 400 };
 
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        console.log('Files in request:', req.files);
+
+        if (!files.mainImage || !files.mainImage[0]) throw { msg: 'Main image is required', status: 400 };
+        console.log('usersId from createProperty :', usersId);
+        console.log('authorizationRole from createProperty :', authorizationRole);
+        console.log('Initial request body:', req.body);
+        console.log('Parsed facilityIds:', JSON.parse(req.body.facilityIds));
+        console.log('Parsed roomTypes:', JSON.parse(req.body.roomTypes));
+        console.log('Files in request:', req.files);
+          
+        const data = await createPropertyService({usersId, authorizationRole,
+            propertyData: {
+                name,
+                address,
+                city,
+                category,
+                description,
+                roomCapacity: Number(roomCapacity),
+                facilityIds: JSON.parse(facilityIds),
+                roomTypes: JSON.parse(roomTypes)
+            },
+        files});
+        
+        res.status(201).json({
+            error: false,
+            message: 'Property successfully created',
+            data: {}
+        })
     } catch (error) {
         next(error)
     }
@@ -135,6 +167,38 @@ export const deleteProperty = async(req: Request, res: Response, next: NextFunct
         res.status(200).json({
             error: false,
             message: 'Property deleted',
+            data: {}
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getPropertiesAndRoomFacilities = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await getPropertiesAndRoomFacilitiesService()
+
+        res.status(200).json({
+            error: false,
+            message: 'Facilities list retrieved',
+            data: data
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createFacilitiesIcons = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        // const {id, role} = req.body
+        const {name, type} = req.body
+        const iconFileName = req?.file?.filename
+
+        await createFacilitiesIconsService({name, type, iconFileName})
+
+        res.status(200).json({
+            error: false,
+            message: `Facility ${name} added`,
             data: {}
         })
     } catch (error) {

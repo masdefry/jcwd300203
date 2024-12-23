@@ -9,6 +9,7 @@ import reportRouters from './report.routers/index'
 
 const router = Router();
 
+router.use('*/images', express.static('src/public/images'))
 router.use('/api/auth', authRouters);
 router.use('/api/profile', profileRouters);
 router.use('/api/property', propertyRouters);

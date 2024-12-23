@@ -1,5 +1,6 @@
 import { prisma } from '@/connection';
-import { IGetPropertyList } from './types';
+import { ICreateProperty, IGetPropertyList } from './types';
+import { createFacilitiesIcons } from '@/controllers/property.controller';
 
 export const getPropertiesListService = async ({
   parsedCheckIn,
@@ -438,4 +439,136 @@ export const deletePropertyService = async ({
       tenantId: usersId,
     },
   });
+};
+
+export const getPropertiesAndRoomFacilitiesService = async() => {
+  const propertiesFacilities = await prisma.propFacility.findMany()
+  const roomFacilities = await prisma.roomFacility.findMany()
+
+  return {
+    propertiesFacilities: propertiesFacilities,
+    roomFacilities: roomFacilities
+  }
+}
+
+export const createFacilitiesIconsService = async({name, type, iconFileName}:{name: string, type: string, iconFileName: string | undefined}) => {
+  let createdFacility
+
+  if(type === 'property'){
+    await prisma.propFacility.create({
+      data: {
+        name: name,
+        icon: iconFileName
+      }
+    })
+  }else if(type === 'room'){
+    await prisma.roomFacility.create({
+      data: {
+        name: name,
+        icon: iconFileName
+      }
+    })
+  }else throw {msg: 'invalid type', status: 406}
+}
+
+export const createPropertyService = async({usersId, authorizationRole, propertyData, files}: ICreateProperty) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const findTenant = await tx.tenant.findUnique({
+        where: {
+          id: usersId,
+          role: authorizationRole
+        }
+      });
+      
+      if (!findTenant) throw { msg: 'Invalid credentials', status: 401 };
+
+      const baseProperty = await tx.property.create({
+        data: {
+          name: propertyData.name,
+          address: propertyData.address,
+          city: propertyData.city,
+          category: propertyData.category,
+          description: propertyData.description,
+          roomCapacity: Number(propertyData.roomCapacity),
+          mainImage: files.mainImage[0].filename,
+          tenantId: usersId,
+        }
+      });
+
+      console.log('Created base property:', baseProperty);
+
+      if (files.propertyImages?.length) {
+        await tx.propertyImage.createMany({
+          data: files.propertyImages.map(image => ({
+            url: image.filename,
+            propertyId: baseProperty.id
+          }))
+        });
+      }
+
+      if (propertyData.facilityIds.length) {
+        await tx.property.update({
+          where: { id: baseProperty.id },
+          data: {
+            facilities: {
+              connect: propertyData.facilityIds.map(id => ({ id }))
+            }
+          }
+        });
+      }
+
+      for (const [index, roomType] of propertyData.roomTypes.entries()) {
+        const newRoomType = await tx.roomType.create({
+          data: {
+            name: roomType.name,
+            price: parseFloat(roomType.price.toString()),
+            description: roomType.description,
+            qty: parseInt(roomType.qty.toString()),
+            guestCapacity: parseInt(roomType.guestCapacity.toString()),
+            propertyId: baseProperty.id
+          }
+        });
+
+        if (files[`roomTypeImages${index}`]?.length) {
+          await tx.roomImage.createMany({
+            data: files[`roomTypeImages${index}`].map(image => ({
+              url: image.filename,
+              roomId: newRoomType.id
+            }))
+          });
+        }
+
+        if (roomType.facilities.length) {
+          await tx.roomType.update({
+            where: { id: newRoomType.id },
+            data: {
+              facilities: {
+                connect: roomType.facilities.map(id => ({ id }))
+              }
+            }
+          });
+        }
+      }
+
+      const completeProperty = await tx.property.findUnique({
+        where: { id: baseProperty.id },
+        include: {
+          images: true,
+          facilities: true,
+          roomTypes: {
+            include: {
+              images: true,
+              facilities: true
+            }
+          }
+        }
+      });
+
+      return completeProperty;
+    });
+  } catch (error) {
+    console.error('Transaction error:', error);
+    throw error;
+  }
 };

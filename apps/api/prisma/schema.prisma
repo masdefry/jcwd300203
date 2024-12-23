@@ -49,6 +49,7 @@ model Property {
   address      String
   city         String 
   category     String?
+  description  String             @db.Text
   roomCapacity Int
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
@@ -109,6 +110,7 @@ model RoomType {
   id           Int           @id @default(autoincrement())
   name         String
   price        Decimal
+  description  String        @db.Text 
   qty          Int           // Total quantity of this room type
   guestCapacity Int          // Maximum number of guests for this room type
   propertyId   Int
