@@ -20,51 +20,63 @@ interface GetTenantOrderParams {
 }
   
 export const getOrderListService = async ({ usersId, authorizationRole, date, orderNumber, status }: GetOrderListParams) => {
-    // Build query filters
-    const filters: any = {
-      customerId: usersId,
-    };
-  
-    if (date) {
-      const parsedDate = new Date(date);
-      if (!isNaN(parsedDate.getTime())) {
-        filters.checkInDate = { gte: parsedDate }; 
-      }
-    }
-  
-    if (orderNumber) {
-      filters.id = Number(orderNumber); // Assuming order number corresponds to the booking ID
-    }
-  
-    if (status) {
-      filters.status = {
-        some: {
-          Status: status,
-        },
-      };
-    }
-  
-    // Fetch orders with proof of payment
-    const orders = await prisma.booking.findMany({
-      where: filters,
-      include: {
-          status: { select: { Status: true } }, // Select status value
-          property: {
-              select: { 
-                  name: true, 
-                  address: true, 
-              },
-          },
-          room: {
-              select: { 
-                  name: true, 
-                  price: true 
-              },
-          },
+  // Build query filters
+  const filters: any = {
+    customerId: usersId,
+    status: {
+      none: {
+        Status: BookingStatus.CANCELED, // Exclude canceled orders
       },
-  }); 
-  
-    return orders;
+    },
+  };
+
+  if (date) {
+    const parsedDate = new Date(date);
+    if (!isNaN(parsedDate.getTime())) {
+      filters.checkInDate = { gte: parsedDate };
+    }
+  }
+
+  if (orderNumber) {
+    filters.id = Number(orderNumber); // Assuming order number corresponds to the booking ID
+  }
+
+  if (status) {
+    filters.status = {
+      some: {
+        Status: BookingStatus[status as keyof typeof BookingStatus], // Match status dynamically
+      },
+    };
+  }
+
+  // Fetch orders
+  const orders = await prisma.booking.findMany({
+    where: filters,
+    include: {
+      status: {
+        orderBy: { createdAt: "desc" }, // Ensure latest status is prioritized
+        take: 1, // Fetch only the latest status for clarity
+        select: { Status: true },
+      },
+      property: {
+        select: {
+          name: true,
+          address: true,
+        },
+      },
+      room: {
+        select: {
+          name: true,
+          price: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return orders;
 };
 
 export const getTenantOrderListService = async ({ usersId, status }: GetTenantOrderParams) => {
@@ -110,7 +122,7 @@ export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderPara
       where: { id: bookingId },
       include: { status: true },
     });
-  
+    
     if (!booking) {
       throw { msg: "Booking not found", status: 404 };
     }
@@ -154,10 +166,6 @@ export const cancelUserOrderService = async ({ usersId, bookingId }: { usersId: 
 
   if (!booking) {
     throw { msg: "Booking not found", status: 404 };
-  }
-
-  if (booking.property.tenantId !== usersId) {
-    throw { msg: "Unauthorized: You can only cancel your own property's orders", status: 403 };
   }
 
   // Update the booking status to "CANCELED"

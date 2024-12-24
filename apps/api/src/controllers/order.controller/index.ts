@@ -70,7 +70,7 @@ export const cancelOrder = async (req: Request, res: Response, next: NextFunctio
     try {
       const { bookingId } = req.params; // The ID of the booking to cancel
       const { usersId } = req.body; // Logged-in user's ID
-  
+      
       // Call service to cancel the order
       const result = await cancelOrderService({ bookingId: Number(bookingId), usersId: Number(usersId) });
   

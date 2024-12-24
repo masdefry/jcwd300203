@@ -49,7 +49,7 @@ model Property {
   address      String
   city         String 
   category     String?
-  description  String             @db.Text
+  description  String             @db.Text @default("No description provided")
   roomCapacity Int
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
