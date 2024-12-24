@@ -9,7 +9,7 @@ import { verifyRoleTenant } from "@/middlewares/verify.role.tenant"
 const router = Router()
 
 // create a new room reservation
-router.post("/reserve", verifyToken, verifyRoleTenant, createRoomReservation)
+router.post("/reserve", verifyToken, verifyRoleCustomer, createRoomReservation)
 
 // upload payment proof route
 router.post("/upload-proof/:bookingId",verifyToken, verifyRoleCustomer, proofOfPaymentUploader, uploadPaymentProof)
