@@ -183,7 +183,11 @@ export const uploadPaymentProofService = async ({ bookingId, usersId, file }: Up
   // Validate booking ownership and status
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { status: true },
+    include: { status: {
+        orderBy: { createdAt: "desc" }, // Sort statuses by creation date (latest first)
+        take: 1, // Fetch only the latest status
+      } 
+    },
   });
 
   if (!booking || booking.customerId !== usersId) {
@@ -218,7 +222,7 @@ export const confirmPaymentService = async ({usersId, bookingId, action}: Confir
   })
 
   if (!booking || booking.property.tenantId !== usersId) throw { msg: "Unauthorized: You can only confirm/reject your own property's orders", status: 403 };
-
+  
   if (!booking.proofOfPayment) throw { msg: "No proof of payment uploaded for this booking", status: 400 };
   
   // approve transaction
