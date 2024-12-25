@@ -155,7 +155,7 @@ export const loginCustomerService = async({emailOrUsername}: ILogin) => {
         where: where as any
     });
 
-    if(!user) throw {msg: 'User not found', status: 404};
+    if(!user) throw {msg: 'Wrong email or username', status: 404};
 
     return user;
 }
@@ -413,7 +413,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
     const emailTemplate = fs.readFileSync(
         './src/public/change-email.html',
         'utf-8'
-      ); // Replace with your actual email template file
+      ); 
       const compiledEmailBody = await compile(emailTemplate);
       const personalizedEmailBody = compiledEmailBody({
         name: user.name || 'User',
