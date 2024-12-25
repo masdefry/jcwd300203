@@ -123,24 +123,20 @@ export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderPara
       include: { status: true },
     });
     
-    if (!booking) {
-      throw { msg: "Booking not found", status: 404 };
-    }
+    if (!booking) throw { msg: "Booking not found", status: 404 };
+    
   
-    if (booking.customerId !== usersId) {
-      throw { msg: "Unauthorized: You can only cancel your own bookings", status: 403 };
-    }
+    if (booking.customerId !== usersId) throw { msg: "Unauthorized: You can only cancel your own bookings", status: 403 };
+    
   
     // Check if proof of payment has been uploaded
-    if (booking.proofOfPayment) {
-      throw { msg: "Cannot cancel: Proof of payment has already been uploaded", status: 400 };
-    }
+    if (booking.proofOfPayment) throw { msg: "Cannot cancel: Proof of payment has already been uploaded", status: 400 };
+    
     
     // Check if payment deadline has passed
     const paymentDeadline = new Date(booking.createdAt.getTime() + 60 * 60 * 1000); // 1 hour from booking creation    
-    if (new Date() > paymentDeadline) {
-      throw { msg: "Cannot cancel: Payment deadline has passed", status: 400 };
-    }
+    if (new Date() > paymentDeadline) throw { msg: "Cannot cancel: Payment deadline has passed", status: 400 };
+    
     
     // Update booking status to "CANCELED"
     const canceledBooking = await prisma.booking.update({
@@ -164,9 +160,8 @@ export const cancelUserOrderService = async ({ usersId, bookingId }: { usersId: 
     include: { property: true },
   });
 
-  if (!booking) {
-    throw { msg: "Booking not found", status: 404 };
-  }
+  if (!booking) throw { msg: "Booking not found", status: 404 };
+  
 
   // Update the booking status to "CANCELED"
   const canceledBooking = await prisma.booking.update({

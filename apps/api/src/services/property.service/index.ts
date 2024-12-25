@@ -1,6 +1,5 @@
 import { prisma } from '@/connection';
 import { ICreateProperty, IGetPropertyList } from './types';
-import { createFacilitiesIcons } from '@/controllers/property.controller';
 
 export const getPropertiesListService = async ({
   parsedCheckIn,
@@ -452,8 +451,6 @@ export const getPropertiesAndRoomFacilitiesService = async() => {
 }
 
 export const createFacilitiesIconsService = async({name, type, iconFileName}:{name: string, type: string, iconFileName: string | undefined}) => {
-  let createdFacility
-
   if(type === 'property'){
     await prisma.propFacility.create({
       data: {

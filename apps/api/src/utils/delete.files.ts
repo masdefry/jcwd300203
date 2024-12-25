@@ -1,7 +1,9 @@
 import fs from 'fs';
 
-export const deleteFiles = ({imagesUploaded}: any) => {
-    imagesUploaded.images.forEach((item: any) => {
-        fs.rmSync(item.path)
-    })
-}
+export const deleteFiles = ({imagesUploaded}: {imagesUploaded: {images: {path: string}[]}}) => {
+    imagesUploaded.images.forEach((item) => {
+        if (fs.existsSync(item.path)) {  
+            fs.rmSync(item.path);
+        }
+    });
+};

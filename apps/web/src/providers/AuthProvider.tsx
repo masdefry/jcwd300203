@@ -22,6 +22,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const isValidToken = (token: string | null | undefined): boolean => !!token && token.trim() !== "";
 
     useEffect(() => {
+        console.log('Current role:', role);
+        console.log('Current pathname:', pathname);
+        console.log('Is token valid:', isValidToken(token));
+    }, [role, pathname, token]);
+
+    useEffect(() => {
         const fetchKeepAuth = async () => {
             try {
                 const res = await instance.get('/auth');
@@ -52,41 +58,94 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const authRoutes = ['/login/user', '/login/tenant', '/register/user', '/register/tenant', '/forget-password'];
-
+        if (role === '' || role === undefined && isValidToken(token)) return;
+        
+        
         if (!isLoading) {
+            console.log('Auth State Check:', {
+                currentPath: pathname,
+                userRole: role,
+                hasValidToken: isValidToken(token)
+            });
+    
+            if (typeof role === 'undefined') return;
+            
+    
+            if (typeof pathname === 'undefined') return;
+            
+            const isTenantRoute = (path: string) => {
+                return path === '/listing' || 
+                       path === '/dashboard' || 
+                       path.startsWith('/dashboard/') ||
+                       path.startsWith('/listing/');
+            };
+    
+            const isCustomerRoute = (path: string) => {
+                return path === '/user' ||
+                       path === '/user/profile' ||
+                       path.startsWith('/user/');
+            };
+    
+            const isPublicRoute = (path: string) => {
+                return path === '/' || 
+                       authRoutes.includes(path) || 
+                       path === '/about' ||  
+                       path === '/contact';
+            };
+    
+            if (isPublicRoute(pathname) && !isValidToken(token)) {
+                setIsAuthorized(true);
+                return;
+            }
+    
             if (authRoutes.includes(pathname) && isValidToken(token)) {
                 setErrorMessage('You are already logged in');
                 router.push('/');
                 return;
             }
-
-            if (pathname.startsWith('/dashboard') && role !== 'tenant') {
-                setErrorMessage('Unauthorized access');
-                setIsAuthorized(false);
-                return;
+    
+            if (isTenantRoute(pathname)) {
+                if (!isValidToken(token)) {
+                    setErrorMessage('Please login first');
+                    setIsAuthorized(false);
+                    return;
+                }
+    
+                if (role !== 'tenant') {
+                    setErrorMessage('Unauthorized access - Tenant only');
+                    setIsAuthorized(false);
+                    return;
+                }
             }
-
-            if (pathname.startsWith('/user') && role !== 'customer') {
-                setErrorMessage('Unauthorized access');
-                setIsAuthorized(false);
-                return;
+    
+            if (isCustomerRoute(pathname)) {
+                if (!isValidToken(token)) {
+                    setErrorMessage('Please login first');
+                    setIsAuthorized(false);
+                    return;
+                }
+    
+                if (role !== 'customer') {
+                    setErrorMessage('Unauthorized access - Customer only');
+                    setIsAuthorized(false);
+                    return;
+                }
             }
-
-            if(pathname.startsWith('/change-email') && role === '' && !isValidToken(token)) {
-                setErrorMessage('Invalid Token');
-                setIsAuthorized(false);
-                return;
+    
+            if (pathname.startsWith('/change-email') || pathname.startsWith('/verify-account')) {
+                if (!isValidToken(token)) {
+                    setErrorMessage('Invalid Token');
+                    setIsAuthorized(false);
+                    return;
+                }
             }
-
-            if(pathname.startsWith('/verify-account') && role === '' && !isValidToken(token)) {
-                setErrorMessage('Invalid Token');
-                setIsAuthorized(false);
-                return;
-            }
-
+    
+            // If we get here, authorize access
             setIsAuthorized(true);
+            setErrorMessage(null);
         }
-    }, [isLoading, token, pathname, role, router]);
+    }, [isLoading, token, pathname, role]);
+
 
     useEffect(() => {
         if (!isAuthorized && !hasTriggered) {

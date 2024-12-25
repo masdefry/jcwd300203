@@ -79,7 +79,7 @@ instance.interceptors.response.use(
     
     async (error) => {
         const originalRequest = error.config;
-        if(error?.response?.data?.message === 'jwt expired' || error.response.status === 406){
+        if(error?.response?.data?.message === 'jwt expired'){
             try {
             const response = await axios.post('http://localhost:4700/api/auth/refresh-token', null, {withCredentials: true})
             console.log('Refreshed token response:', response.data);

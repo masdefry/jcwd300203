@@ -1,4 +1,3 @@
-// services/report.service.ts
 import { prisma } from "@/connection";
 import { BookingStatus } from "@prisma/client";
 
