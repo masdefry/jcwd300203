@@ -26,9 +26,7 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import instance from "@/utils/axiosInstance"
 import { usePathname, useSearchParams } from "next/navigation"
-
-
-
+import { useRouter } from "next/navigation"
 
 
 function PropertyGallery({ mainImage, images = [] }: any) {
@@ -448,7 +446,15 @@ export function AvailabilitySection({ roomType }: any) {
     }[]
   }
   
-  export function RoomType({ name, price, guestCapacity, facilities, images, availability }: any) {
+  export function RoomType({ id, name, price, guestCapacity, facilities, images, availability, checkIn, checkOut }: any) {
+    const router = useRouter() 
+     
+    const handleReserve = () => {
+      router.push(
+        `/checkout?roomId=${id}&checkIn=${checkIn}&checkOut=${checkOut}&price=${price}&guests=${guestCapacity}`
+      );
+    };
+
     return (
       <Card className="overflow-hidden">
         <div className="grid md:grid-cols-[2fr,1fr]">
@@ -467,7 +473,7 @@ export function AvailabilitySection({ roomType }: any) {
                 ${price.toLocaleString()}
                 <span className="text-sm font-normal text-muted-foreground">/night</span>
               </div>
-              <Button className="w-auto" disabled={!availability}>
+              <Button className="w-auto" onClick={handleReserve} disabled={!availability}>
                 {availability ? "Reserve" : "Not Available"}
               </Button>
             </div>
@@ -493,6 +499,7 @@ export function AvailabilitySection({ roomType }: any) {
     const searchParams = useSearchParams()
     const checkIn = searchParams.get('checkIn') || new Date();
     const checkOut = searchParams.get('checkOut') || addDays(new Date(), 1);
+    
     const {data, isLoading, isError} = useQuery({
         queryKey: ['queryPropertyDetails'],
         queryFn: async () => {
@@ -505,7 +512,10 @@ export function AvailabilitySection({ roomType }: any) {
             return res?.data?.data
         }
     })
+    
     console.log('data: ', data)
+    console.log('room type data: ', data?.roomTypes?.[0])
+
     return (
       <div className="container mx-auto py-6">
         <div className="grid gap-6">
@@ -531,11 +541,13 @@ export function AvailabilitySection({ roomType }: any) {
             <TabsContent value="rooms" className="mt-6">
               <div className="grid gap-6">
                 <AvailabilitySection 
-                 roomType={data?.roomTypes?.[0]} 
+                  roomType={data?.roomTypes?.[0]}
                 />
                 {data?.roomTypes?.map((roomType: any, index: any) => (
                   <RoomType key={index} {...roomType} 
                   availability = {data?.roomTypes[0]?.priceComparison[0]?.availableRooms}
+                  checkIn = {checkIn}
+                  checkOut = {checkOut}
                   />
                 ))}
               </div>
@@ -566,4 +578,4 @@ export function AvailabilitySection({ roomType }: any) {
         </div>
       </div>
     )
-}
+  }

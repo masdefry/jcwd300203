@@ -30,4 +30,10 @@ export interface ICreateProperty {
       }[];
     };
     files: { [fieldname: string]: Express.Multer.File[] };
-  }
+}
+
+export interface IGetRoomDetailsById {
+  roomId: string;
+  parsedCheckIn?: Date;
+  parsedCheckOut?: Date;
+}

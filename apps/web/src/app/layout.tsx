@@ -32,6 +32,12 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:400,400i,500,600,700&display=swap" />
         <link rel="icon" href="./favicon.ico" />
+        {/* Include Midtrans Snap script */}
+        <script
+          type="text/javascript"
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key="SB-Mid-client-Qu-bODSBhUtjUUQM"
+        ></script>
       </head>
 
       <body className={inter.className}>

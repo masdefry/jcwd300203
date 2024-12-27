@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { confirmPayment, createRoomReservation, uploadPaymentProof } from "@/controllers/transaction.controller"
+import { confirmPayment, createRoomReservation, uploadPaymentProof, handlePaymentNotification} from "@/controllers/transaction.controller"
 import { proofOfPaymentUploader } from "@/middlewares/upload.payment.proof"
 import { verifyToken } from "@/middlewares/verify.token"
 import { verifyRoleCustomer } from "@/middlewares/verify.role.customer"
@@ -9,7 +9,10 @@ import { verifyRoleTenant } from "@/middlewares/verify.role.tenant"
 const router = Router()
 
 // create a new room reservation
-router.post("/reserve", createRoomReservation)
+router.post("/reserve", verifyToken, verifyRoleCustomer, createRoomReservation)
+
+// midtrans webhook route
+router.post("/payment-notification", handlePaymentNotification);
 
 // upload payment proof route
 router.post("/upload-proof/:bookingId",verifyToken, verifyRoleCustomer, proofOfPaymentUploader, uploadPaymentProof)

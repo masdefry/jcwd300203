@@ -1,4 +1,4 @@
-import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService } from "@/services/property.service";
+import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
 import { parseCustomDate, parseCustomDateList } from "@/utils/parse.date";
 
@@ -9,6 +9,12 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
 
         const {search, checkIn, checkOut, guest, sortBy, sortOrder, page, limit} = req.query
 
+        console.log('checkIn: ', checkIn)
+        console.log('checkOut: ', checkOut) 
+
+        console.log('type of checkIn: ', typeof checkIn)
+        console.log('type of checkOut: ', typeof checkOut)
+
         if (checkIn && typeof checkIn !== "string") throw { msg: "Invalid date", status: 406 };
         if (checkOut && typeof checkOut !== "string") throw { msg: "Invalid date", status: 406 };
         if (search && typeof search !== "string") throw { msg: "Invalid search input", status: 406 };
@@ -16,7 +22,6 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
 
         if (search && !checkIn && !checkOut && !guest) throw {msg: 'Please complete the input', status:400}
 
-      
         const parsedCheckIn = checkIn ? parseCustomDateList(checkIn) : undefined;
         if (parsedCheckIn! < currentDate) throw {msg: 'Invalid Date', status: 406}
         const parsedCheckOut = checkOut ? parseCustomDateList(checkOut) : undefined;
@@ -205,3 +210,46 @@ export const createFacilitiesIcons = async(req: Request, res: Response, next: Ne
         next(error)
     }
 }
+
+// Controller to fetch room details by ID
+export const getRoomDetailsById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { roomId, checkIn, checkOut } = req.query;
+  
+      // Validate roomId
+      if (!roomId) {
+        return res.status(400).json({ error: "Missing roomId in query parameters." });
+      }
+  
+      // Parse and validate check-in and check-out dates
+      const parsedCheckIn = checkIn ? new Date(checkIn as string) : new Date();
+      const parsedCheckOut = checkOut ? new Date(checkOut as string) : new Date();
+  
+      if (
+        (checkIn && isNaN(parsedCheckIn.getTime())) ||
+        (checkOut && isNaN(parsedCheckOut.getTime()))
+      ) {
+        return res.status(400).json({ error: "Invalid checkIn or checkOut date format." });
+      }
+  
+      // Fetch room details from the service
+      const roomDetails = await getRoomDetailsByIdService({
+        roomId: roomId as string,
+        parsedCheckIn,
+        parsedCheckOut,
+      });
+
+      console.log(roomDetails)
+  
+      if (!roomDetails) {
+        return res.status(404).json({ error: "Room not found." });
+      }
+  
+      // Return room details
+      return res.status(200).json({ data: roomDetails });
+    } catch (error) {
+      console.error("Error fetching room details:", error);
+      return res.status(500).json({ error: "Internal server error." });
+    }
+  };
+  
