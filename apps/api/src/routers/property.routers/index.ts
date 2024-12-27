@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createFacilitiesIcons, createProperty, deleteProperty, getPropertiesAndRoomFacilities, getPropertiesList, getPropertiesListTenant, getPropertyDetails, getPropertyDetailsTenant } from "@/controllers/property.controller";
+import { createFacilitiesIcons, createProperty, deleteProperty, getPropertiesAndRoomFacilities, getPropertiesList, getPropertiesListTenant, getPropertyDetails, getPropertyDetailsTenant, getRoomDetailsById } from "@/controllers/property.controller";
 import { verifyToken } from "@/middlewares/verify.token";
 import { verifyRoleTenant } from "@/middlewares/verify.role.tenant";
 import { uploadIcon } from "@/middlewares/upload.multer.icon";
@@ -15,5 +15,6 @@ router.delete('/:id', verifyToken, verifyRoleTenant, deleteProperty);
 router.get('/facilites',  getPropertiesAndRoomFacilities);
 router.post('/facilities/create',  uploadIcon, createFacilitiesIcons);
 router.post('/', verifyToken, verifyRoleTenant, uploadProperty, createProperty);
+router.get('/roomType/details', getRoomDetailsById);
 
 export default router;

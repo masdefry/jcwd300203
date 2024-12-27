@@ -1,5 +1,5 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IGetPropertyList } from './types';
+import { ICreateProperty, IGetPropertyList, IGetRoomDetailsById } from './types';
 
 export const getPropertiesListService = async ({
   parsedCheckIn,
@@ -568,4 +568,90 @@ export const createPropertyService = async({usersId, authorizationRole, property
     console.error('Transaction error:', error);
     throw error;
   }
+};
+
+export const getRoomDetailsByIdService = async ({
+  roomId,
+  parsedCheckIn,
+  parsedCheckOut,
+}: IGetRoomDetailsById) => {
+  const roomIdNumber = Number(roomId);
+
+  // Validate roomId
+  if (!roomIdNumber) throw { msg: "Invalid room ID", status: 400 };
+
+  // Fetch room details from database
+  const roomDetails = await prisma.roomType.findUnique({
+    where: { id: roomIdNumber },
+    include: {
+      facilities: true,
+      images: true,
+      flexiblePrice: true,
+      bookings: {
+        where: {
+          OR: [
+            {
+              checkInDate: { lte: parsedCheckOut },
+              checkOutDate: { gte: parsedCheckIn },
+            },
+          ],
+        },
+        select: {
+          room_qty: true,
+          checkInDate: true,
+          checkOutDate: true,
+        },
+      },
+    },
+  });
+
+  if (!roomDetails) throw { msg: "Room not found", status: 404 };
+
+  // Calculate availability for the next 30 days
+  const next30Days = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+
+    // Calculate total booked rooms for the specific date
+    const bookedRooms = roomDetails.bookings
+      .filter((booking) => {
+        const bookingCheckIn = new Date(booking.checkInDate);
+        const bookingCheckOut = new Date(booking.checkOutDate);
+        return bookingCheckIn <= date && bookingCheckOut >= date;
+      })
+      .reduce((total, booking) => total + booking.room_qty, 0);
+
+    // Calculate available rooms
+    const availableRooms = Math.max(roomDetails.qty - bookedRooms, 0);
+
+    // Check for flexible pricing on this date
+    const flexiblePrice = roomDetails.flexiblePrice.find(
+      (price) => new Date(price.customDate).toDateString() === date.toDateString()
+    )?.customPrice;
+
+    return {
+      date: date.toDateString(),
+      price: flexiblePrice || roomDetails.price,
+      availableRooms,
+    };
+  });
+
+  // Return formatted room details
+  return {
+    id: roomDetails.id,
+    name: roomDetails.name,
+    description: roomDetails.description,
+    price: roomDetails.price,
+    guestCapacity: roomDetails.guestCapacity,
+    images: roomDetails.images.map((img) => ({
+      id: img.id,
+      url: img.url,
+    })),
+    facilities: roomDetails.facilities.map((facility) => ({
+      id: facility.id,
+      name: facility.name,
+      icon: facility.icon,
+    })),
+    priceComparison: next30Days,
+  };
 };

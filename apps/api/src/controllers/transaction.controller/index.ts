@@ -1,6 +1,66 @@
 import { Request, Response, NextFunction } from "express";
 import { createRoomReservationService, uploadPaymentProofService, confirmPaymentService} from "@/services/transaction.service";
 import { parseCustomDate } from "@/utils/parse.date";
+import midtransClient from 'midtrans-client'
+import { CoreApi } from "midtrans-client";
+import { prisma } from "@/connection"
+import { BookingStatus } from "@prisma/client";
+
+// Initialize Midtrans client
+const snap = new midtransClient.Snap({
+  isProduction: false,
+  serverKey: 'SB-Mid-server-3W12iKdf4GXKeedvdA7NrGuX',
+});
+
+const coreApi = new CoreApi({
+  isProduction: false, // Set to true in production
+  serverKey: "SB-Mid-server-3W12iKdf4GXKeedvdA7NrGuX",
+});
+
+/**
+ * Update Booking Status
+ * @param req
+ * @param res
+ */
+export const updateBookingStatus = async (req: Request, res: Response) => {
+  try {
+    const { bookingId, status } = req.body;
+
+    if (!bookingId || !status) {
+      return res.status(400).json({ error: true, message: "Missing required fields" });
+    }
+
+    // Validate the status
+    const validStatuses = ["CONFIRMED", "CANCELED"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: true, message: "Invalid status value" });
+    }
+
+    // Find the Status record using bookingId
+    const statusRecord = await prisma.status.findFirst({
+      where: { bookingId: Number(bookingId) },
+    });
+
+    if (!statusRecord) {
+      return res.status(404).json({ error: true, message: "Status record not found" });
+    }
+
+    // Update the Status record using the unique `id`
+    const updatedStatus = await prisma.status.update({
+      where: { id: statusRecord.id }, // Use the unique `id`
+      data: { Status: status },
+    });
+
+    return res.status(200).json({
+      error: false,
+      message: `Booking status updated to ${status}`,
+      data: updatedStatus,
+    });
+  } catch (error) {
+    console.error("Error updating booking status:", error);
+    return res.status(500).json({ error: true, message: "Internal server error" });
+  }
+};
 
 /**
  * create room reservation
@@ -10,12 +70,17 @@ import { parseCustomDate } from "@/utils/parse.date";
 */
 export const createRoomReservation = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { usersId, propertyId, roomId, checkInDate, checkOutDate, room_qty, paymentMethod } = req.body;
+    const { usersId, propertyId, checkInDate, checkOutDate, room_qty, paymentMethod } = req.body;
+    
+    // convert roomId to integer
+    const roomId = parseInt(req.body.roomId, 10); // Ensure roomId is an integer
+    if (isNaN(roomId)) {
+      throw { msg: "Invalid roomId", status: 400 };
+    }
 
     // Validate request body
     if (!usersId || !propertyId || !roomId || !checkInDate || !checkOutDate || !room_qty) throw { msg: "All fields are required", status: 400 };
   
-
     // Convert incoming `YYYY-MM-DD` to `DD/MM/YYYY` for compatibility with `parseCustomDate`
     const formattedCheckInDate = checkInDate.split('-').reverse().join('/');
     const formattedCheckOutDate = checkOutDate.split('-').reverse().join('/');
@@ -40,11 +105,33 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
       paymentMethod,
     });
 
-    res.status(201).json({
-      error: false,
-      message: "Room reservation created successfully",
-      data: booking,
-    });
+    if (paymentMethod === "GATEWAY") {
+      // Create Midtrans transaction
+      const paymentParams = {
+        transaction_details: {
+          order_id: `ORDER-${booking.id}`, // Unique order ID
+          gross_amount: booking.price, // Total price
+        }
+      };
+
+      const paymentToken = await snap.createTransaction(paymentParams);
+
+      res.status(201).json({
+        error: false,
+        message: "Room reservation created successfully",
+        data: {
+          booking,
+          token: paymentToken,
+        },
+      });
+    } else {
+      res.status(201).json({
+        error: false,
+        message: "Room reservation created successfully",
+        data: booking,
+      });
+    }
+    
   } catch (error) {
     next(error);
   }
