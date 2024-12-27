@@ -4,6 +4,7 @@ import { parseCustomDate } from "@/utils/parse.date";
 import midtransClient from 'midtrans-client'
 import { CoreApi } from "midtrans-client";
 import { prisma } from "@/connection"
+import { BookingStatus } from "@prisma/client";
 
 // Initialize Midtrans client
 const snap = new midtransClient.Snap({
@@ -17,103 +18,47 @@ const coreApi = new CoreApi({
 });
 
 /**
- * Handle Midtrans Payment Notification
+ * Update Booking Status
  * @param req
  * @param res
  */
-export const handlePaymentNotification = async (req: Request, res: Response) => {
+export const updateBookingStatus = async (req: Request, res: Response) => {
   try {
-    
-    // Validate and parse the notification using Midtrans
-    const notification = req.body;
+    const { bookingId, status } = req.body;
 
-    // Validate the notification using the transaction ID (order_id)
-    const orderId = notification.order_id;
-    if (!orderId) {
-      throw new Error("Missing order_id in notification payload");
+    if (!bookingId || !status) {
+      return res.status(400).json({ error: true, message: "Missing required fields" });
     }
 
-    // Use `transaction.status` to fetch transaction details
-    const statusResponse = await coreApi.transaction.status(orderId);
+    // Validate the status
+    const validStatuses = ["CONFIRMED", "CANCELED"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: true, message: "Invalid status value" });
+    }
 
-    const { order_id, transaction_status, fraud_status } = statusResponse;
-
-    console.log("Payment Notification Received:", {
-      order_id,
-      transaction_status,
-      fraud_status,
+    // Find the Status record using bookingId
+    const statusRecord = await prisma.status.findFirst({
+      where: { bookingId: Number(bookingId) },
     });
 
-    // Find the corresponding booking by order_id
-    const bookingId = parseInt(order_id.split("-")[1], 10); // Assuming order_id format is ORDER-{bookingId}
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
+    if (!statusRecord) {
+      return res.status(404).json({ error: true, message: "Status record not found" });
+    }
+
+    // Update the Status record using the unique `id`
+    const updatedStatus = await prisma.status.update({
+      where: { id: statusRecord.id }, // Use the unique `id`
+      data: { Status: status },
     });
 
-    if (!booking) {
-      return res.status(404).json({ error: true, message: "Booking not found" });
-    }
-
-    // Handle different transaction statuses
-    if (transaction_status === "capture") {
-      if (fraud_status === "accept") {
-        // Update booking status to CONFIRMED
-        await prisma.booking.update({
-          where: { id: bookingId },
-          data: {
-            status: {
-              create: { Status: "CONFIRMED" },
-            },
-          },
-        });
-      } else if (fraud_status === "challenge") {
-        // Handle challenge status
-        await prisma.booking.update({
-          where: { id: bookingId },
-          data: {
-            status: {
-              create: { Status: "WAITING_FOR_CONFIRMATION" },
-            },
-          },
-        });
-      }
-    } else if (transaction_status === "settlement") {
-      // Payment settled successfully
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-          status: {
-            create: { Status: "CONFIRMED" },
-          },
-        },
-      });
-    } else if (transaction_status === "cancel" || transaction_status === "deny" || transaction_status === "expire") {
-      // Payment failed or expired
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-          status: {
-            create: { Status: "CANCELED" },
-          },
-        },
-      });
-    } else if (transaction_status === "pending") {
-      // Payment is pending
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-          status: {
-            create: { Status: "WAITING_FOR_PAYMENT" },
-          },
-        },
-      });
-    }
-
-    // Respond to Midtrans with a 200 OK status
-    res.status(200).json({ message: "Notification handled successfully" });
+    return res.status(200).json({
+      error: false,
+      message: `Booking status updated to ${status}`,
+      data: updatedStatus,
+    });
   } catch (error) {
-    console.error("Error handling payment notification:", error);
-    res.status(500).json({ error: true, message: "Internal server error" });
+    console.error("Error updating booking status:", error);
+    return res.status(500).json({ error: true, message: "Internal server error" });
   }
 };
 

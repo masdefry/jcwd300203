@@ -12,6 +12,27 @@ import instance from "@/utils/axiosInstance";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
+enum BookingStatus {
+  WAITING_FOR_PAYMENT,
+  WAITING_FOR_CONFIRMATION,
+  CONFIRMED,
+  CANCELED
+}
+
+const updateBookingStatus = async (bookingId: number, status: BookingStatus) => {
+  try {
+    const response = await instance.put("/transaction/status/update", {
+      bookingId,
+      status: BookingStatus[status],
+    });
+    console.log("Booking status updated:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating booking status:", error);
+    throw new Error("Failed to update booking status.");
+  }
+};
+
 const RoomDetailsCard = () => {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -296,6 +317,7 @@ export default function ReservationPage() {
                     onSuccess: (result: any) => {
                       console.log("Payment success:", result);
                       alert("Payment successful! Your reservation is confirmed.");
+                      updateBookingStatus(data.data.booking.id, BookingStatus.CONFIRMED)
                     },
                     onPending: (result: any) => {
                       console.log("Waiting for payment:", result);
@@ -304,9 +326,11 @@ export default function ReservationPage() {
                     onError: (result: any) => {
                       console.error("Payment error:", result);
                       alert("Payment failed. Please try again.");
+                      updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                     },
                     onClose: () => {
                       alert("Payment popup closed. Please complete your payment.");
+                      updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED); // Use enum here
                     },
                   });
                 } else {
