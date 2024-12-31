@@ -4,6 +4,17 @@ import instance from "@/utils/axiosInstance";
 import authStore from "@/zustand/authStore";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken{
+    data: {
+      id: string;
+      role: string;
+      email: string;
+    };
+    exp: number;
+    iat: number;
+  }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
@@ -15,11 +26,30 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     const setKeepAuth = authStore((state: any) => state.setKeepAuth);
     const authLogout = authStore((state: any) => state.setAuthLogout);
-    const role = authStore((state: any) => state.role);
-    const token = authStore((state: any) => state.token);
-    console.log('Role from zustand:', role)
+    const token = localStorage?.getItem('authToken');
 
-    const isValidToken = (token: string | null | undefined): boolean => !!token && token.trim() !== "";
+    const getRole = (token: string): string => {
+        try {
+            const decoded = jwtDecode<DecodedToken>(token);
+            return decoded.data.role;
+        } catch (error) {
+            console.error('Error decoding token for role:', error);
+            return '';
+        }
+    }
+
+    const role = getRole(token!);
+        
+    const isValidToken = (token: string | null | undefined): boolean => {
+        if (!token || token.trim() === "") return false;
+        try {
+            const decoded = jwtDecode<{ exp: number }>(token); 
+            const currentTime = Math.floor(Date.now() / 1000); 
+            return decoded.exp > currentTime;
+        } catch (error) {
+            return false; 
+        }
+    };
 
     useEffect(() => {
         console.log('Current role:', role);
@@ -58,59 +88,43 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const authRoutes = ['/login/user', '/login/tenant', '/register/user', '/register/tenant', '/forget-password'];
-        if (role === '' || role === undefined && isValidToken(token)) return;
-        
-        
-        if (!isLoading) {
-            console.log('Auth State Check:', {
-                currentPath: pathname,
-                userRole: role,
-                hasValidToken: isValidToken(token)
-            });
+
+        if (isLoading) return; // Wait until loading is complete
+
+        if(!isLoading){
+            const isPublicRoute = (path: string) => {
+                return path === '/' || path === '/about' || path === '/contact';
+            };
     
-            if (typeof role === 'undefined') return;
-            
-    
-            if (typeof pathname === 'undefined') return;
-            
             const isTenantRoute = (path: string) => {
-                return path === '/listing' || 
-                       path === '/dashboard' || 
-                       path.startsWith('/dashboard/') ||
-                       path.startsWith('/listing/');
+                return ['/listing', '/dashboard', '/dashboard/', '/listing/'].some(route => path.startsWith(route));
             };
     
             const isCustomerRoute = (path: string) => {
-                return path === '/user' ||
-                       path === '/user/profile' ||
-                       path.startsWith('/user/');
+                return ['/user', '/user/profile', '/user/'].some(route => path.startsWith(route));
             };
     
-            const isPublicRoute = (path: string) => {
-                return path === '/' || 
-                       authRoutes.includes(path) || 
-                       path === '/about' ||  
-                       path === '/contact';
-            };
-    
-            if (isPublicRoute(pathname) && !isValidToken(token)) {
+            // Allow access to public routes without authentication
+            if (isPublicRoute(pathname)) {
                 setIsAuthorized(true);
                 return;
             }
     
+            // If the user is logged in and tries to access auth routes, redirect them
             if (authRoutes.includes(pathname) && isValidToken(token)) {
                 setErrorMessage('You are already logged in');
+                setIsAuthorized(false)
                 router.push('/');
                 return;
             }
     
+            // Check for tenant routes
             if (isTenantRoute(pathname)) {
                 if (!isValidToken(token)) {
                     setErrorMessage('Please login first');
                     setIsAuthorized(false);
                     return;
                 }
-    
                 if (role !== 'tenant') {
                     setErrorMessage('Unauthorized access - Tenant only');
                     setIsAuthorized(false);
@@ -118,13 +132,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
     
+            // Check for customer routes
             if (isCustomerRoute(pathname)) {
                 if (!isValidToken(token)) {
                     setErrorMessage('Please login first');
                     setIsAuthorized(false);
                     return;
                 }
-    
                 if (role !== 'customer') {
                     setErrorMessage('Unauthorized access - Customer only');
                     setIsAuthorized(false);
@@ -132,6 +146,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
     
+            // Handle specific routes that require a valid token
             if (pathname.startsWith('/change-email') || pathname.startsWith('/verify-account')) {
                 if (!isValidToken(token)) {
                     setErrorMessage('Invalid Token');
@@ -140,11 +155,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
     
-            // If we get here, authorize access
+            // If all checks pass, set authorized to true
             setIsAuthorized(true);
             setErrorMessage(null);
         }
+        
     }, [isLoading, token, pathname, role]);
+
 
 
     useEffect(() => {
@@ -168,7 +185,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         );
     }
 
-    if (!isAuthorized && errorMessage) {
+    if (!isAuthorized) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-gray-50 flex-col animate-fadeInOpacity duration-1000">
                 <h1 className="text-2xl text-red-500 font-bold pb-5 animate-fadeInUp transition-all duration-1000">
