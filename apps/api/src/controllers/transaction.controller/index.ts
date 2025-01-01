@@ -109,7 +109,7 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
       // Create Midtrans transaction
       const paymentParams = {
         transaction_details: {
-          order_id: `ORDER-${booking.id}`, // Unique order ID
+          order_id: `ORDER-${booking.id}-${Date.now()}`, // Unique order ID
           gross_amount: booking.price, // Total price
         }
       };

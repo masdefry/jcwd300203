@@ -33,6 +33,39 @@ const updateBookingStatus = async (bookingId: number, status: BookingStatus) => 
   }
 };
 
+const loadMidtransScript = () => {
+  return new Promise<void>((resolve, reject) => {
+    if (typeof window.snap !== "undefined") {
+      resolve(); // Script is already loaded
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+    script.setAttribute("data-client-key", "SB-Mid-client-Qu-bODSBhUtjUUQM");
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Midtrans Snap script"));
+    document.body.appendChild(script);
+  });
+};
+
+const fetchPropertyId = async (roomId: string | null): Promise<number | null> => {
+  if (!roomId) {
+    throw new Error("Room ID is required to fetch Property ID.");
+  }
+
+  try {
+    const response = await instance.get(`/property/roomType/propertyId`, {
+      params: { roomId },
+    });
+
+    return response.data?.data?.propertyId || null;
+  } catch (error) {
+    console.error("Failed to fetch property ID:", error);
+    throw new Error("Failed to fetch property ID.");
+  }
+};
+
 const RoomDetailsCard = () => {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -79,11 +112,10 @@ const RoomDetailsCard = () => {
         setError("Failed to fetch room details. Please try again.");
       }
     };
-  
+
     fetchRoomDetails();
   }, [roomId, checkIn, checkOut]);
-   
-
+  
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
   }
@@ -287,72 +319,76 @@ export default function ReservationPage() {
         validationSchema={validationSchema}
         onSubmit={async (values) => {
           try {
+            // fetch propertyId in here
+            const propertyId = await fetchPropertyId(roomId);
+
             console.log("Submitted Reservation Details:", values);
-      
+        
             // Send the reservation request to the backend
             const response = await instance.post("/transaction/reserve", {
               roomId,
-              propertyId: 1, // Replace with actual property ID if available
+              propertyId,
               checkInDate: checkIn,
               checkOutDate: checkOut,
               room_qty: values.rooms,
               paymentMethod: values.paymentMethod === "online" ? "GATEWAY" : "MANUAL",
             });
-      
+        
             const data = response.data;
-            console.log(data)
-
+            console.log(data);
+        
             if (data.error) {
               throw new Error(data.message);
             }
-      
-            // Handle success response (e.g., trigger payment gateway for online payment)
+        
             if (values.paymentMethod === "online") {
               try {
                 console.log("Online payment triggered. Token:", data.data.token.token);
-            
-                // Ensure the `window.snap` object exists before calling pay()
+        
+                // Ensure Snap script is loaded
+                await loadMidtransScript();
+        
+                // Call Snap payment gateway
                 if (typeof window.snap !== "undefined") {
                   window.snap.pay(data.data.token.token, {
-                    onSuccess: (result: any) => {
+                    onSuccess: (result) => {
                       console.log("Payment success:", result);
                       alert("Payment successful! Your reservation is confirmed.");
-                      updateBookingStatus(data.data.booking.id, BookingStatus.CONFIRMED)
+                      updateBookingStatus(data.data.booking.id, BookingStatus.CONFIRMED);
                     },
-                    onPending: (result: any) => {
+                    onPending: (result) => {
                       console.log("Waiting for payment:", result);
                       alert("Waiting for your payment!");
                     },
-                    onError: (result: any) => {
+                    onError: (result) => {
                       console.error("Payment error:", result);
                       alert("Payment failed. Please try again.");
                       updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                     },
                     onClose: () => {
                       alert("Payment popup closed. Please complete your payment.");
-                      updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED); // Use enum here
+                      updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                     },
                   });
                 } else {
-                  console.error("Midtrans Snap is not loaded. Ensure the script is included.");
+                  console.error("Midtrans Snap is not loaded.");
                   alert("Payment system is not initialized. Please try again later.");
                 }
               } catch (error) {
                 console.error("Error initializing payment:", error);
                 alert("Something went wrong during the payment process.");
-              }            
-
+              }
             } else {
-              // Handle manual transfer
               console.log("Manual transfer selected. Awaiting confirmation.");
               alert("Your reservation is awaiting confirmation. Please upload your proof of payment.");
-              window.location.href = "/reservation-confirmation"; // Change to your desired page              
+              window.location.href = "/reservation-confirmation";
             }
           } catch (error: any) {
             console.error("Error submitting reservation:", error);
             alert(error.message || "Something went wrong. Please try again.");
           }
         }}
+         
       >
         {({ values, setFieldValue }) => (
           <Form>
@@ -453,20 +489,6 @@ export default function ReservationPage() {
                       </div>
                     </RadioGroup>
                   </div>
-
-                  {/* Special Request */}
-                  {/* <div>
-                    <Label htmlFor="specialRequest">Special Requests</Label>
-                    <textarea
-                      id="specialRequest"
-                      name="specialRequest"
-                      rows={3}
-                      value={reservationDetails.specialRequest}
-                      onChange={handleInputChange}
-                      placeholder="Any additional requests?"
-                      className="w-full border rounded p-2"
-                    />
-                  </div> */}
 
                   {/* Separator */}
                   <Separator />

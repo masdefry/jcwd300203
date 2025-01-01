@@ -655,3 +655,16 @@ export const getRoomDetailsByIdService = async ({
     priceComparison: next30Days,
   };
 };
+
+export const getPropertyIdByRoomIdService = async (roomId: string) => {
+  try {
+    const room = await prisma.roomType.findUnique({
+      where: { id: Number(roomId) },
+      select: { propertyId: true },
+    });
+    return room?.propertyId || null;
+  } catch (error) {
+    console.error("Error fetching propertyId by roomId:", error);
+    throw new Error("Unable to fetch propertyId for the given roomId.");
+  }
+};
