@@ -1,4 +1,4 @@
-import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService } from "@/services/property.service";
+import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService, getPropertyIdByRoomIdService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
 import { parseCustomDate, parseCustomDateList } from "@/utils/parse.date";
 
@@ -251,5 +251,25 @@ export const getRoomDetailsById = async (req: Request, res: Response, next: Next
       console.error("Error fetching room details:", error);
       return res.status(500).json({ error: "Internal server error." });
     }
-  };
+};
+
+// controller to fetch property ID by Room ID
+export const getPropertyIdByRoomId = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { roomId } = req.query;
   
+      if (!roomId) {
+        return res.status(400).json({ error: true, message: "Missing roomId parameter." });
+      }
+  
+      const propertyId = await getPropertyIdByRoomIdService(roomId as string);
+  
+      if (!propertyId) {
+        return res.status(404).json({ error: true, message: "Property not found for the given roomId." });
+      }
+  
+      res.status(200).json({ error: false, data: { propertyId } });
+    } catch (error) {
+      next(error);
+    }
+};

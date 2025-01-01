@@ -49,6 +49,23 @@ const loadMidtransScript = () => {
   });
 };
 
+const fetchPropertyId = async (roomId: string | null): Promise<number | null> => {
+  if (!roomId) {
+    throw new Error("Room ID is required to fetch Property ID.");
+  }
+
+  try {
+    const response = await instance.get(`/property/roomType/propertyId`, {
+      params: { roomId },
+    });
+
+    return response.data?.data?.propertyId || null;
+  } catch (error) {
+    console.error("Failed to fetch property ID:", error);
+    throw new Error("Failed to fetch property ID.");
+  }
+};
+
 const RoomDetailsCard = () => {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("roomId");
@@ -95,11 +112,10 @@ const RoomDetailsCard = () => {
         setError("Failed to fetch room details. Please try again.");
       }
     };
-  
+
     fetchRoomDetails();
   }, [roomId, checkIn, checkOut]);
-   
-
+  
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
   }
@@ -303,12 +319,15 @@ export default function ReservationPage() {
         validationSchema={validationSchema}
         onSubmit={async (values) => {
           try {
+            // fetch propertyId in here
+            const propertyId = await fetchPropertyId(roomId);
+
             console.log("Submitted Reservation Details:", values);
         
             // Send the reservation request to the backend
             const response = await instance.post("/transaction/reserve", {
               roomId,
-              propertyId: 1, // Replace with actual property ID if available
+              propertyId,
               checkInDate: checkIn,
               checkOutDate: checkOut,
               room_qty: values.rooms,
@@ -470,20 +489,6 @@ export default function ReservationPage() {
                       </div>
                     </RadioGroup>
                   </div>
-
-                  {/* Special Request */}
-                  {/* <div>
-                    <Label htmlFor="specialRequest">Special Requests</Label>
-                    <textarea
-                      id="specialRequest"
-                      name="specialRequest"
-                      rows={3}
-                      value={reservationDetails.specialRequest}
-                      onChange={handleInputChange}
-                      placeholder="Any additional requests?"
-                      className="w-full border rounded p-2"
-                    />
-                  </div> */}
 
                   {/* Separator */}
                   <Separator />

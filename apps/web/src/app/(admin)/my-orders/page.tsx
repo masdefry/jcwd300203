@@ -1,6 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import instance from "@/utils/axiosInstance";
+import Wrapper from "@/components/layout/Wrapper";
+import Header from "@/components/home/Header";
+import Footer from "@/components/common/footer/Footer";
+import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
 
 const Modal = ({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) => {
   if (!isOpen) return null;
@@ -52,17 +56,49 @@ const MyOrdersPage = () => {
   ); 
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">My Orders</h1>
+    <Wrapper>
+      <Header/>
 
-      {/* Pending Orders Table */}
-      <h2 className="text-xl font-semibold mb-2">Pending Orders</h2>
-      <OrdersTable orders={pendingOrders} />
+      <div className="bg-gray-900 min-h-screen py-16">
+        <div className="container mx-auto bg-gray-100 shadow-lg rounded-lg py-12 px-8 mt-8">
+          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+            Admin Orders
+          </h1>
 
-      {/* Confirmed Orders Table */}
-      <h2 className="text-xl font-semibold mt-6 mb-2">Confirmed Orders</h2>
-      <OrdersTable orders={confirmedOrders} />
-    </div>
+          {/* Pending Orders Table */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-700">
+              Pending Orders
+            </h2>
+            <OrdersTable orders={pendingOrders} />
+          </div>
+
+          {/* Confirmed Orders Table */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-700">
+              Confirmed Orders
+            </h2>
+            <OrdersTable orders={confirmedOrders} />
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <section className="footer_one">
+        <div className="container">
+          <div className="row">
+            <Footer />
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Bottom Area */}
+      <section className="footer_middle_area pt40 pb40">
+        <div className="container">
+          <CopyrightFooter />
+        </div>
+      </section>
+    </Wrapper> 
   );
 };
 
@@ -82,7 +118,7 @@ const OrdersTable = ({ orders }: { orders: any[] }) => {
   }
 
   return (
-    <div>
+    <div className="overflow-x-auto">
       <table className="w-full table-auto border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
