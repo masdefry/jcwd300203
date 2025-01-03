@@ -4,7 +4,7 @@ import { parseCustomDate } from "@/utils/parse.date";
 import midtransClient from 'midtrans-client'
 import { CoreApi } from "midtrans-client";
 import { prisma } from "@/connection"
-import { BookingStatus } from "@prisma/client";
+import { sendReminderEmails } from "@/services/transaction.service";
 
 // Initialize Midtrans client
 const snap = new midtransClient.Snap({
@@ -185,3 +185,20 @@ export const confirmPayment = async (req: Request, res: Response, next: NextFunc
     next(error) 
   }
 }
+
+// trigger order reminder (manual)
+export const triggerOrderReminder = async (req: Request, res: Response) => {
+  try {
+    const result: any = await sendReminderEmails();
+    res.status(200).json({
+      error: false,
+      message: `Reminder emails sent to ${result.count} users.`,
+    });
+  } catch (error) {
+    console.error("Error triggering order reminders:", error);
+    res.status(500).json({
+      error: true,
+      message: "Failed to send order reminders.",
+    });
+  }
+};

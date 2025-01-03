@@ -11,7 +11,7 @@ import { PORT } from './config';
 import cookieParser from 'cookie-parser';
 import router from './routers';
 import { startScheduler } from './utils/scheduler';
-import { scheduleBookingCleanup } from './services/transaction.service';
+import { scheduleBookingCleanup, startOrderReminderCronJob } from './services/transaction.service';
 import path from "path";
 
 export default class App {
@@ -77,6 +77,9 @@ export default class App {
   public start(): void {
     // schedule booking cleanup
     scheduleBookingCleanup()
+
+    // Start the order reminder cron job
+    startOrderReminderCronJob();
 
     // Expose the "public" directory
     const publicDirectory = path.join(__dirname, "public/images/proof-of-payment");

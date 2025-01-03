@@ -1,6 +1,6 @@
 import { Router } from "express"
 
-import { confirmPayment, createRoomReservation, uploadPaymentProof, updateBookingStatus} from "@/controllers/transaction.controller"
+import { confirmPayment, createRoomReservation, uploadPaymentProof, updateBookingStatus, triggerOrderReminder} from "@/controllers/transaction.controller"
 import { proofOfPaymentUploader } from "@/middlewares/upload.payment.proof"
 import { verifyToken } from "@/middlewares/verify.token"
 import { verifyRoleCustomer } from "@/middlewares/verify.role.customer"
@@ -19,5 +19,8 @@ router.post("/upload-proof/:bookingId",verifyToken, verifyRoleCustomer, proofOfP
 
 // tenant route
 router.post("/:bookingId/confirm",verifyToken, verifyRoleTenant, confirmPayment)
+
+// send order reminder to the user
+router.get("/orders/reminders", triggerOrderReminder);
 
 export default router

@@ -3,6 +3,7 @@ import { BookingStatus } from "@prisma/client"; // Import Prisma enum type
 import cron from "node-cron";
 import path from "path";
 import fs from "fs";
+import { sendEmail } from "@/utils/emailSender";
 
 interface RoomReservationParams {
   usersId: number;
@@ -252,3 +253,75 @@ export const confirmPaymentService = async ({usersId, bookingId, action}: Confir
     return updatedBooking;
   }
 }
+
+// send reminder emails for customer with confirmed order
+export const sendReminderEmails = async () => {
+  try {
+    // Find all bookings with status "CONFIRMED"
+    const orders = await prisma.booking.findMany({
+      where: {
+        status: {
+          some: {
+            Status: "CONFIRMED",
+          },
+        },
+      },
+      include: {
+        property: true,
+        customer: true,
+      },
+    });
+
+    if (orders.length === 0) {
+      console.log("No confirmed orders found for reminder emails.");
+      return { success: true, count: 0 }; // Return a consistent structure
+    }
+
+    for (const order of orders) {
+      if (!order.customer || !order.property) {
+        console.warn(
+          `Missing customer or property for order ID ${order.id}. Skipping email.`
+        );
+        continue;
+      }
+
+      const emailContent = `
+        <p>Dear ${order.customer.name},</p>
+        <p>This is a reminder for your upcoming reservation:</p>
+        <ul>
+          <li><strong>Property:</strong> ${order.property.name}</li>
+          <li><strong>Check-in Date:</strong> ${order.checkInDate.toDateString()}</li>
+          <li><strong>Rules:</strong> ${order.property.description || "N/A"}</li>
+        </ul>
+        <p>Please ensure you bring the necessary documents for check-in.</p>
+        <p>Thank you for choosing our service!</p>
+      `;
+
+      // Send email
+      await sendEmail({
+        to: order.customer.email,
+        subject: "Reservation Reminder",
+        html: emailContent,
+      });
+
+      console.log(`Reminder email sent to ${order.customer.email}`);
+    }
+
+    return { success: true, count: orders.length };
+  } catch (error) {
+    console.error("Error sending reminder emails:", error);
+    throw error; // Rethrow the error to ensure it's handled upstream
+  }
+};
+
+export const startOrderReminderCronJob = () => {
+  cron.schedule("0 0 * * *", async () => {
+    console.log("Running Order Reminder Cron Job...");
+    try {
+      const result = await sendReminderEmails();
+      console.log(`Order Reminder Cron Job completed. Emails sent: ${result.count}`);
+    } catch (error) {
+      console.error("Error triggering order reminders:", error);
+    }
+  });
+};
