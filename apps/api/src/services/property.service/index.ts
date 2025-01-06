@@ -15,6 +15,9 @@ export const getPropertiesListService = async ({
   const currentDate = new Date();
 
   const properties = await prisma.property.findMany({
+    where:{
+      deletedAt: null
+    },
     include: {
       facilities: true,
       roomTypes: {
@@ -144,6 +147,7 @@ export const getPropertyDetailsService = async ({
   const propertyDetails = await prisma.property.findUnique({
     where: {
       id: propertyId,
+      deletedAt: null
     },
     include: {
       images: true,
@@ -282,7 +286,7 @@ export const getPropertiesListTenantService = async ({
   const property = await prisma.property.findMany({
     where: {
       tenantId: tenant.id,
-      deletedAt: {not: null}
+      deletedAt: null
     },
     include: {
       images: true,
@@ -317,6 +321,7 @@ export const getPropertyDetailsTenantService = async ({
     where: {
       id: propertyId,
       tenantId: usersId,
+      deletedAt: null
     },
     include: {
       images: true,
@@ -407,7 +412,6 @@ export const deletePropertyService = async ({
       },
     });
 
-    // Soft delete room types
     if (roomTypeIds.length > 0) {
       await prisma.roomType.updateMany({
         where: {
@@ -419,7 +423,6 @@ export const deletePropertyService = async ({
       });
     }
 
-    // Soft delete room images
     await prisma.roomImage.updateMany({
       where: {
         roomId: { in: roomTypeIds },
@@ -429,7 +432,6 @@ export const deletePropertyService = async ({
       },
     });
 
-    // Soft delete property images
     await prisma.propertyImage.updateMany({
       where: {
         propertyId: propertyId,
@@ -578,12 +580,13 @@ export const getRoomDetailsByIdService = async ({
 }: IGetRoomDetailsById) => {
   const roomIdNumber = Number(roomId);
 
-  // Validate roomId
   if (!roomIdNumber) throw { msg: "Invalid room ID", status: 400 };
 
-  // Fetch room details from database
   const roomDetails = await prisma.roomType.findUnique({
-    where: { id: roomIdNumber },
+    where: { 
+      id: roomIdNumber,
+      deletedAt: null
+     },
     include: {
       facilities: true,
       images: true,

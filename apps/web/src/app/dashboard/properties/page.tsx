@@ -141,7 +141,7 @@ const PropertyList = () => {
             <Home size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No Properties Yet</h3>
             <p className="text-gray-500 mb-4">Start by adding your first property</p>
-            <Link href="/dashboard/properties/add">
+            <Link href="/dashboard/listing">
               <Button>
                 Add Your First Property
               </Button>
