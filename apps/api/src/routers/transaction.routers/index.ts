@@ -20,7 +20,7 @@ router.post("/upload-proof/:bookingId",verifyToken, verifyRoleCustomer, proofOfP
 // tenant route
 router.post("/:bookingId/confirm",verifyToken, verifyRoleTenant, confirmPayment)
 
-// send order reminder to the user
+// send order reminder to the user of their order
 router.get("/orders/reminders", triggerOrderReminder);
 
 export default router

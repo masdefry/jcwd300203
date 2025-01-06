@@ -12,6 +12,13 @@ import instance from "@/utils/axiosInstance";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
+import Header from "@/components/home/Header";
+import MobileMenu from "@/components/common/header/MobileMenu";
+import PopupSignInUp from "@/components/common/PopupSignInUp";
+import Footer from "@/components/common/footer/Footer";
+import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
+import Wrapper from "@/components/layout/Wrapper";
+
 enum BookingStatus {
   WAITING_FOR_PAYMENT,
   WAITING_FOR_CONFIRMATION,
@@ -280,232 +287,258 @@ export default function ReservationPage() {
   });
 
   return (
-    <div className="container mx-auto py-6">
-      {/* Room Details Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">{roomData.name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-2">
-            {roomData.description || "No description available."}
-          </p>
-          <p>
-            <span className="font-semibold">Price: </span>
-            {new Intl.NumberFormat("id-ID", {
-              style: "currency",
-              currency: "IDR",
-            }).format(roomData.price)}{" "}
-            / night
-          </p>
-          <p>
-            <span className="font-semibold">Guest Capacity: </span>
-            {roomData.guestCapacity} guests
-          </p>
-          <p>
-            <span className="font-semibold">Available Rooms: </span>
-            {roomData.priceComparison[0]?.availableRooms} rooms
-          </p>
-        </CardContent>
-      </Card>
+      <Wrapper>
+        <Header />
 
-      {/* Reservation Details Form */}
-      <Formik
-        initialValues={{
-          guests: 1,
-          rooms: 1,
-          paymentMethod: "online",
-        }}
-        validationSchema={validationSchema}
-        onSubmit={async (values) => {
-          try {
-            // fetch propertyId in here
-            const propertyId = await fetchPropertyId(roomId);
+        {/* Mobile Menu */}
+        <MobileMenu />
 
-            console.log("Submitted Reservation Details:", values);
-        
-            // Send the reservation request to the backend
-            const response = await instance.post("/transaction/reserve", {
-              roomId,
-              propertyId,
-              checkInDate: checkIn,
-              checkOutDate: checkOut,
-              room_qty: values.rooms,
-              paymentMethod: values.paymentMethod === "online" ? "GATEWAY" : "MANUAL",
-            });
-        
-            const data = response.data;
-            console.log(data);
-        
-            if (data.error) {
-              throw new Error(data.message);
-            }
-        
-            if (values.paymentMethod === "online") {
+        {/* Modal */}
+        <PopupSignInUp />
+
+        <div className="container mx-auto py-6">
+          {/* Room Details Card */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">{roomData.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-2">
+                {roomData.description || "No description available."}
+              </p>
+              <p>
+                <span className="font-semibold">Price: </span>
+                {new Intl.NumberFormat("id-ID", {
+                  style: "currency",
+                  currency: "IDR",
+                }).format(roomData.price)}{" "}
+                / night
+              </p>
+              <p>
+                <span className="font-semibold">Guest Capacity: </span>
+                {roomData.guestCapacity} guests
+              </p>
+              <p>
+                <span className="font-semibold">Available Rooms: </span>
+                {roomData.priceComparison[0]?.availableRooms} rooms
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Reservation Details Form */}
+          <Formik
+            initialValues={{
+              guests: 1,
+              rooms: 1,
+              paymentMethod: "online",
+            }}
+            validationSchema={validationSchema}
+            onSubmit={async (values) => {
               try {
-                console.log("Online payment triggered. Token:", data.data.token.token);
-        
-                // Ensure Snap script is loaded
-                await loadMidtransScript();
-        
-                // Call Snap payment gateway
-                if (typeof window.snap !== "undefined") {
-                  window.snap.pay(data.data.token.token, {
-                    onSuccess: (result) => {
-                      console.log("Payment success:", result);
-                      alert("Payment successful! Your reservation is confirmed.");
-                      updateBookingStatus(data.data.booking.id, BookingStatus.CONFIRMED);
-                    },
-                    onPending: (result) => {
-                      console.log("Waiting for payment:", result);
-                      alert("Waiting for your payment!");
-                    },
-                    onError: (result) => {
-                      console.error("Payment error:", result);
-                      alert("Payment failed. Please try again.");
-                      updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
-                    },
-                    onClose: () => {
-                      alert("Payment popup closed. Please complete your payment.");
-                      updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
-                    },
-                  });
-                } else {
-                  console.error("Midtrans Snap is not loaded.");
-                  alert("Payment system is not initialized. Please try again later.");
+                // fetch propertyId in here
+                const propertyId = await fetchPropertyId(roomId);
+
+                console.log("Submitted Reservation Details:", values);
+            
+                // Send the reservation request to the backend
+                const response = await instance.post("/transaction/reserve", {
+                  roomId,
+                  propertyId,
+                  checkInDate: checkIn,
+                  checkOutDate: checkOut,
+                  room_qty: values.rooms,
+                  paymentMethod: values.paymentMethod === "online" ? "GATEWAY" : "MANUAL",
+                });
+            
+                const data = response.data;
+                console.log(data);
+            
+                if (data.error) {
+                  throw new Error(data.message);
                 }
-              } catch (error) {
-                console.error("Error initializing payment:", error);
-                alert("Something went wrong during the payment process.");
+            
+                if (values.paymentMethod === "online") {
+                  try {
+                    console.log("Online payment triggered. Token:", data.data.token.token);
+            
+                    // Ensure Snap script is loaded
+                    await loadMidtransScript();
+            
+                    // Call Snap payment gateway
+                    if (typeof window.snap !== "undefined") {
+                      window.snap.pay(data.data.token.token, {
+                        onSuccess: (result) => {
+                          console.log("Payment success:", result);
+                          alert("Payment successful! Your reservation is confirmed.");
+                          updateBookingStatus(data.data.booking.id, BookingStatus.CONFIRMED);
+                        },
+                        onPending: (result) => {
+                          console.log("Waiting for payment:", result);
+                          alert("Waiting for your payment!");
+                        },
+                        onError: (result) => {
+                          console.error("Payment error:", result);
+                          alert("Payment failed. Please try again.");
+                          updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
+                        },
+                        onClose: () => {
+                          alert("Payment popup closed. Please complete your payment.");
+                          updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
+                        },
+                      });
+                    } else {
+                      console.error("Midtrans Snap is not loaded.");
+                      alert("Payment system is not initialized. Please try again later.");
+                    }
+                  } catch (error) {
+                    console.error("Error initializing payment:", error);
+                    alert("Something went wrong during the payment process.");
+                  }
+                } else {
+                  console.log("Manual transfer selected. Awaiting confirmation.");
+                  alert("Your reservation is awaiting confirmation. Please upload your proof of payment.");
+                  window.location.href = "/reservation-confirmation";
+                }
+              } catch (error: any) {
+                console.error("Error submitting reservation:", error);
+                alert(error.message || "Something went wrong. Please try again.");
               }
-            } else {
-              console.log("Manual transfer selected. Awaiting confirmation.");
-              alert("Your reservation is awaiting confirmation. Please upload your proof of payment.");
-              window.location.href = "/reservation-confirmation";
-            }
-          } catch (error: any) {
-            console.error("Error submitting reservation:", error);
-            alert(error.message || "Something went wrong. Please try again.");
-          }
-        }}
-         
-      >
-        {({ values, setFieldValue }) => (
-          <Form>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-semibold">Reservation Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-6">
-                  {/* Duration of Stay */}
-                  <div>
-                    <Label>Stay Duration</Label>
-                    <p className="text-lg font-semibold">{stayDuration || "Calculating..."}</p>
-                  </div>
-
-                  {/* Guest Count */}
-                  <div>
-                    <Label htmlFor="guests">Number of Guests</Label>
-                    <Field
-                      id="guests"
-                      type="number"
-                      name="guests"
-                      className="w-full border rounded p-2"
-                      placeholder="Enter number of guests"
-                    />
-                    <ErrorMessage
-                      name="guests"
-                      component="p"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-
-                  {/* Room Count */}
-                  <div>
-                    <Label htmlFor="rooms">Number of Rooms</Label>
-                    <Field
-                      id="rooms"
-                      name="rooms"
-                      type="number"
-                      className="w-full border rounded p-2"
-                      placeholder="Enter number of rooms"
-                    />
-                    <ErrorMessage
-                      name="rooms"
-                      component="p"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </div>
-
-                  {/* Price Breakdown */}
-                  <div>
-                    <Label>Price Breakdown (flexible pricing)</Label>
-                    <ul className="list-disc ml-6 text-muted-foreground">
-                      {priceBreakdown && priceBreakdown.length > 0 ? (
-                        priceBreakdown.map((day) => (
-                          <li key={day.date}>
-                            {new Date(day.date).toLocaleDateString("en-GB")}:{" "}
-                            {new Intl.NumberFormat("id-ID", {
-                              style: "currency",
-                              currency: "IDR",
-                            }).format(day.price)}{" "}
-                            / night
-                          </li>
-                        ))
-                      ) : (
-                        <p>No breakdown available.</p>
-                      )}
-                    </ul>
-                  </div>
-
-                  {/* Total Price */}
-                  <div>
-                    <Label>Total Price</Label>
-                    <p className="text-lg font-semibold">
-                      {totalPrice !== null
-                        ? new Intl.NumberFormat("id-ID", {
-                            style: "currency",
-                            currency: "IDR",
-                          }).format(totalPrice)
-                        : "Calculating..."}
-                    </p>
-                  </div>
-
-                  {/* Payment Method */}
-                  <div>
-                    <Label>Payment Method</Label>
-                    <RadioGroup
-                      value={values.paymentMethod}
-                      onValueChange={(value) => setFieldValue("paymentMethod", value)}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <RadioGroupItem value="online" id="online" />
-                        <Label htmlFor="online">Online Payment</Label>
+            }}
+            
+          >
+            {({ values, setFieldValue }) => (
+              <Form>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-semibold">Reservation Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-6">
+                      {/* Duration of Stay */}
+                      <div>
+                        <Label>Stay Duration</Label>
+                        <p className="text-lg font-semibold">{stayDuration || "Calculating..."}</p>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <RadioGroupItem value="manual" id="manual" />
-                        <Label htmlFor="manual">Manual Transfer</Label>
+
+                      {/* Guest Count */}
+                      <div>
+                        <Label htmlFor="guests">Number of Guests</Label>
+                        <Field
+                          id="guests"
+                          type="number"
+                          name="guests"
+                          className="w-full border rounded p-2"
+                          placeholder="Enter number of guests"
+                        />
+                        <ErrorMessage
+                          name="guests"
+                          component="p"
+                          className="text-red-500 text-sm mt-1"
+                        />
                       </div>
-                    </RadioGroup>
-                  </div>
 
-                  {/* Separator */}
-                  <Separator />
+                      {/* Room Count */}
+                      <div>
+                        <Label htmlFor="rooms">Number of Rooms</Label>
+                        <Field
+                          id="rooms"
+                          name="rooms"
+                          type="number"
+                          className="w-full border rounded p-2"
+                          placeholder="Enter number of rooms"
+                        />
+                        <ErrorMessage
+                          name="rooms"
+                          component="p"
+                          className="text-red-500 text-sm mt-1"
+                        />
+                      </div>
 
-                  {/* Confirm Reservation */}
-                  <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    type="submit"
-                  >
-                    Confirm Reservation
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </Form>
-        )}
-      </Formik>
-    </div>
+                      {/* Price Breakdown */}
+                      <div>
+                        <Label>Price Breakdown (flexible pricing)</Label>
+                        <ul className="list-disc ml-6 text-muted-foreground">
+                          {priceBreakdown && priceBreakdown.length > 0 ? (
+                            priceBreakdown.map((day) => (
+                              <li key={day.date}>
+                                {new Date(day.date).toLocaleDateString("en-GB")}:{" "}
+                                {new Intl.NumberFormat("id-ID", {
+                                  style: "currency",
+                                  currency: "IDR",
+                                }).format(day.price)}{" "}
+                                / night
+                              </li>
+                            ))
+                          ) : (
+                            <p>No breakdown available.</p>
+                          )}
+                        </ul>
+                      </div>
+
+                      {/* Total Price */}
+                      <div>
+                        <Label>Total Price</Label>
+                        <p className="text-lg font-semibold">
+                          {totalPrice !== null
+                            ? new Intl.NumberFormat("id-ID", {
+                                style: "currency",
+                                currency: "IDR",
+                              }).format(totalPrice)
+                            : "Calculating..."}
+                        </p>
+                      </div>
+
+                      {/* Payment Method */}
+                      <div>
+                        <Label>Payment Method</Label>
+                        <RadioGroup
+                          value={values.paymentMethod}
+                          onValueChange={(value) => setFieldValue("paymentMethod", value)}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <RadioGroupItem value="online" id="online" />
+                            <Label htmlFor="online">Online Payment</Label>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <RadioGroupItem value="manual" id="manual" />
+                            <Label htmlFor="manual">Manual Transfer</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Separator */}
+                      <Separator />
+
+                      {/* Confirm Reservation */}
+                      <Button
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        type="submit"
+                      >
+                        Confirm Reservation
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Form>
+            )}
+          </Formik>
+        </div>
+
+        {/* Footer */}
+        <section className="footer_one">
+          <div className="container">
+            <div className="row">
+              <Footer />
+            </div>
+          </div>
+        </section>
+
+        {/* Footer Bottom Area */}
+        <section className="footer_middle_area pt40 pb40">
+          <div className="container">
+            <CopyrightFooter />
+          </div>
+        </section>
+    </Wrapper>
   );
 }
