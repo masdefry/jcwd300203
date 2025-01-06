@@ -53,6 +53,7 @@ model Property {
   roomCapacity Int
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
+  deletedAt    DateTime?
   tenantId     Int
   bookings     Booking[]
   tenant       Tenant             @relation(fields: [tenantId], references: [id])
@@ -67,6 +68,7 @@ model PropertyImage {
   url        String
   propertyId Int
   createdAt  DateTime @default(now())
+  deletedAt    DateTime?
   property   Property @relation(fields: [propertyId], references: [id])
 }
 
@@ -77,6 +79,8 @@ model RoomImage {
   room   RoomType   @relation(fields: [roomId], references: [id])
 
   createdAt DateTime @default(now())
+  deletedAt    DateTime?
+
 }
 
 model Booking {
@@ -122,6 +126,7 @@ model RoomType {
   bookings     Booking[]
 
   createdAt    DateTime      @default(now())
+  deletedAt    DateTime?
   updatedAt    DateTime      @updatedAt
 }
 

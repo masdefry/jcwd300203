@@ -11,7 +11,7 @@ router.get('/', getPropertiesList);
 router.get('/details/:id', getPropertyDetails);
 router.get('/tenant', verifyToken, verifyRoleTenant, getPropertiesListTenant);
 router.get('/tenant/details/:id', verifyToken, verifyRoleTenant, getPropertyDetailsTenant);
-router.delete('/:id', verifyToken, verifyRoleTenant, deleteProperty);
+router.patch('/delete/:id', verifyToken, verifyRoleTenant, deleteProperty);
 router.get('/facilites',  getPropertiesAndRoomFacilities);
 router.post('/facilities/create',  uploadIcon, createFacilitiesIcons);
 router.post('/', verifyToken, verifyRoleTenant, uploadProperty, createProperty);

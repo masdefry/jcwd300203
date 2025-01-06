@@ -282,6 +282,7 @@ export const getPropertiesListTenantService = async ({
   const property = await prisma.property.findMany({
     where: {
       tenantId: tenant.id,
+      deletedAt: {not: null}
     },
     include: {
       images: true,
@@ -373,6 +374,7 @@ export const deletePropertyService = async ({
   id: string;
 }) => {
   const propertyId = Number(id);
+  const currentTime = new Date()
 
   const findTenant = await prisma.tenant.findUnique({
     where: {
@@ -392,51 +394,50 @@ export const deletePropertyService = async ({
     },
   });
 
-  const roomTypeIds = roomTypes.map((room) => room.id);
+  const roomTypeIds = roomTypes.map(room => room.id);
 
   await prisma.$transaction(async (prisma) => {
-    await prisma.booking.deleteMany({
+    await prisma.property.update({
+      where: {
+        id: propertyId,
+        tenantId: usersId,
+      },
+      data: {
+        deletedAt: currentTime,
+      },
+    });
+
+    // Soft delete room types
+    if (roomTypeIds.length > 0) {
+      await prisma.roomType.updateMany({
+        where: {
+          id: { in: roomTypeIds },
+        },
+        data: {
+          deletedAt: currentTime,
+        },
+      });
+    }
+
+    // Soft delete room images
+    await prisma.roomImage.updateMany({
+      where: {
+        roomId: { in: roomTypeIds },
+      },
+      data: {
+        deletedAt: currentTime,
+      },
+    });
+
+    // Soft delete property images
+    await prisma.propertyImage.updateMany({
       where: {
         propertyId: propertyId,
       },
-    }),
-      await prisma.roomType.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.booking.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.propertyImage.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.roomImage.deleteMany({
-        where: {
-          roomId: { in: roomTypeIds },
-        },
-      }),
-      await prisma.review.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.flexiblePrice.deleteMany({
-        where: {
-          roomTypeId: { in: roomTypeIds },
-        },
-      });
-  });
-
-  await prisma.property.delete({
-    where: {
-      id: propertyId,
-      tenantId: usersId,
-    },
+      data: {
+        deletedAt: currentTime,
+      },
+    });
   });
 };
 
