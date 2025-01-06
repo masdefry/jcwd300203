@@ -15,6 +15,9 @@ export const getPropertiesListService = async ({
   const currentDate = new Date();
 
   const properties = await prisma.property.findMany({
+    where:{
+      deletedAt: null
+    },
     include: {
       facilities: true,
       roomTypes: {
@@ -144,6 +147,7 @@ export const getPropertyDetailsService = async ({
   const propertyDetails = await prisma.property.findUnique({
     where: {
       id: propertyId,
+      deletedAt: null
     },
     include: {
       images: true,
@@ -282,6 +286,7 @@ export const getPropertiesListTenantService = async ({
   const property = await prisma.property.findMany({
     where: {
       tenantId: tenant.id,
+      deletedAt: null
     },
     include: {
       images: true,
@@ -316,6 +321,7 @@ export const getPropertyDetailsTenantService = async ({
     where: {
       id: propertyId,
       tenantId: usersId,
+      deletedAt: null
     },
     include: {
       images: true,
@@ -373,6 +379,7 @@ export const deletePropertyService = async ({
   id: string;
 }) => {
   const propertyId = Number(id);
+  const currentTime = new Date()
 
   const findTenant = await prisma.tenant.findUnique({
     where: {
@@ -392,51 +399,47 @@ export const deletePropertyService = async ({
     },
   });
 
-  const roomTypeIds = roomTypes.map((room) => room.id);
+  const roomTypeIds = roomTypes.map(room => room.id);
 
   await prisma.$transaction(async (prisma) => {
-    await prisma.booking.deleteMany({
+    await prisma.property.update({
+      where: {
+        id: propertyId,
+        tenantId: usersId,
+      },
+      data: {
+        deletedAt: currentTime,
+      },
+    });
+
+    if (roomTypeIds.length > 0) {
+      await prisma.roomType.updateMany({
+        where: {
+          id: { in: roomTypeIds },
+        },
+        data: {
+          deletedAt: currentTime,
+        },
+      });
+    }
+
+    await prisma.roomImage.updateMany({
+      where: {
+        roomId: { in: roomTypeIds },
+      },
+      data: {
+        deletedAt: currentTime,
+      },
+    });
+
+    await prisma.propertyImage.updateMany({
       where: {
         propertyId: propertyId,
       },
-    }),
-      await prisma.roomType.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.booking.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.propertyImage.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.roomImage.deleteMany({
-        where: {
-          roomId: { in: roomTypeIds },
-        },
-      }),
-      await prisma.review.deleteMany({
-        where: {
-          propertyId: propertyId,
-        },
-      }),
-      await prisma.flexiblePrice.deleteMany({
-        where: {
-          roomTypeId: { in: roomTypeIds },
-        },
-      });
-  });
-
-  await prisma.property.delete({
-    where: {
-      id: propertyId,
-      tenantId: usersId,
-    },
+      data: {
+        deletedAt: currentTime,
+      },
+    });
   });
 };
 
@@ -577,12 +580,13 @@ export const getRoomDetailsByIdService = async ({
 }: IGetRoomDetailsById) => {
   const roomIdNumber = Number(roomId);
 
-  // Validate roomId
   if (!roomIdNumber) throw { msg: "Invalid room ID", status: 400 };
 
-  // Fetch room details from database
   const roomDetails = await prisma.roomType.findUnique({
-    where: { id: roomIdNumber },
+    where: { 
+      id: roomIdNumber,
+      deletedAt: null
+     },
     include: {
       facilities: true,
       images: true,

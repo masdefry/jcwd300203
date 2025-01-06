@@ -171,7 +171,7 @@ export const deleteProperty = async(req: Request, res: Response, next: NextFunct
 
         res.status(200).json({
             error: false,
-            message: 'Property deleted',
+            message: 'Property successfully deleted',
             data: {}
         })
     } catch (error) {
