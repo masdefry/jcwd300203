@@ -1,6 +1,7 @@
-import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService, getPropertyIdByRoomIdService } from "@/services/property.service";
+import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService, getPropertyIdByRoomIdService, getPropertyCategoriesService, createPropertyCategoriesService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
 import { parseCustomDate, parseCustomDateList } from "@/utils/parse.date";
+import { error } from "console";
 
 export  const getPropertiesList = async(req: Request, res: Response, next: NextFunction) => {
     try {
@@ -27,12 +28,6 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
         const parsedCheckOut = checkOut ? parseCustomDateList(checkOut) : undefined;
         const guestCount = guest ? Number(guest) : undefined 
 
-        console.log('checkIn: ',checkIn)
-        console.log('checkOut: ',checkOut)
-
-        console.log('parsed checkin: ',parsedCheckIn)
-        console.log('parsed checkout: ',parsedCheckOut)
-
         const pageNumber = page ? parseInt(page as string, 10) : 1
         const pageSize = limit ? parseInt(limit as string, 10) : 10
         const offset = (pageNumber - 1) * pageSize;
@@ -42,17 +37,6 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
 
         const validSort = allowedSortBy.includes(sortBy as string) ? (sortBy as string) : 'name'
         const validSortOrder = allowedSortOrder.includes (sortOrder as string) ? (sortOrder as string) : 'asc'
-
-        console.log({
-            parsedCheckIn,
-            parsedCheckOut,
-            search,
-            guestCount,
-            offset,
-            pageSize,
-            sortBy: validSort,
-            sortOrder: validSortOrder
-        });
 
         const properties = await getPropertiesListService({parsedCheckIn, parsedCheckOut, search: search || undefined, guest: guest || undefined, offset, pageSize, sortBy: validSort, sortOrder: validSortOrder})
 
@@ -123,7 +107,7 @@ export const getPropertyDetailsTenant = async(req: Request, res: Response, next:
 
 export const createProperty = async(req: Request, res: Response, next: NextFunction) => {
     try {
-        const {usersId, authorizationRole, name, address, city, category, description, roomCapacity, facilityIds, roomTypes} = req.body;
+        const {usersId, authorizationRole, name, address, city, categoryId, description, roomCapacity, facilityIds, roomTypes} = req.body;
         console.log('Initial request body:', req.body);
         
         if (!name || !address || !city || !description || !roomCapacity || !roomTypes) throw { msg: 'Missing required fields', status: 400 };
@@ -132,19 +116,19 @@ export const createProperty = async(req: Request, res: Response, next: NextFunct
         console.log('Files in request:', req.files);
 
         if (!files.mainImage || !files.mainImage[0]) throw { msg: 'Main image is required', status: 400 };
-        console.log('usersId from createProperty :', usersId);
-        console.log('authorizationRole from createProperty :', authorizationRole);
-        console.log('Initial request body:', req.body);
-        console.log('Parsed facilityIds:', JSON.parse(req.body.facilityIds));
-        console.log('Parsed roomTypes:', JSON.parse(req.body.roomTypes));
-        console.log('Files in request:', req.files);
+        // console.log('usersId from createProperty :', usersId);
+        // console.log('authorizationRole from createProperty :', authorizationRole);
+        // console.log('Initial request body:', req.body);
+        // console.log('Parsed facilityIds:', JSON.parse(req.body.facilityIds));
+        // console.log('Parsed roomTypes:', JSON.parse(req.body.roomTypes));
+        // console.log('Files in request:', req.files);
           
         const data = await createPropertyService({usersId, authorizationRole,
             propertyData: {
                 name,
                 address,
                 city,
-                category,
+                categoryId: Number(categoryId),
                 description,
                 roomCapacity: Number(roomCapacity),
                 facilityIds: JSON.parse(facilityIds),
@@ -193,9 +177,41 @@ export const getPropertiesAndRoomFacilities = async(req: Request, res: Response,
     }
 }
 
+export const getPropertyCategories = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const data = await getPropertyCategoriesService()
+
+        res.status(200).json({
+            error: false,
+            message: 'Categories retrieved',
+            data: data
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createPropertyCategories = async(req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {name} = req.body
+        const iconFileName = req?.file?.filename
+
+        if(!name || !iconFileName) throw {msg: 'Icon or Name required'}
+
+        await createPropertyCategoriesService({name, iconFileName})
+
+        res.status(201).json({
+            error: false,
+            message: 'Category created',
+            data: {}
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
 export const createFacilitiesIcons = async(req: Request, res: Response, next: NextFunction) => {
     try {
-        // const {id, role} = req.body
         const {name, type} = req.body
         const iconFileName = req?.file?.filename
 

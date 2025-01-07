@@ -45,27 +45,6 @@ const PropertyList = () => {
     setDeleteDialogState({ isOpen: false, propertyId: null, propertyName: '' });
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-96 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="w-full h-96 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 text-lg">{error?.message || 'Failed to load properties'}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="container mx-auto p-6">
@@ -85,7 +64,7 @@ const PropertyList = () => {
               <CardHeader className="p-0">
                 <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
                   <img
-                    src={property.mainImage || '/api/placeholder/400/300'}
+                    src={`http://localhost:4700/images/${property.mainImage}` || '/api/placeholder/400/300'}
                     alt={property.name}
                     className="w-full h-full object-cover"
                   />

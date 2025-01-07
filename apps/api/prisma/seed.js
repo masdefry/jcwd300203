@@ -21,7 +21,8 @@ async function resetSequences() {
     'Review_id_seq',
     'FlexiblePrice_id_seq',
     'Property_id_seq',
-    'RoomType_id_seq'
+    'RoomType_id_seq',
+    'Category_id_seq'
   ];
 
   for (const seq of sequences) {
@@ -151,7 +152,7 @@ var properties = [
     name: 'Pantai Sumatera Residences',
     address: 'Jl. Tepi Pantai No. 45, Padang, Sumatra Barat, Indonesia',
     city: 'Padang',
-    category: 'Apartement',
+    category: 'Apartment',
     roomCapacity: 20,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
     description: 'A modern beachfront apartment offering stunning ocean views and comfortable amenities.',
@@ -166,7 +167,7 @@ var properties = [
     category: 'Villa',
     roomCapacity: 30,
     mainImage: 'https://example.com/images/rizki_pratama_id.jpg',
-    description: 'A tropical lodge nestled in the heart of Kalimantan’s lush forests, perfect for nature lovers.',
+    description: 'A tropical lodge nestled in the heart of Kalimantan lush forests, perfect for nature lovers.',
     createdAt: new Date(),
     updatedAt: new Date(),
     tenantIndex: 1,
@@ -231,6 +232,33 @@ var properties = [
     updatedAt: new Date(),
     tenantIndex: 0,
   },
+];
+
+const categories = [
+  {
+    name: 'Villa',
+    icon: 'villa.svg',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    name: 'Hotel',
+    icon: 'hotel.svg',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    name: 'Resort',
+    icon: 'resort.svg',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    name: 'Apartment',
+    icon: 'apartment.svg',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }
 ];
 
 // bookings seed
@@ -508,8 +536,32 @@ async function main() {
       await tx.customer.deleteMany({});
       await tx.propFacility.deleteMany({});
       await tx.roomFacility.deleteMany({});
+      await tx.category.deleteMany({});
 
       await resetSequences();
+
+      const createdCategories = await Promise.all(
+        categories.map(async (category) => {
+          const existing = await tx.category.findFirst({
+            where: { name: category.name }
+          });
+          
+          if (!existing) {
+            return await tx.category.create({
+              data: category
+            });
+          }
+          return existing;
+        })
+      );
+      
+      // Create a map for easy category lookup
+      const categoryMap = new Map(
+        createdCategories.map(cat => [cat.name, cat.id])
+      );
+      
+      console.log('Created Categories:', createdCategories);
+      console.log('Category Map:', Array.from(categoryMap.entries()));
 
       // Create customers
       const createdCustomers = await Promise.all(
@@ -539,15 +591,26 @@ async function main() {
 
       // Create properties
       const createdProperties = await Promise.all(
-        properties.map(property => {
-          const { tenantIndex, ...rest } = property;
-          return tx.property.create({
-            data: {
-              ...rest,
-              tenantId: createdTenants[tenantIndex].id,
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
+        properties.map(async (property) => {
+          const { tenantIndex, category: categoryName, ...rest } = property;
+          const categoryId = categoryMap.get(categoryName);
+      
+          if (!categoryId) {
+            throw new Error(`Category not found for property: ${property.name}, category: ${categoryName}`);
+          }
+      
+          const propertyData = {
+            ...rest,
+            categoryId,
+            tenantId: createdTenants[tenantIndex].id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+      
+          console.log('Creating property with data:', propertyData);
+      
+          return await tx.property.create({
+            data: propertyData
           });
         })
       );

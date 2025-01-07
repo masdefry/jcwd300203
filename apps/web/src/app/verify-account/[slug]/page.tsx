@@ -27,17 +27,15 @@ const ConfirmVerifyAccountPage = () => {
         role: decoded.data.role,
       };
     } catch (error) {
-      throw new Error('Invalid or expired token');
     }
   };
 
   useEffect(() => {
     if (token) {
       try {
-        decodeToken(token); // No need to store decoded data since it's handled by middleware
+        decodeToken(token); 
       } catch (error) {
         setStatus('error');
-        toast.error('Invalid or expired token. Please check the link and try again.');
       }
     }
   }, [token]);

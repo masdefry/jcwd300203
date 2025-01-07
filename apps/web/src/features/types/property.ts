@@ -23,7 +23,7 @@ export interface PropertyFormValues {
     address: string;
     description: string;
     city: string;
-    category: string;
+    categoryId: string;
     roomCapacity: string;
     mainImage: File | null;
     propertyImages: File[];

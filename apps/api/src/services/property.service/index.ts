@@ -15,10 +15,16 @@ export const getPropertiesListService = async ({
   const currentDate = new Date();
 
   const properties = await prisma.property.findMany({
-    where:{
+    where: {
       deletedAt: null
     },
     include: {
+      category: true, // Include category relation
+      reviews: {
+        select: {
+          rating: true
+        }
+      },
       facilities: true,
       roomTypes: {
         where: {
@@ -86,22 +92,30 @@ export const getPropertiesListService = async ({
       if (price === null || roomPrice < price) price = roomPrice;
     });
 
+    // Calculate average rating
+    const averageRating = property.reviews.length > 0
+      ? parseFloat((property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1))
+      : 0;
+
     const similarity = search
       ? (property.name.toLowerCase().includes(search.toLowerCase()) ? 3 : 0) +
         (property.city.toLowerCase().includes(search.toLowerCase()) ? 2 : 0) +
         (property.address.toLowerCase().includes(search.toLowerCase()) ? 1 : 0) +
-        (property.category?.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)
+        (property.category?.name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0)
       : 0;
 
     return {
       id: property.id,
       name: property.name,
-      category: property.category,
+      category: property.category?.name || null,
+      categoryIcon: property.category?.icon || null,
       address: property.address,
       city: property.city,
       mainImage: property.mainImage,
       facilities: property.facilities,
       price: price || 0,
+      averageRating,
+      totalReviews: property.reviews.length,
       isAvailable,
       isAlmostFullyBooked,
       similarity,
@@ -123,10 +137,10 @@ export const getPropertiesListService = async ({
     return 0; 
   });
 
- const paginatedProperties =
-  pageSize && offset !== undefined
-    ? sortedProperties.slice(offset, offset + pageSize)
-    : sortedProperties;
+  const paginatedProperties =
+    pageSize && offset !== undefined
+      ? sortedProperties.slice(offset, offset + pageSize)
+      : sortedProperties;
 
   console.log('Formatted and Sorted Properties:', paginatedProperties);
   return paginatedProperties;
@@ -453,6 +467,21 @@ export const getPropertiesAndRoomFacilitiesService = async() => {
   }
 }
 
+export const getPropertyCategoriesService = async() => {
+  const categories = await prisma.category.findMany()
+
+  return categories
+}
+
+export const createPropertyCategoriesService = async({name, iconFileName}:{name: string, iconFileName: string }) => {
+  await prisma.category.create({
+    data: {
+      name: name,
+      icon: iconFileName
+    }
+  })
+}
+
 export const createFacilitiesIconsService = async({name, type, iconFileName}:{name: string, type: string, iconFileName: string | undefined}) => {
   if(type === 'property'){
     await prisma.propFacility.create({
@@ -488,7 +517,7 @@ export const createPropertyService = async({usersId, authorizationRole, property
           name: propertyData.name,
           address: propertyData.address,
           city: propertyData.city,
-          category: propertyData.category,
+          categoryId: Number(propertyData.categoryId),
           description: propertyData.description,
           roomCapacity: Number(propertyData.roomCapacity),
           mainImage: files.mainImage[0].filename,
@@ -554,6 +583,7 @@ export const createPropertyService = async({usersId, authorizationRole, property
       const completeProperty = await tx.property.findUnique({
         where: { id: baseProperty.id },
         include: {
+          category: true,
           images: true,
           facilities: true,
           roomTypes: {
