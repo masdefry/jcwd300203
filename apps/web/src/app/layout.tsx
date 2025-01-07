@@ -15,6 +15,7 @@ import {store} from "./store/store"
 import ReactQueryProvider from '../providers/TanstackProvider';
 import AuthProvider from '../providers/AuthProvider';
 import React from 'react';
+import Navbar from '@/components/Header';
 
 if (typeof window !== "undefined") {
   require("bootstrap/dist/js/bootstrap");
@@ -44,6 +45,7 @@ export default function RootLayout({
         <Provider store={store}>
           <AuthProvider>
             <ReactQueryProvider>
+              <Navbar/>
             {children}
             </ReactQueryProvider>
           </AuthProvider>

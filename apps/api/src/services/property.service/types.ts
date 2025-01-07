@@ -16,7 +16,7 @@ export interface ICreateProperty {
       name: string;
       address: string;
       city: string;
-      category: string;
+      categoryId: string | number;
       description: string;
       roomCapacity: number;
       facilityIds: number[];

@@ -7,9 +7,8 @@ export const propertyValidationSchema = Yup.object().shape({
     name: Yup.string()
       .required('Property name is required')
       .min(3, 'Property name must be at least 3 characters'),
-    category: Yup.string()
-      .required('Property Category is Required')
-      .min(3, 'Property Category must be at least 3 characters'),
+    categoryId: Yup.string()
+      .required('Property Category is Required'),
     address: Yup.string()
       .required('Address is required')
       .min(5, 'Address must be at least 5 characters'),

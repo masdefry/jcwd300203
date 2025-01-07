@@ -24,7 +24,7 @@ const PropertyListingForm: React.FC = () => {
     address: '',
     description: '',
     city: '',
-    category: '',
+    categoryId: '',
     roomCapacity: '',
     mainImage: null,
     propertyImages: [],
@@ -87,7 +87,7 @@ const PropertyListingForm: React.FC = () => {
               createProperty(values);
             }}
           >
-            {({ values, setFieldValue, errors, touched }) => (
+            {({ values, setFieldValue, errors, touched, isValid, dirty }) => (
               <Form className="space-y-6">
                 <BasicInformation />
 
@@ -162,6 +162,22 @@ const PropertyListingForm: React.FC = () => {
                     {isPending ? 'Creating Property...' : 'Submit Property'}
                   </button>
                 </div>
+                <div className="p-4 bg-gray-100 rounded-lg">
+                    <h3 className="font-semibold mb-2">Form Debug Info:</h3>
+                    <div className="space-y-1 text-sm">
+                      <p>Form is Valid: {isValid ? '✅' : '❌'}</p>
+                      <p>Form is Dirty: {dirty ? '✅' : '❌'}</p>
+                      <p>Form Errors: {Object.keys(errors).length ? '❌' : '✅'}</p>
+                      {Object.keys(errors).length > 0 && (
+                        <div className="mt-2">
+                          <p className="font-semibold">Current Errors:</p>
+                          <pre className="bg-white p-2 rounded mt-1 overflow-auto max-h-40">
+                            {JSON.stringify(errors, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </div>
               </Form>
             )}
           </Formik>

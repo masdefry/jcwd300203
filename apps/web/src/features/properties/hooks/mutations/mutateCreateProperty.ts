@@ -16,7 +16,7 @@ export const useMutateCreateProperty = () => {
       formData.append('name', values.name);
       formData.append('address', values.address);
       formData.append('city', values.city);
-      formData.append('category', values.category);
+      formData.append('categoryId', values.categoryId);
       formData.append('description', values.description);
       formData.append('roomCapacity', values.roomCapacity);
       
@@ -60,7 +60,7 @@ export const useMutateCreateProperty = () => {
           name: values.name,
           address: values.address,
           city: values.city,
-          category: values.category,
+          category: values.categoryId,
           roomTypes: values.roomTypes.length
         });
 

@@ -1,7 +1,12 @@
 import React from 'react';
 import { Field, ErrorMessage } from 'formik';
+import { useQueryPropertyCategories } from '@/features/properties/hooks/queries/queryPropertyCategories';
+import { AddCategoryDialog } from './AddCategoryDialog';
+import { CategorySelect } from './CategoriesSection';
 
 export const BasicInformation: React.FC = () => {
+  const { data: categories, isLoading } = useQueryPropertyCategories();
+
   return (
     <div className="space-y-4">
       <div>
@@ -19,14 +24,17 @@ export const BasicInformation: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Property Category</label>
-        <Field
-          name="category"
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-          type="text"
+        <div className="flex justify-between items-center mb-1">
+          <label className="block text-sm font-medium">Property Category</label>
+          <AddCategoryDialog />
+        </div>
+        <CategorySelect
+          categories={categories}
+          isLoading={isLoading}
+          name="categoryId"
         />
         <ErrorMessage
-          name="category"
+          name="categoryId"
           component="div"
           className="text-red-500 text-sm mt-1"
         />

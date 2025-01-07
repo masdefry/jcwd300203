@@ -23,13 +23,13 @@ export default function Home() {
   return (
     <Wrapper>
       {/* <!-- Main Header Nav --> */}
-      <Header />
+      {/* <Header /> */}
 
       {/* <!--  Mobile Menu --> */}
-      <MobileMenu />
+      {/* <MobileMenu /> */}
 
       {/* <!-- Modal --> */}
-      <PopupSignInUp />
+      {/* <PopupSignInUp /> */}
 
       {/* <!-- Home Design --> */}
       <section className="p0">
