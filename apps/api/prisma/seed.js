@@ -258,6 +258,10 @@ const categories = [
     icon: 'apartment.svg',
     createdAt: new Date(),
     updatedAt: new Date(),
+  },
+  {
+    "name": "Beach House",
+    "icon": "icon-1736181348027-281616744.svg",
   }
 ];
 
