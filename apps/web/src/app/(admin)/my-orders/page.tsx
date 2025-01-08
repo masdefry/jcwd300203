@@ -4,6 +4,8 @@ import instance from "@/utils/axiosInstance";
 import Wrapper from "@/components/layout/Wrapper";
 import Footer from "@/components/common/footer/Footer";
 import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
+import SidebarMenu from "@/components/common/header/dashboard/SidebarMenu";
+import MobileMenu from "@/components/common/header/MobileMenu";
 
 type Status = {
   Status: string;
@@ -183,7 +185,7 @@ const MyOrdersPage = () => {
           )}
 
           {/* Cancel Button */}
-          {isPending && (
+          {!hasProofOfPayment && isPending && (
             <button
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
               onClick={() => handleCancel(order.id, hasProofOfPayment)}
@@ -213,6 +215,34 @@ const MyOrdersPage = () => {
 
   return (
     <Wrapper>
+      <div className="dashboard_sidebar_menu lg:hidden">
+        <div
+          className="offcanvas offcanvas-dashboard offcanvas-start"
+          tabIndex={-1}
+          id="DashboardOffcanvasMenu"
+          data-bs-scroll="true"
+        >
+          <SidebarMenu />
+        </div>
+      </div>
+
+      {/* Start Dashboard Navigation */}
+      <div className="col-lg-12">
+        <div className="dashboard_navigationbar dn db-1024">
+          <div className="dropdown">
+            <button
+              className="dropbtn"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#DashboardOffcanvasMenu"
+              aria-controls="DashboardOffcanvasMenu"
+            >
+              <i className="fa fa-bars pr10"></i> Dashboard Navigation
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* End Dashboard Navigation */}
+
       <div className="bg-gray-100 min-h-screen">
         <div className="container mx-auto py-12 px-8">
           <h1 className="text-3xl font-bold text-center mb-6">Orders</h1>

@@ -6,9 +6,6 @@ import ChatBox from "./ChatBox";
 const index = () => {
   return (
     <>
-      {/* <!-- Main Header Nav --> */}
-      <Header />
-
       {/* <!--  Mobile Menu --> */}
       <MobileMenu />
 
