@@ -288,11 +288,6 @@ export default function ReservationPage() {
 
   return (
       <Wrapper>
-        <Header />
-
-        {/* Mobile Menu */}
-        <MobileMenu />
-
         {/* Modal */}
         <PopupSignInUp />
 

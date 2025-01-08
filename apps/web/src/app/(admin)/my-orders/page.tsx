@@ -57,8 +57,6 @@ const MyOrdersPage = () => {
 
   return (
     <Wrapper>
-      <Header/>
-
       <div className="bg-gray-900 min-h-screen py-16">
         <div className="container mx-auto bg-gray-100 shadow-lg rounded-lg py-12 px-8 mt-8">
           <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
