@@ -70,6 +70,16 @@ const SidebarMenu = () => {
             </li>
             <li
               className={`treeview ${
+                isSinglePageActive("/my-orders", pathname) ? "active" : ""
+              }`}
+            >
+              <Link href="/my-orders">
+                <i className="flaticon-box"></i>
+                <span> My Orders</span>
+              </Link>
+            </li>
+            <li
+              className={`treeview ${
                 isSinglePageActive("/create-listing", pathname)
                   ? "active"
                   : ""
@@ -93,112 +103,10 @@ const SidebarMenu = () => {
               </Link>
             </li>
 
-            <li
-              className={`treeview ${
-                isSinglePageActive("/my-orders", pathname) ? "active" : ""
-              }`}
-            >
-              <Link href="/my-orders">
-                <i className="flaticon-order"></i>
-                <span> My Orders</span>
-              </Link>
-            </li>
 
           </ul>
         </li>
         {/* End Main */}
-
-        <li className="title">
-          <span>Manage Listings</span>
-          <ul>
-            <li
-              className={`treeview ${
-                isParentPageActive(myProperties, pathname) ? "active" : ""
-              }`}
-            >
-              <a data-bs-toggle="collapse" href="#my-property">
-                <i className="flaticon-home"></i> <span>My Properties</span>
-                <i className="fa fa-angle-down pull-right"></i>
-              </a>
-              <ul className="treeview-menu collapse" id="my-property">
-                {myProperties.map((item) => (
-                  <li key={item.id}>
-                    <Link href={item.route}>
-                      <i className="fa fa-circle"></i> {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-            {/* end properties */}
-
-            <li
-              className={`treeview ${
-                isParentPageActive(reviews, pathname) ? "active" : ""
-              }`}
-            >
-              <a data-bs-toggle="collapse" href="#review">
-                <i className="flaticon-chat"></i>
-                <span>Reviews</span>
-                <i className="fa fa-angle-down pull-right"></i>
-              </a>
-              <ul className="treeview-menu collapse" id="review">
-                {reviews.map((item) => (
-                  <li key={item.id}>
-                    <Link href={item.route}>
-                      <i className="fa fa-circle"></i> {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-            {/* End Review */}
-
-            <li
-              className={`treeview ${
-                isSinglePageActive("/my-favourites", pathname)
-                  ? "active"
-                  : ""
-              }`}
-            >
-              <Link href="/my-favourites">
-                <i className="flaticon-magnifying-glass"></i>
-                <span> My Favorites</span>
-              </Link>
-            </li>
-            <li
-              className={`treeview ${
-                isSinglePageActive("/my-saved-search", pathname)
-                  ? "active"
-                  : ""
-              }`}
-            >
-              <Link href="/my-saved-search">
-                <i className="flaticon-magnifying-glass"></i>
-                <span> Saved Search</span>
-              </Link>
-            </li>
-          </ul>
-        </li>
-        {/* End manage listing */}
-
-        <li className="title">
-          <span>Manage Account</span>
-          <ul>
-            {manageAccount.map((item) => (
-              <li
-                className={
-                  isSinglePageActive(item.route, pathname) ? "active" : ""
-                }
-                key={item.id}
-              >
-                <Link href={item.route}>
-                  <i className={item.icon}></i> <span>{item.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </li>
       </ul>
     </>
   );

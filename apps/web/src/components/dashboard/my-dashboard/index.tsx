@@ -8,12 +8,6 @@ import StatisticsChart from "./StatisticsChart";
 const index = () => {
   return (
     <>
-      {/* <!-- Main Header Nav --> */}
-      <Header />
-
-      {/* <!--  Mobile Menu --> */}
-      <MobileMenu />
-
       <div className="dashboard_sidebar_menu">
         <div
           className="offcanvas offcanvas-dashboard offcanvas-start"
