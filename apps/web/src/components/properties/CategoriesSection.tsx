@@ -29,31 +29,50 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   error,
   touched,
 }) => {
+  if (isLoading) {
+    return (
+      <Select disabled>
+        <SelectTrigger>
+          <SelectValue placeholder="Loading categories..." />
+        </SelectTrigger>
+      </Select>
+    );
+  }
+
+  if (!categories?.length) {
+    return (
+      <Select disabled>
+        <SelectTrigger>
+          <SelectValue placeholder="No categories available" />
+        </SelectTrigger>
+      </Select>
+    );
+  }
+
   return (
     <Field name={name}>
-      {({ field, form }:any) => (
+      {({ field, form }: any) => (
         <div>
           <Select
-            disabled={isLoading}
             value={field.value?.toString()}
-            onValueChange={(value) => form.setFieldValue(name, value)}
+            onValueChange={(value) => form.setFieldValue(name, Number(value))}
           >
             <SelectTrigger>
               {field.value ? (
                 <div className="flex items-center gap-2">
                   <img
-                    src={`http://localhost:4700/images/${categories?.find(c => c.id.toString() === field.value)?.icon}`}
+                    src={`http://localhost:4700/images/${categories?.find(c => c.id === Number(field.value))?.icon}`}
                     alt="category icon"
                     className="w-4 h-4"
                   />
-                  <span>{categories?.find(c => c.id.toString() === field.value)?.name}</span>
+                  <span>{categories?.find(c => c.id === Number(field.value))?.name}</span>
                 </div>
               ) : (
                 <SelectValue placeholder="Select category" />
               )}
             </SelectTrigger>
             <SelectContent>
-              {categories?.map((category) => (
+              {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id.toString()}>
                   <div className="flex items-center gap-2">
                     <img

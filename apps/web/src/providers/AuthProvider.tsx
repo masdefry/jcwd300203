@@ -5,6 +5,7 @@ import authStore from "@/zustand/authStore";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
+import LoadingWithSpinner from "@/components/Loading";
 
 interface DecodedToken{
     data: {
@@ -176,12 +177,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     if (isLoading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                <div className="animate-fade-in transition-opacity duration-1000">
-                    <div className="w-16 h-16 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin"></div>
-                    <p className="mt-4 text-gray-600 text-lg animate-pulse">Loading...</p>
-                </div>
-            </div>
+            <LoadingWithSpinner/>
         );
     }
 

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState} from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
@@ -9,43 +9,16 @@ import instance from '@/utils/axiosInstance';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff } from 'lucide-react';
 import { errorHandler } from '@/utils/errorHandler';
-import jwt from 'jsonwebtoken';
-import { InvalidLinkError } from '@/components/404/InvalidLink';
+import { isTokenValid } from '@/utils/decodeToken';
+import NotFound from "@/components/404";
 
 export default function ConfirmResetPassword({ params }: any) {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [isTokenValid, setIsTokenValid] = useState(false);
     const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'idle'>('idle');
     const token = params?.slug;
-  
-    const decodeToken = (token: string) => {
-      try {
-        const decoded: any = jwt.decode(token);
-        if (!decoded || !decoded.data || !decoded.data.id || !decoded.data.role) {
-          throw new Error('Invalid token data');
-        }
-        return {
-          id: decoded.data.id,
-          role: decoded.data.role,
-        };
-      } catch (error) {
-        throw error;
-      }
-    };
-  
-    useEffect(() => {
-      if (token) {
-        try {
-          decodeToken(token);
-          setIsTokenValid(true);
-        } catch (error) {
-          setStatus('error');
-          setIsTokenValid(false);
-        }
-      }
-    }, [token]);
+    const valid = isTokenValid(token)
   
     const { mutate: mutateResetPassword, isPending } = useMutation({
       mutationFn: async ({ password }: any) => {
@@ -73,7 +46,7 @@ export default function ConfirmResetPassword({ params }: any) {
       }
     });
   
-    if (status === 'error' || !isTokenValid) return <InvalidLinkError />;
+    if (status === 'error' || !valid) return <NotFound />;
     
   
     const validationSchema = Yup.object().shape({

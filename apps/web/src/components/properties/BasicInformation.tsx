@@ -3,10 +3,12 @@ import { Field, ErrorMessage } from 'formik';
 import { useQueryPropertyCategories } from '@/features/properties/hooks/queries/queryPropertyCategories';
 import { AddCategoryDialog } from './AddCategoryDialog';
 import { CategorySelect } from './CategoriesSection';
+import { useFormikContext } from 'formik';
 
 export const BasicInformation: React.FC = () => {
   const { data: categories, isLoading } = useQueryPropertyCategories();
-
+  const { touched } = useFormikContext();
+  
   return (
     <div className="space-y-4">
       <div>
@@ -32,6 +34,8 @@ export const BasicInformation: React.FC = () => {
           categories={categories}
           isLoading={isLoading}
           name="categoryId"
+          error={<ErrorMessage name="categoryId" component="div" />}
+          touched={touched.categoryId}
         />
         <ErrorMessage
           name="categoryId"

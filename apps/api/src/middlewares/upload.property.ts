@@ -19,6 +19,14 @@ export const uploadProperty = (req: Request, res: Response, next: NextFunction) 
         });
     }
 
+    // Offset for new room type.
+    for (let i = 10000; i < 10010; i++) {
+        uploadFields.push({
+            name: `roomTypeImages${i}`,
+            maxCount: 15
+        });
+    }
+
     console.log('Configured upload fields:', uploadFields);
 
     const upload = uploadMulterProperty.fields(uploadFields);

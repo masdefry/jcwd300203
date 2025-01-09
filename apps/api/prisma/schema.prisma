@@ -130,8 +130,8 @@ model RoomType {
   name          String
   price         Decimal
   description   String   @db.Text
-  qty           Int // Total quantity of this room type
-  guestCapacity Int // Maximum number of guests for this room type
+  qty           Int
+  guestCapacity Int 
   propertyId    Int
   property      Property @relation(fields: [propertyId], references: [id])
 
