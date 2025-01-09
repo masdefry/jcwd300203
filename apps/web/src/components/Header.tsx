@@ -60,6 +60,11 @@ const Navbar = () => {
       ? "block w-full px-4 py-2 text-base text-gray-700 hover:bg-gray-50 transition-colors"
       : "px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#e54949] transition-colors";
 
+    if (!isTokenValid || !role) {
+      // If token is invalid or role is not defined, do not display any navigation items.
+      return null;
+    }
+
     return (
       <>
         {/* Dashboard Route */}
@@ -70,7 +75,7 @@ const Navbar = () => {
           My Dashboard
         </Link>
 
-         {/* Review Route - Only accessible if not a tenant */}
+        {/* Review Route - Only accessible if not a tenant */}
         {role !== "tenant" && (
           <Link href="/user/review" className={baseClasses}>
             Review
