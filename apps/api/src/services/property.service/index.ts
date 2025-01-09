@@ -1,5 +1,6 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IGetPropertyList, IGetRoomDetailsById } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById } from './types';
+import { deleteFiles } from '@/utils/delete.files';
 
 export const getPropertiesListService = async ({
   parsedCheckIn,
@@ -236,6 +237,7 @@ export const getPropertyDetailsService = async ({
       id: room.id,
       name: room.name,
       quantity: room.qty,
+      description: room.description,
       guestCapacity: room.guestCapacity,
       price: room.price,
       images: room.images.map((img) => ({
@@ -256,6 +258,7 @@ export const getPropertyDetailsService = async ({
     name: propertyDetails.name,
     address: propertyDetails.address,
     city: propertyDetails.city,
+    description: propertyDetails.description,
     mainImage: propertyDetails.mainImage,
     roomCapacity: propertyDetails.roomCapacity,
     images: propertyDetails.images.map((img) => ({
@@ -363,6 +366,7 @@ export const getPropertyDetailsTenantService = async ({
       id: roomType.id,
       quantity: roomType.qty,
       name: roomType.name,
+      description: roomType.description,
       price: roomType.price,
       guestCapacity: roomType.guestCapacity,
       images: roomType.images.map((img) => ({
@@ -601,6 +605,267 @@ export const createPropertyService = async({usersId, authorizationRole, property
     console.error('Transaction error:', error);
     throw error;
   }
+};
+
+export const editPropertyService = async({
+  propertyId,
+  tenantId,
+  tenantRole,
+  name,
+  address,
+  city,
+  categoryId,
+  description,
+  roomCapacity,
+  mainImage,
+  propertyImages,
+  facilityIds,
+  roomTypesToUpdate = [],
+  roomTypesToAdd = [],
+  roomTypesToDelete = [],
+  imagesToDelete = []
+}: IEditProperty) => {
+  const tenant = await prisma.tenant.findUnique({
+    where: {
+      id: tenantId,
+      role: tenantRole
+    }
+  })
+  if (!tenant) throw {msg: 'Invalid Credentials', status: 401}
+  // Verify property ownership
+  const existingProperty = await prisma.property.findUnique({
+      where: {
+          id: propertyId,
+          tenantId,
+          deletedAt: null
+      },
+      include: {
+        images: true,
+        roomTypes: {
+          include: {
+            images: true
+          }
+        }
+      }
+  });
+
+  if (!existingProperty) throw { msg: 'Property not found or unauthorized', status: 404 };
+  
+
+  return await prisma.$transaction(async (tx) => {
+    // Handle image deletions and file cleanup
+    const imagesToBeDeleted: { path: string }[] = [];
+      // 1. Update basic property information if provided
+      if (name || address || city || categoryId !== undefined || description || roomCapacity !== undefined || mainImage) {
+          await tx.property.update({
+              where: { id: propertyId },
+              data: {
+                  ...(name && { name }),
+                  ...(address && { address }),
+                  ...(city && { city }),
+                  ...(categoryId !== undefined && { categoryId }),
+                  ...(description && { description }),
+                  ...(roomCapacity !== undefined && { roomCapacity }),
+                  ...(mainImage && { mainImage })
+              }
+          });
+      }
+
+      // 2. Handle property images deletion
+      if (imagesToDelete.length > 0) {
+        const imagesToRemove = existingProperty.images.filter(img => imagesToDelete.includes(img.id));
+        imagesToRemove.forEach(img => {
+            imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
+        });
+
+        await tx.propertyImage.deleteMany({
+            where: { 
+                id: { in: imagesToDelete },
+                propertyId 
+            }
+        });
+    }
+
+       // 3. Add new property images if provided
+       if (propertyImages?.length) {
+        await tx.propertyImage.createMany({
+            data: propertyImages.map(url => ({
+                url,
+                propertyId
+            }))
+        });
+    }
+
+
+       // 4. Update facilities if provided
+       if (facilityIds) {
+        await tx.property.update({
+            where: { id: propertyId },
+            data: {
+                facilities: {
+                    set: facilityIds.map(id => ({ id }))
+                }
+            }
+        });
+    }
+
+      // 4. Delete room types if specified
+      if (roomTypesToDelete.length > 0) {
+          await tx.roomType.deleteMany({
+              where: {
+                  id: { in: roomTypesToDelete },
+                  propertyId
+              }
+          });
+      }
+
+       // 5. Handle room type deletions
+       if (roomTypesToDelete.length > 0) {
+        // Get images of rooms to be deleted
+        const roomsToDelete = existingProperty.roomTypes.filter(room => roomTypesToDelete.includes(room.id));
+        roomsToDelete.forEach(room => {
+            room.images.forEach(img => {
+                imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
+            });
+        });
+
+        await tx.roomType.deleteMany({
+            where: {
+                id: { in: roomTypesToDelete },
+                propertyId
+            }
+        });
+    }
+
+      // 6. Update existing room types
+      for (const room of roomTypesToUpdate) {
+        const existingRoom = await tx.roomType.findFirst({
+            where: {
+                id: room.id,
+                propertyId
+            },
+            include: {
+                images: true
+            }
+        });
+
+        if (!existingRoom) continue;
+
+        // Update basic room info if provided
+        const roomUpdateData: any = {};
+        if (room.name) roomUpdateData.name = room.name;
+        if (room.price) roomUpdateData.price = parseFloat(room.price as string);
+        if (room.description) roomUpdateData.description = room.description;
+        if (room.qty) roomUpdateData.qty = parseInt(room.qty as string);
+        if (room.guestCapacity) roomUpdateData.guestCapacity = parseInt(room.guestCapacity as string);
+
+        if (Object.keys(roomUpdateData).length > 0) {
+            await tx.roomType.update({
+                where: { id: room.id },
+                data: roomUpdateData
+            });
+        }
+
+        // Update room images if provided
+        if (room.images?.length) {
+            // Store old images for deletion
+            existingRoom.images.forEach(img => {
+                imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
+            });
+
+            // Delete existing images from database
+            await tx.roomImage.deleteMany({
+                where: { roomId: room.id }
+            });
+
+            // Add new images
+            await tx.roomImage.createMany({
+                data: room.images.map(url => ({
+                    url,
+                    roomId: room.id
+                }))
+            });
+        }
+
+          // Update room facilities if provided
+          if (room.facilities?.length) {
+              await tx.roomType.update({
+                  where: { id: room.id },
+                  data: {
+                      facilities: {
+                          set: room.facilities.map(id => ({ id }))
+                      }
+                  }
+              });
+          }
+
+          // Handle special pricing if provided
+          if (room.specialPrice !== undefined) {
+              // Delete existing special prices
+              await tx.flexiblePrice.deleteMany({
+                  where: { roomTypeId: room.id }
+              });
+
+              // Add new special prices if any are provided
+              if (room.specialPrice.length > 0) {
+                  await tx.flexiblePrice.createMany({
+                      data: room.specialPrice.map(sp => ({
+                          roomTypeId: room.id,
+                          customDate: sp.date,
+                          customPrice: sp.price
+                      }))
+                  });
+              }
+          }
+      }
+
+       // 7. Add new room types
+       for (const room of roomTypesToAdd) {
+        const newRoom = await tx.roomType.create({
+            data: {
+                name: room.name,
+                price: parseFloat(room.price as string),
+                description: room.description,
+                qty: parseInt(room.qty as string),
+                guestCapacity: parseInt(room.guestCapacity as string),
+                propertyId,
+                facilities: {
+                    connect: room.facilities.map(id => ({ id }))
+                }
+            }
+        });
+
+        // Add room images if provided
+        if (room.images?.length) {
+            await tx.roomImage.createMany({
+                data: room.images.map(url => ({
+                    url,
+                    roomId: newRoom.id
+                }))
+            });
+        }
+
+          // Add special pricing if provided
+          if (room.specialPrice?.length) {
+              await tx.flexiblePrice.createMany({
+                  data: room.specialPrice.map(sp => ({
+                      roomTypeId: newRoom.id,
+                      customDate: sp.date,
+                      customPrice: sp.price
+                  }))
+              });
+          }
+      }
+
+      // Delete old image files after database operations succeed
+      if (imagesToBeDeleted.length > 0) {
+        deleteFiles({ imagesUploaded: { images: imagesToBeDeleted } });
+    }
+
+  }, {
+    maxWait: 15000,  // Maximum time (ms) to wait to acquire a transaction lock
+    timeout: 20000,  // Maximum time (ms) the transaction can run
+  });
 };
 
 export const getRoomDetailsByIdService = async ({

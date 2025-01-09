@@ -40,7 +40,7 @@ export default function RegistrationForm({ params }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const token = pathname.split('/')[2]
+  const token = pathname.split('/')[3]
   const valid = isTokenValid(token);
   if(!valid) return <NotFound/>
 
@@ -73,14 +73,23 @@ export default function RegistrationForm({ params }: any) {
 
   const getStepData = (step: number) => {
     try {
-      return JSON.parse(sessionStorage.getItem(`registerUserStep${step}`) || '{}');
-    } catch {
+      const key = `register_user_step${step}`;
+      const data = sessionStorage.getItem(key);
+    
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      console.error('Error getting data:', error);
       return {};
     }
   };
 
   const saveStepData = (step: number, data: any) => {
-    sessionStorage.setItem(`registerUserStep${step}`, JSON.stringify(data));
+    try {
+      const key = `register_user_step${step}`; 
+      sessionStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
   };
 
   const clearStepData = () => {

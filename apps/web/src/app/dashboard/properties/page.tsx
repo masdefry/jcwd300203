@@ -8,6 +8,7 @@ import { useGetProperties } from '@/features/properties/hooks/queries/queryGetPr
 import { useDeleteProperty } from '@/features/properties/hooks/mutations/mutateDeleteProperty';
 import { DeletePropertyDialog } from '@/components/properties/DeletePropertyDialog';
 import { useState } from 'react';
+import LoadingWithSpinner from '@/components/Loading';
 
 const PropertyList = () => {
   const { data: properties, isLoading, error, isError } = useGetProperties();
@@ -21,6 +22,8 @@ const PropertyList = () => {
     propertyId: null,
     propertyName: '',
   });
+
+  if (isLoading) return <LoadingWithSpinner/>
 
   const handleDeleteClick = (propertyId: number, propertyName: string) => {
     setDeleteDialogState({

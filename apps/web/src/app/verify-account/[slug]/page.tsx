@@ -7,6 +7,8 @@ import instance from '@/utils/axiosInstance';
 import { toast } from 'react-toastify';
 import { errorHandler } from '@/utils/errorHandler';
 import authStore from '@/zustand/authStore';
+import { isTokenValid } from '@/utils/decodeToken';
+import NotFound from "@/components/404";
 
 const ConfirmVerifyAccountPage = () => {
   const pathname = usePathname();
@@ -15,7 +17,8 @@ const ConfirmVerifyAccountPage = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'idle'>('idle');
   const router = useRouter();
   const name = authStore((state) => state.name);
-
+  const valid = isTokenValid(token)
+  if(!valid) return <NotFound/>
   const decodeToken = (token: string) => {
     try {
       const decoded: any = jwt.decode(token);

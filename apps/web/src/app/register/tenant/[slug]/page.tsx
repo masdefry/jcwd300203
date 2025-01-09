@@ -12,7 +12,7 @@ import { toast } from 'react-toastify';
 import { errorHandler } from '@/utils/errorHandler';
 import { usePathname, useRouter } from 'next/navigation';
 import { isTokenValid } from '@/utils/decodeToken';
-import NotFound from "@/components/404";
+import NotFound from '@/components/404';
 
 const validationSchemas = {
   step1: Yup.object().shape({
@@ -44,18 +44,32 @@ export default function RegisterPage({ params }: any) {
   const idCardImageRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
-  const token = pathname.split('/')[2]
+  const token = pathname.split('/')[3];
+
   const saveStepData = (step: number, data: any) => {
-    sessionStorage.setItem(`registerStep${step}`, JSON.stringify(data));
+    try {
+      const key = `register_tenant_step${step}`; 
+      console.log(`Saving step ${step} data:`, data);
+      sessionStorage.setItem(key, JSON.stringify(data));
+   
+      const saved = sessionStorage.getItem(key);
+      console.log(`Verified save for step ${step}:`, JSON.parse(saved || '{}'));
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
   };
-  const valid = isTokenValid(token)
-  console.log('valid:',valid)
-  if(!valid) return <NotFound/>;
-  
+  const valid = isTokenValid(token);
+
+  if (!valid) return <NotFound />;
+
   const getStepData = (step: number) => {
     try {
-      return JSON.parse(sessionStorage.getItem(`registerStep${step}`) || '{}');
-    } catch {
+      const key = `register_tenant_step${step}`;
+      const data = sessionStorage.getItem(key);
+      console.log(`Getting step ${step} data:`, data);
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      console.error('Error getting data:', error);
       return {};
     }
   };
@@ -106,6 +120,7 @@ export default function RegisterPage({ params }: any) {
     onSuccess: (res) => {
       toast.success(res.message);
       setIsSubmitting(false);
+      clearStepData();
       router.push('/login/tenant');
     },
     onError: (err: any) => {
@@ -123,7 +138,10 @@ export default function RegisterPage({ params }: any) {
         }}
         validationSchema={validationSchemas.step1}
         onSubmit={(values) => {
+          console.log('Saving Step 1:', values); // Debug log
           saveStepData(1, values);
+          const savedData = getStepData(1);
+          console.log('Verified Step 1 Save:', savedData); // Verify save
           setCurrentStep(2);
         }}
       >
@@ -179,7 +197,10 @@ export default function RegisterPage({ params }: any) {
         }}
         validationSchema={validationSchemas.step2}
         onSubmit={(values) => {
+          console.log('Saving Step 2:', values); // Debug log
           saveStepData(2, values);
+          const savedData = getStepData(2);
+          console.log('Verified Step 2 Save:', savedData); // Verify save
           setCurrentStep(3);
         }}
       >
@@ -204,7 +225,7 @@ export default function RegisterPage({ params }: any) {
                 className="text-red-500 text-sm mt-1"
               />
             </div>
-    
+
             <div>
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <input // Changed from Field to input
@@ -224,7 +245,7 @@ export default function RegisterPage({ params }: any) {
                 className="text-red-500 text-sm mt-1"
               />
             </div>
-    
+
             <div className="flex gap-3">
               <Button
                 type="button"
@@ -342,24 +363,51 @@ export default function RegisterPage({ params }: any) {
             type="button"
             disabled={isSubmitting}
             onClick={() => {
+              const step1Data = getStepData(1);
+              const step2Data = getStepData(2);
+
               if (!idCardImage) {
                 toast.error('Please upload an ID card image');
                 return;
               }
+              // Validate all required data is present
+              if (!step1Data.fullName || !step1Data.username) {
+                toast.error(
+                  'Missing personal information. Please go back and fill all fields.',
+                );
+                return;
+              }
 
+              if (!step2Data.password) {
+                toast.error(
+                  'Missing password information. Please go back and fill all fields.',
+                );
+                return;
+              }
+
+              if (!profileImage || !idCardImage) {
+                toast.error(
+                  'Both profile image and ID card image are required.',
+                );
+                return;
+              }
+
+              
               setIsSubmitting(true);
-              const step1Data = getStepData(1);
-              const step2Data = getStepData(2);
 
               const submitFormData = new FormData();
               submitFormData.append('name', step1Data.fullName);
               submitFormData.append('username', step1Data.username);
               submitFormData.append('password', step2Data.password);
-              submitFormData.append('profileImage', profileImage!);
+              submitFormData.append('profileImage', profileImage);
               submitFormData.append('idCardImage', idCardImage);
 
+              // Log FormData entries
+              for (let pair of submitFormData.entries()) {
+                console.log(pair[0], pair[1]);
+              }
+
               mutateRegisterTenant(submitFormData);
-              clearStepData(); // Clear the session storage after submission
             }}
             className={`w-1/2 py-3 text-white bg-[#f15b5b] rounded-lg font-medium
     ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#e54949]'}`}

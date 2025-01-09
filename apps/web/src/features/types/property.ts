@@ -89,3 +89,83 @@ export interface FacilitiesResponse {
     roomFacilities: Facility[];
   };
 }
+
+
+  
+
+  export interface RoomTypeImage {
+    id: number;
+    url: string;
+  }
+  
+  export interface RoomTypeResponse {
+    id: number;
+    quantity: number;
+    name: string;
+    price: string;
+    guestCapacity: number;
+    description?: string;
+    images: RoomTypeImage[];
+    facilities: Array<{
+      id: number;
+      name: string;
+      icon: string;
+    }>;
+    specialPrice?: Array<{
+      id: number;
+      date: string;
+      price: string;
+    }>;
+  }
+  
+  export interface RoomTypeForm {
+    id?: number;
+    name: string;
+    price: string;
+    description: string;
+    qty: number;
+    guestCapacity: number;
+    facilities: number[];
+    images: Array<File | RoomTypeImage>;
+    specialPrice?: Array<{
+      id?: number;
+      date: Date | null;
+      price: string;
+    }>;
+  }
+  
+  export interface PropertyType {
+    id: number;
+    name: string;
+    mainImage: string;
+    address: string;
+    city: string;
+    categoryId: number;
+    description: string;
+    roomCapacity: number;
+    images: Array<{
+      id: number;
+      url: string;
+    }>;
+    facilities: Array<{
+      id: number;
+      name: string;
+      icon: string;
+    }>;
+    roomTypes: RoomTypeResponse[];
+  }
+  
+  export interface PropertyDetailsRoomSectionProps {
+    values: {
+      roomTypes: RoomTypeForm[];
+    };
+    setFieldValue: (field: string, value: any) => void;
+    errors: any;
+    touched: any;
+    roomImagePreviews: { [key: number]: string[] };
+    handleImagePreview: {
+      addRoomImages: (files: File[], roomIndex: number) => void;
+      setRoomImages: (images: Array<File | RoomTypeImage>, roomIndex: number) => void;
+      removeRoomImage: (roomIndex: number, imageIndex: number) => void;
+    };
+  }
