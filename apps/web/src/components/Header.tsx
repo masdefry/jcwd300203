@@ -158,11 +158,11 @@ const Navbar = () => {
             <span>My Dashboard</span>
           </DropdownMenuItem> */}
 
-
-          {/* Profile Link - Conditional Redirect */}
+          
+          {/* my messages */}
           <DropdownMenuItem
             onClick={() =>
-              window.location.href = role === 'tenant' ? '/dashboard/profile' : '/user/profile'
+              window.location.href = role === 'tenant' ? '/dashboard/messages' : '/user/messages'
             }
           >
             <Inbox className="mr-2 h-4 w-4" />
