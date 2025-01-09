@@ -275,7 +275,7 @@ const bookings = [
     checkOutDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
     roomTypeIndex: 0, // Instead of roomId: 1
     propertyIndex: 0, // Instead of propertyId: 1
-    customerIndex: 0, // Instead of customerId: 1, references Ucup uwuw
+    customerIndex: 0, // Ucup uwuw
     room_qty: 1,
     status: 'CONFIRMED'
   },
@@ -305,8 +305,18 @@ const bookings = [
     customerIndex: 3, // Ahmad Bejo
     room_qty: 1,
     status: 'CONFIRMED'
-  }
+  },
+  {
+    checkInDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000), // 1 year ago
+    checkOutDate: new Date(Date.now() - 362 * 24 * 60 * 60 * 1000), // 1 year ago, 3 days later
+    roomTypeIndex: 1, // Room type for the booking
+    propertyIndex: 1, // Property associated with this booking
+    customerIndex: 0, // Ucup uwuw
+    room_qty: 1,
+    status: 'CONFIRMED'
+  },
 ];
+
 
 // Variable to store PropertyRoomType seeds
 // Integrated Room Data for Each Property

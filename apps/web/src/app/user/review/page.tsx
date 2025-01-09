@@ -66,7 +66,7 @@ const Bookings: React.FC = () => {
         <td className="px-4 py-2 text-center">
           {isPast && (
             <button
-              onClick={() => router.push(`/review/${booking.id}`)}
+              onClick={() => router.push(`/user/review/${booking.id}`)}
               className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
             >
               Review
