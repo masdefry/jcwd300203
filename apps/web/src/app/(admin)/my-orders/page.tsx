@@ -37,6 +37,7 @@ const MyOrdersPage = () => {
   const [activeTab, setActiveTab] = useState<"pending" | "confirmed">("pending");
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -121,14 +122,12 @@ const MyOrdersPage = () => {
         key={order.id}
         className="flex flex-col md:flex-row items-start md:items-center bg-white shadow rounded-lg p-4 mb-4 border hover:shadow-md transition-shadow"
       >
-        {/* Property Image */}
         <img
           src={order.property?.img || "/placeholder.jpg"}
           alt={order.property?.name || "Property"}
           className="w-full md:w-24 h-24 object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
         />
 
-        {/* Property Details */}
         <div className="flex-1">
           <h4 className="text-lg font-semibold mb-1">
             {order.property?.name || "Property Name"}
@@ -154,9 +153,7 @@ const MyOrdersPage = () => {
           </span>
         </div>
 
-        {/* Actions Section */}
         <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-center">
-          {/* View Proof Button */}
           {hasProofOfPayment && (
             <button
               className="text-blue-500 underline"
@@ -166,7 +163,6 @@ const MyOrdersPage = () => {
             </button>
           )}
 
-          {/* Approve or Reject Button */}
           {hasProofOfPayment && !isConfirmed && (
             <>
               <button
@@ -184,7 +180,6 @@ const MyOrdersPage = () => {
             </>
           )}
 
-          {/* Cancel Button */}
           {!hasProofOfPayment && isPending && (
             <button
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
@@ -195,7 +190,6 @@ const MyOrdersPage = () => {
           )}
         </div>
 
-        {/* Price */}
         <div className="mt-4 md:mt-0 md:ml-4 text-right">
           <p className="text-lg font-semibold text-gray-700">
             {order.price
@@ -215,86 +209,119 @@ const MyOrdersPage = () => {
 
   return (
     <Wrapper>
-      <div className="dashboard_sidebar_menu lg:hidden">
+      {/* Main container with flex layout */}
+      <div className="flex min-h-screen relative">
+        {/* Sidebar - Fixed on desktop, sliding on mobile */}
         <div
-          className="offcanvas offcanvas-dashboard offcanvas-start"
-          tabIndex={-1}
-          id="DashboardOffcanvasMenu"
-          data-bs-scroll="true"
+          className={`w-72 bg-[#13213c] min-h-screen fixed md:static z-40 transition-transform duration-300 ease-in-out ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
         >
           <SidebarMenu />
         </div>
-      </div>
 
-      {/* Start Dashboard Navigation */}
-      <div className="col-lg-12">
-        <div className="dashboard_navigationbar dn db-1024">
-          <div className="dropdown">
-            <button
-              className="dropbtn"
-              data-bs-toggle="offcanvas"
-              data-bs-target="#DashboardOffcanvasMenu"
-              aria-controls="DashboardOffcanvasMenu"
-            >
-              <i className="fa fa-bars pr10"></i> Dashboard Navigation
-            </button>
-          </div>
-        </div>
-      </div>
-      {/* End Dashboard Navigation */}
+        {/* Mobile overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
-      <div className="bg-gray-100 min-h-screen">
-        <div className="container mx-auto py-12 px-8">
-          <h1 className="text-3xl font-bold text-center mb-6">Orders</h1>
-          <p className="text-center text-gray-500 mb-12">
-            View your pending and confirmed orders below.
-          </p>
-
-          <div className="flex justify-center mb-8">
+        {/* Main content */}
+        <div className="flex-1 min-h-screen bg-gray-100">
+          {/* Mobile header with menu button */}
+          <div className="md:hidden p-4 bg-white shadow-sm">
             <button
-              className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
-                activeTab === "pending"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-              onClick={() => setActiveTab("pending")}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-md hover:bg-gray-100"
             >
-              Pending
-            </button>
-            <button
-              className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
-                activeTab === "confirmed"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
-              onClick={() => setActiveTab("confirmed")}
-            >
-              Confirmed
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
             </button>
           </div>
 
-          {activeTab === "pending" && (
-            <div>
-              {pendingOrders.length > 0 ? (
-                pendingOrders.map((order) => renderCard(order))
-              ) : (
-                <p className="text-center text-gray-500">
-                  No pending orders available.
-                </p>
+          {/* Content area */}
+          <div className="p-6 md:p-8">
+            <div className="max-w-7xl mx-auto">
+              <h1 className="text-3xl font-bold text-center mb-6">Orders</h1>
+              <p className="text-center text-gray-500 mb-12">
+                View your pending and confirmed orders below.
+              </p>
+
+              <div className="flex justify-center mb-8">
+                <button
+                  className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                    activeTab === "pending"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  onClick={() => setActiveTab("pending")}
+                >
+                  Pending
+                </button>
+                <button
+                  className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                    activeTab === "confirmed"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  onClick={() => setActiveTab("confirmed")}
+                >
+                  Confirmed
+                </button>
+              </div>
+
+              {activeTab === "pending" && (
+                <div>
+                  {pendingOrders.length > 0 ? (
+                    pendingOrders.map((order) => renderCard(order))
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No pending orders available.
+                    </p>
+                  )}
+                </div>
+              )}
+              {activeTab === "confirmed" && (
+                <div>
+                  {confirmedOrders.length > 0 ? (
+                    confirmedOrders.map((order) => renderCard(order))
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No confirmed orders available.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
-          )}
-          {activeTab === "confirmed" && (
-            <div>
-              {confirmedOrders.length > 0 ? (
-                confirmedOrders.map((order) => renderCard(order))
-              ) : (
-                <p className="text-center text-gray-500">
-                  No confirmed orders available.
-                </p>
-              )}
+          </div>
+
+          {/* Footer sections */}
+          {/* <section className="footer_one">
+            <div className="container">
+              <div className="row">
+                <Footer />
+              </div>
             </div>
-          )}
+          </section>
+
+          <section className="footer_middle_area pt40 pb40">
+            <div className="container">
+              <CopyrightFooter />
+            </div>
+          </section> */}
         </div>
       </div>
 
@@ -316,22 +343,6 @@ const MyOrdersPage = () => {
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <section className="footer_one">
-        <div className="container">
-          <div className="row">
-            <Footer />
-          </div>
-        </div>
-      </section>
-
-      {/* Footer Bottom Area */}
-      <section className="footer_middle_area pt40 pb40">
-        <div className="container">
-          <CopyrightFooter />
-        </div>
-      </section>
     </Wrapper>
   );
 };

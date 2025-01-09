@@ -5,7 +5,14 @@ import { getSalesReportService, getPropertyReportService } from "@/services/repo
 // Sales Report
 export const salesReport = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { tenantId } = req.body;
+    const { usersId } = req.body; 
+    const tenantId = usersId;
+
+
+    if (!tenantId) {
+      return res.status(400).json({ success: false, message: "Tenant ID is required" });
+    }
+
     const { startDate, endDate, sortBy } = req.query;
 
     const report = await getSalesReportService({ tenantId, startDate, endDate, sortBy });
@@ -18,7 +25,9 @@ export const salesReport = async (req: Request, res: Response, next: NextFunctio
 // Property Report
 export const propertyReport = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { tenantId } = req.body;
+    const { usersId } = req.body;
+    const tenantId = usersId; 
+    
     const report = await getPropertyReportService({ tenantId });
     res.status(200).json({ success: true, data: report });
   } catch (error) {
