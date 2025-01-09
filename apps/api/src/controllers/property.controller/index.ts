@@ -1,7 +1,8 @@
-import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService, getPropertyIdByRoomIdService, getPropertyCategoriesService, createPropertyCategoriesService } from "@/services/property.service";
+import { createFacilitiesIconsService, createPropertyService, deletePropertyService, getPropertiesAndRoomFacilitiesService, getPropertiesListService, getPropertiesListTenantService, getPropertyDetailsService, getPropertyDetailsTenantService, getRoomDetailsByIdService, getPropertyIdByRoomIdService, getPropertyCategoriesService, createPropertyCategoriesService, editPropertyService } from "@/services/property.service";
 import { Request, Response, NextFunction } from "express";
 import { parseCustomDate, parseCustomDateList } from "@/utils/parse.date";
 import { error } from "console";
+import { deleteFiles } from "@/utils/delete.files";
 
 export  const getPropertiesList = async(req: Request, res: Response, next: NextFunction) => {
     try {
@@ -116,12 +117,6 @@ export const createProperty = async(req: Request, res: Response, next: NextFunct
         console.log('Files in request:', req.files);
 
         if (!files.mainImage || !files.mainImage[0]) throw { msg: 'Main image is required', status: 400 };
-        // console.log('usersId from createProperty :', usersId);
-        // console.log('authorizationRole from createProperty :', authorizationRole);
-        // console.log('Initial request body:', req.body);
-        // console.log('Parsed facilityIds:', JSON.parse(req.body.facilityIds));
-        // console.log('Parsed roomTypes:', JSON.parse(req.body.roomTypes));
-        // console.log('Files in request:', req.files);
           
         const data = await createPropertyService({usersId, authorizationRole,
             propertyData: {
@@ -145,6 +140,90 @@ export const createProperty = async(req: Request, res: Response, next: NextFunct
         next(error)
     }
 }
+
+export const editProperty = async(req: Request, res: Response, next: NextFunction) => {
+    // Track uploaded files for cleanup in case of error
+    const uploadedFiles: { path: string }[] = [];
+    
+    try {
+        const { usersId, authorizationRole } = req.body;
+        const { id } = req.params;
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        
+        // Parse the property data
+        const propertyData = JSON.parse(req.body.data);
+
+        // Track uploaded files
+        if (files) {
+            Object.values(files).flat().forEach(file => {
+                uploadedFiles.push({ path: file.path });
+            });
+        }
+
+        // Handle main image
+        const mainImage = files?.mainImage?.[0]?.filename;
+
+        // Handle property images
+        const propertyImages = files?.propertyImages?.map(file => file.filename) || [];
+
+        // Handle room images
+        const roomImages: { [key: number]: string[] } = {};
+        Object.keys(files || {}).forEach(key => {
+            if (key.startsWith('roomTypeImages')) {
+                const index = parseInt(key.replace('roomTypeImages', ''));
+                roomImages[index] = files[key].map(file => file.filename);
+            }
+        });
+
+        // Map room types with their images
+        const roomTypesToUpdate = propertyData.roomTypesToUpdate?.map((room: any, index: number) => ({
+            ...room,
+            images: roomImages[index] || undefined, // Only include if new images were uploaded
+            specialPrice: room.specialPrice?.map((sp: any) => ({
+                ...sp,
+                date: new Date(sp.date),
+                price: parseFloat(sp.price)
+            }))
+        })) || [];
+
+        const roomTypesToAdd = propertyData.roomTypesToAdd?.map((room: any, index: number) => ({
+            ...room,
+            images: roomImages[10000 + index] || [], // Use offset for new rooms
+            specialPrice: room.specialPrice?.map((sp: any) => ({
+                date: new Date(sp.date),
+                price: parseFloat(sp.price)
+            }))
+        })) || [];
+
+        const updatedProperty = await editPropertyService({
+            propertyId: Number(id),
+            tenantId: usersId,
+            tenantRole: authorizationRole,
+            name: propertyData.name,
+            address: propertyData.address,
+            city: propertyData.city,
+            categoryId: propertyData.categoryId ? parseInt(propertyData.categoryId) : undefined,
+            description: propertyData.description,
+            roomCapacity: propertyData.roomCapacity ? parseInt(propertyData.roomCapacity) : undefined,
+            mainImage,
+            propertyImages,
+            facilityIds: propertyData.facilityIds?.map((id: string) => parseInt(id)),
+            roomTypesToUpdate,
+            roomTypesToAdd,
+            roomTypesToDelete: propertyData.roomTypesToDelete?.map((id: string) => parseInt(id)),
+            imagesToDelete: propertyData.imagesToDelete?.map((id: string) => parseInt(id))
+        });
+
+        res.status(200).json({
+            error: false,
+            message: 'Property updated successfully',
+            data: updatedProperty
+        });
+    } catch (error) {
+        if (uploadedFiles.length > 0) deleteFiles({ imagesUploaded: { images: uploadedFiles } });
+        next(error);
+    }
+};
 
 export const deleteProperty = async(req: Request, res: Response, next: NextFunction) => {
     try {

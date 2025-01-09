@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createFacilitiesIcons, createProperty, deleteProperty, getPropertiesAndRoomFacilities, getPropertiesList, getPropertiesListTenant, getPropertyDetails, getPropertyDetailsTenant, getRoomDetailsById, getPropertyIdByRoomId, getPropertyCategories, createPropertyCategories } from "@/controllers/property.controller";
+import { createFacilitiesIcons, createProperty, deleteProperty, getPropertiesAndRoomFacilities, getPropertiesList, getPropertiesListTenant, getPropertyDetails, getPropertyDetailsTenant, getRoomDetailsById, getPropertyIdByRoomId, getPropertyCategories, createPropertyCategories, editProperty } from "@/controllers/property.controller";
 import { verifyToken } from "@/middlewares/verify.token";
 import { verifyRoleTenant } from "@/middlewares/verify.role.tenant";
 import { uploadIcon } from "@/middlewares/upload.multer.icon";
@@ -11,6 +11,7 @@ router.get('/', getPropertiesList);
 router.get('/details/:id', getPropertyDetails);
 router.get('/tenant', verifyToken, verifyRoleTenant, getPropertiesListTenant);
 router.get('/tenant/details/:id', verifyToken, verifyRoleTenant, getPropertyDetailsTenant);
+router.patch('/edit/:id',verifyToken, verifyRoleTenant, uploadProperty, editProperty)
 router.patch('/delete/:id', verifyToken, verifyRoleTenant, deleteProperty);
 router.get('/facilites',  getPropertiesAndRoomFacilities);
 router.post('/facilities/create',  uploadIcon, createFacilitiesIcons);

@@ -37,3 +37,48 @@ export interface IGetRoomDetailsById {
   parsedCheckIn?: Date;
   parsedCheckOut?: Date;
 }
+
+export interface IEditProperty {
+    propertyId: number;
+    tenantId: number;
+    tenantRole: string;
+    name?: string;
+    address?: string;
+    city?: string;
+    categoryId?: number;
+    description?: string;
+    roomCapacity?: number;
+    mainImage?: string;
+    propertyImages?: string[];
+    facilityIds?: number[];
+    roomTypesToUpdate?: Array<{
+        id: number;
+        name?: string;
+        price?: number | string;
+        description?: string;
+        qty?: number | string;
+        guestCapacity?: number | string;
+        facilities?: number[];
+        images?: string[];
+        specialPrice?: Array<{
+            id?: number;
+            date: Date;
+            price: number;
+        }>;
+    }>;
+    roomTypesToAdd?: Array<{
+        name: string;
+        price: number | string;
+        description: string;
+        qty: number | string;
+        guestCapacity: number | string;
+        facilities: number[];
+        images?: string[];
+        specialPrice?: Array<{
+            date: Date;
+            price: number;
+        }>;
+    }>;
+    roomTypesToDelete?: number[];
+    imagesToDelete?: number[];
+}

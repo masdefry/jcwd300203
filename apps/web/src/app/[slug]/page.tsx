@@ -1,7 +1,4 @@
 'use client';
-import Header from "@/components/common/header/DefaultHeader";
-import MobileMenu from "@/components/common/header/MobileMenu";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,31 +21,44 @@ interface Property {
   name: string;
   price: number;
   area: number;
-  imageUrl: string;
+  mainImage: string;
   category: string;
   address: string;
   city: string;
   checkIn: string;
   checkOut: string
+  facilities: string[] | any;
 }
 
 interface PropertyCardProps extends Property {
     id: number
+
 }
 
 interface PropertySidebarProps {
   onSortChange: (value: SortOption) => void;
 }
 
-function PropertyCard({ name, price, category, address, city, imageUrl, id, checkIn, checkOut }: PropertyCardProps) {
-
+function PropertyCard({
+  name,
+  price,
+  category,
+  address,
+  city,
+  mainImage,
+  id,
+  checkIn,
+  checkOut,
+  facilities,
+}: PropertyCardProps) {
   const formattedCheckIn = checkIn.replace(/-/g, '/');
   const formattedCheckOut = checkOut.replace(/-/g, '/');
+
   return (
     <Card className="w-full rounded-lg shadow-lg overflow-hidden hover:scale-[1.02] transition-transform">
       <div className="relative w-full h-48 bg-gray-100">
         <Image
-          src={imageUrl}
+          src={`http://localhost:4700/images/${mainImage}`}
           alt={name}
           layout="fill"
           objectFit="cover"
@@ -59,16 +69,36 @@ function PropertyCard({ name, price, category, address, city, imageUrl, id, chec
         <CardTitle className="text-xl font-semibold">{name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-lg font-bold items-start text-primary">{price !== 0 ? `From ${price.toLocaleString()} per night` : `No room available`}</p>
+        <p className="text-lg font-bold text-primary">
+          {price !== 0 ? `From ${price.toLocaleString()} per night` : `No room available`}
+        </p>
         <div className="flex justify-between mt-4 text-sm text-gray-600">
-          <span>{category} </span>
+          <span>{category}</span>
           <span>{address}</span>
           <span>{city}</span>
         </div>
+        <div className="mt-4">
+          <h4 className="text-md font-medium">Facilities:</h4>
+          <ul className="grid grid-cols-2 gap-2 mt-2">
+            {facilities.map((facility: any) => (
+              <li key={facility.id} className="flex items-center space-x-2">
+                <Image
+                  src={`http://localhost:4700/images/${facility.icon}`}
+                  alt={facility.name}
+                  width={20}
+                  height={20}
+                />
+                <span>{facility.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </CardContent>
       <CardFooter className="px-6 pb-6">
-        <Link href ={`/property/${id.toLocaleString()}?checkIn=${formattedCheckIn}&checkOut=${formattedCheckOut}`}>
-        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">View Details</Button>
+        <Link
+          href={`/property/${id.toLocaleString()}?checkIn=${formattedCheckIn}&checkOut=${formattedCheckOut}`}
+        >
+          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">View Details</Button>
         </Link>
       </CardFooter>
     </Card>
@@ -105,7 +135,6 @@ function PropertySidebar({ onSortChange }: PropertySidebarProps) {
 export const SearchProperty = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    
     // Handle URL parameters safely
     const searchQuery = searchParams.get('search') || '';
     const checkIn = searchParams.get('checkIn') || '';
@@ -136,6 +165,8 @@ export const SearchProperty = () => {
         return res.data.data;
       },
     });
+
+    console.log('data from search page:',data)
   
     // Handle sort change
     const handleSortChange = (newSortOption: SortOption) => {
@@ -154,6 +185,37 @@ export const SearchProperty = () => {
     };
   
     return (
+        <main>
+          <div className="container mx-auto p-4 pt-48">
+            <SearchForm />
+            <div className="flex flex-col md:flex-row gap-4 pt-10">
+              <div className="w-full md:w-1/4">
+                <PropertySidebar onSortChange={handleSortChange} />
+              </div>
+              <div className="w-full md:w-3/4">
+                {isLoading ? (
+                  <p>Loading...</p>
+                ) : isError ? (
+                  <p className="text-red-500">Error: {(error as Error)?.message}</p>
+                ) : !data || data.length === 0 ? (
+                  <p>No properties found.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {data.map((property: Property) => (
+                      <PropertyCard 
+                      key={property?.id} 
+                      {...property} 
+                      id = {property?.id}
+                      category = {property?.category}
+                      address = {property?.address}
+                      city = {property?.city}
+                      checkIn = {checkIn}
+                      checkOut = {checkOut}
+                      mainImage = {property?.mainImage}
+                      />
+                    ))}
+                  </div>
+                )}
         <Wrapper>
           <main>
             <div className="container mx-auto p-4 pt-48">

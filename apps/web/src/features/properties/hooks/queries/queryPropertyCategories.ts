@@ -2,16 +2,19 @@ import { useQuery } from '@tanstack/react-query';
 import instance from '@/utils/axiosInstance';
 
 interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-}
+    id: number;
+    name: string;
+    icon: string;
+  }
+  
+  interface CategoriesResponse {
+    error: boolean;
+    message: string;
+    data: Category[];
+  }
 
 const fetchPropertyCategories = async (): Promise<Category[]> => {
-  const response = await instance.get('/property/categories');
+  const response = await instance.get<CategoriesResponse>('/property/categories');
   return response.data.data;
 };
 
