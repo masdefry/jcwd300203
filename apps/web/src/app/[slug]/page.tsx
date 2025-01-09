@@ -185,37 +185,6 @@ export const SearchProperty = () => {
     };
   
     return (
-        <main>
-          <div className="container mx-auto p-4 pt-48">
-            <SearchForm />
-            <div className="flex flex-col md:flex-row gap-4 pt-10">
-              <div className="w-full md:w-1/4">
-                <PropertySidebar onSortChange={handleSortChange} />
-              </div>
-              <div className="w-full md:w-3/4">
-                {isLoading ? (
-                  <p>Loading...</p>
-                ) : isError ? (
-                  <p className="text-red-500">Error: {(error as Error)?.message}</p>
-                ) : !data || data.length === 0 ? (
-                  <p>No properties found.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {data.map((property: Property) => (
-                      <PropertyCard 
-                      key={property?.id} 
-                      {...property} 
-                      id = {property?.id}
-                      category = {property?.category}
-                      address = {property?.address}
-                      city = {property?.city}
-                      checkIn = {checkIn}
-                      checkOut = {checkOut}
-                      mainImage = {property?.mainImage}
-                      />
-                    ))}
-                  </div>
-                )}
         <Wrapper>
           <main>
             <div className="container mx-auto p-4 pt-48">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { LogOut, User, Settings, Home, X, Menu, ChevronRight, ClipboardList, MessageSquare, PlusCircle, MapPin, } from 'lucide-react';
+import { LogOut, User, Settings, Home, X, Menu, ChevronRight, ClipboardList, MessageSquare, PlusCircle, MapPin, Inbox } from 'lucide-react';
 import authStore from '@/zustand/authStore';
 import jwt from 'jsonwebtoken';
 import { AvatarWithFallback } from '@/components/profile/AvatarWithFallback';
@@ -64,22 +64,29 @@ const Navbar = () => {
       <>
         {/* Dashboard Route */}
         <Link
-          href={role === 'tenant' ? '/my-dashboard' : '/user/user-dashboard'}
+          href={role === 'tenant' ? '/dashboard' : '/user/dashboard'}
           className={baseClasses}
         >
           My Dashboard
         </Link>
 
+         {/* Review Route - Only accessible if not a tenant */}
+        {role !== "tenant" && (
+          <Link href="/user/review" className={baseClasses}>
+            Review
+          </Link>
+        )} 
+
         {/* Tenant-Protected Routes */}
         {role === 'tenant' && (
           <>
             {/* My Orders */}
-            <Link href="/my-orders" className={baseClasses}>
+            <Link href="/dashboard/orders" className={baseClasses}>
               Orders
             </Link>
 
             {/* My Messages */}
-            <Link href="/my-message" className={baseClasses}>
+            <Link href="/dashboard/messages" className={baseClasses}>
               Messages
             </Link>
 
@@ -126,16 +133,6 @@ const Navbar = () => {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
 
-          {/* My Dashboard - Conditional Redirect */}
-          <DropdownMenuItem
-            onClick={() =>
-              window.location.href = role === 'tenant' ? '/' : '/user/user-dashboard'
-            }
-          >
-            <Home className="mr-2 h-4 w-4" />
-            <span>My Dashboard</span>
-          </DropdownMenuItem>
-
           {/* Profile Link - Conditional Redirect */}
           <DropdownMenuItem
             onClick={() =>
@@ -144,6 +141,27 @@ const Navbar = () => {
           >
             <User className="mr-2 h-4 w-4" />
             <span>My Profile</span>
+          </DropdownMenuItem>
+
+          {/* My Dashboard - Conditional Redirect
+          <DropdownMenuItem
+            onClick={() =>
+              window.location.href = role === 'tenant' ? '/dashboard' : '/user/dashboard'
+            }
+          >
+            <Home className="mr-2 h-4 w-4" />
+            <span>My Dashboard</span>
+          </DropdownMenuItem> */}
+
+
+          {/* Profile Link - Conditional Redirect */}
+          <DropdownMenuItem
+            onClick={() =>
+              window.location.href = role === 'tenant' ? '/dashboard/profile' : '/user/profile'
+            }
+          >
+            <Inbox className="mr-2 h-4 w-4" />
+            <span>My Messages</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -220,60 +238,70 @@ const Navbar = () => {
                   My Profile
                 </span>
               </Link>
+              
               {/* My Dashboard Link */}
               <Link 
-                href={role === 'tenant' ? '/my-dashboard' : '/user/user-dashboard'}
+                href={role === 'tenant' ? '/dashboard' : '/user/dashboard'}
                 className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard' : '/user/user-dashboard') ? 'text-[#f15b5b]' : ''}`}>
+                <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard' : '/user/dashboard') ? 'text-[#f15b5b]' : ''}`}>
                   {role === 'tenant' ? 'My Dashboard' : 'My Bookings'}
                 </span>
               </Link> 
-              {/* My Orders Link */}
-              <Link
-                href="/my-orders"
-                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span
-                  className={`text-lg ${
-                    location.pathname === '/my-orders' ? 'text-[#f15b5b]' : ''
-                  }`}
-                >
-                  My Orders
-                </span>
-              </Link>
-
+              
               {/* My Messages Link */}
               <Link
-                href="/my-message"
+                href={role === "tenant" ? "/dashboard/messages" : "/user/messages"}
                 className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <span
                   className={`text-lg ${
-                    location.pathname === '/my-message' ? 'text-[#f15b5b]' : ''
+                    location.pathname === (role === "tenant" ? "/dashboard/messages" : "/user/messages")
+                      ? "text-[#f15b5b]"
+                      : ""
                   }`}
                 >
                   My Messages
                 </span>
               </Link>
 
-              {/* Create Listing Link */}
-              <Link
-                href="/dashboard/listing"
-                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span
-                  className={`text-lg ${
-                    location.pathname === '/dashboard/listing' ? 'text-[#f15b5b]' : ''
-                  }`}
+              {/* My Reviews Link */}
+              {role !== "tenant" && (
+                <Link
+                  href="/user/review"
+                  className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Create Listing
-                </span>
-              </Link>
+                  <span
+                    className={`text-lg ${
+                      location.pathname === "/user/reviews" ? "text-[#f15b5b]" : ""
+                    }`}
+                  >
+                    My Reviews
+                  </span>
+                </Link>
+              )}
+                            
+              {/* Create Listing Link */}
+              {role === "tenant" && (
+                <Link
+                  href="/dashboard/listing"
+                  className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span
+                    className={`text-lg ${
+                      location.pathname === '/dashboard/listing' ? 'text-[#f15b5b]' : ''
+                    }`}
+                  >
+                    Create Listing
+                  </span>
+                </Link>
+              )}
+
+              {/* Properties Link */}
               <Link 
                 href="/properties"
                 className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
