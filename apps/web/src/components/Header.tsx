@@ -64,7 +64,7 @@ const Navbar = () => {
       <>
         <Link href="/properties" className={baseClasses}>Properties</Link>
         {role === 'tenant' && (
-          <Link href="/dashboard" className={baseClasses}>Dashboard</Link>
+          <Link href="/my-dashboard" className={baseClasses}>My Dashboard</Link>
         )}
       </>
     );
@@ -97,9 +97,9 @@ const Navbar = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => window.location.href = role === 'tenant' ? '/dashboard' : '/'}>
+          <DropdownMenuItem onClick={() => window.location.href = role === 'tenant' ? '/my-dashboard' : '/user/user-dashboard'}>
             <Home className="mr-2 h-4 w-4" />
-            <span>{role === 'tenant' ? 'Dashboard' : 'Home'}</span>
+            <span>{role === 'tenant' ? 'My Dashboard' : 'My Bookings'}</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => window.location.href = role === 'tenant' ? '/dashboard/profile' : '/user/profile'}>
             <User className="mr-2 h-4 w-4" />
@@ -168,12 +168,14 @@ const Navbar = () => {
             
             <nav className="px-4 py-2">
               <Link 
-                href="/"
+                href={role === 'tenant' ? '/my-dashboard' : '/user/user-dashboard'}
                 className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <span className={`text-lg ${location.pathname === '/' ? 'text-[#f15b5b]' : ''}`}>Home</span>
-              </Link>
+                <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard' : '/user/user-dashboard') ? 'text-[#f15b5b]' : ''}`}>
+                  {role === 'tenant' ? 'My Dashboard' : 'My Bookings'}
+                </span>
+              </Link> 
               <Link 
                 href="/properties"
                 className="flex items-center justify-between py-3 hover:text-[#f15b5b]"

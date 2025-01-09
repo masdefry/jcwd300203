@@ -9,6 +9,9 @@ import Image from "next/image";
 import SearchForm from "@/components/home/SearchForm";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Wrapper from "@/components/layout/Wrapper";
+import Footer from "@/components/common/footer/Footer";
+import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
 
 // Type definitions remain the same
 type SortOption = "price_asc" | "price_desc" | "name_asc" | "name_desc";
@@ -213,25 +216,73 @@ export const SearchProperty = () => {
                     ))}
                   </div>
                 )}
+        <Wrapper>
+          <main>
+            <div className="container mx-auto p-4 pt-48">
+              <SearchForm />
+              <div className="flex flex-col md:flex-row gap-4 pt-10">
+                <div className="w-full md:w-1/4">
+                  <PropertySidebar onSortChange={handleSortChange} />
+                </div>
+                <div className="w-full md:w-3/4">
+                  {isLoading ? (
+                    <p>Loading...</p>
+                  ) : isError ? (
+                    <p className="text-red-500">Error: {(error as Error)?.message}</p>
+                  ) : !data || data.length === 0 ? (
+                    <p>No properties found.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {data.map((property: Property) => (
+                        <PropertyCard 
+                        key={property?.id} 
+                        {...property} 
+                        id = {property?.id}
+                        category = {property?.category}
+                        address = {property?.address}
+                        city = {property?.city}
+                        checkIn = {checkIn}
+                        checkOut = {checkOut}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-center mt-6 gap-4">
+                <Button 
+                  onClick={() => handlePageChange(page - 1)} 
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <span className="px-4">Page {page}</span>
+                <Button 
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={!data || data.length < limit}
+                >
+                  Next
+                </Button>
               </div>
             </div>
-            <div className="flex justify-center mt-6 gap-4">
-              <Button 
-                onClick={() => handlePageChange(page - 1)} 
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-              <span className="px-4">Page {page}</span>
-              <Button 
-                onClick={() => handlePageChange(page + 1)}
-                disabled={!data || data.length < limit}
-              >
-                Next
-              </Button>
+          </main>
+
+          {/* Footer */}
+          <section className="footer_one">
+            <div className="container">
+              <div className="row">
+                <Footer />
+              </div>
             </div>
-          </div>
-        </main>
+          </section>
+
+          {/* Footer Bottom Area */}
+          <section className="footer_middle_area pt40 pb40">
+            <div className="container">
+              <CopyrightFooter />
+            </div>
+          </section>
+        </Wrapper>
       );
   };
   
