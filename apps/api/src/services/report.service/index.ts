@@ -2,10 +2,14 @@ import { prisma } from "@/connection";
 import { BookingStatus } from "@prisma/client";
 
 export const getSalesReportService = async ({ tenantId, startDate, endDate, sortBy }: any) => {
+  if (!tenantId) {
+    throw { msg: "Tenant ID is required", status: 400 };
+  }
+
   const where: any = {
-    property: { tenantId: tenantId },
+    property: { tenantId: tenantId }, // Filter by tenantId
     status: {
-      some: { Status: BookingStatus.CONFIRMED }, // Only confirmed bookings
+      some: { Status: BookingStatus.CONFIRMED }, // Only include confirmed bookings
     },
   };
 
@@ -22,7 +26,7 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
     where.createdAt = { ...where.createdAt, lte: parsedEndDate };
   }
 
-  // Fetch bookings with confirmed status and calculate total revenue
+  // Fetch bookings with confirmed status for the specific tenant
   const bookings = await prisma.booking.findMany({
     where,
     include: {
@@ -31,14 +35,14 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
       status: true,
     },
     orderBy: {
-      createdAt: sortBy || "asc", // Sort by createdAt or other criteria
+      createdAt: sortBy || "asc", // Sort by createdAt or provided criteria
     },
   });
 
-  // Calculate total revenue from the bookings
+  // Calculate total revenue for the tenant's bookings
   const totalRevenue = bookings.reduce((sum, booking) => sum + Number(booking.price || 0), 0);
 
-  // Format the result
+  // Format the bookings for response
   const formattedBookings = bookings.map((booking) => ({
     propertyName: booking.property.name,
     customer: booking.customer.name,
@@ -46,14 +50,13 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
     checkOut: booking.checkOutDate,
     totalRooms: booking.room_qty,
     status: booking.status.map((s) => s.Status).join(", "),
-    revenue: Number(booking.price || 0), // Individual booking revenue
+    revenue: Number(booking.price || 0), // Revenue for this booking
   }));
 
-  // Return formatted bookings along with total revenue
   return {
     totalRevenue,
     bookings: formattedBookings,
-  }; 
+  };
 };
 
 // services/report.service.ts

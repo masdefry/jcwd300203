@@ -79,10 +79,6 @@ const Bookings: React.FC = () => {
 
   return (
     <div>
-      <Header />
-      <MobileMenu />
-      <PopupSignInUp />
-
       <div className="p-8">
         {/* Current Stays */}
         <div className="mb-8">
