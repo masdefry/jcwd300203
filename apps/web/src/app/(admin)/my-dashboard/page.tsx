@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import instance from "@/utils/axiosInstance";
 import StatisticsChart from "@/components/dashboard/my-dashboard/StatisticsChart";
 import PropertyCalendar from "@/components/dashboard/my-dashboard/PropertyCalendar";
+import authStore from "@/zustand/authStore";
 
 // Define TypeScript types
 type Booking = {
@@ -48,7 +49,7 @@ const MyDashboard = () => {
     };
   
     fetchBookings();
-  }, []);   
+  }, []);
 
   // Sorting function
   const handleSort = (key: "date" | "revenue") => {
@@ -83,11 +84,14 @@ const MyDashboard = () => {
     setFilteredBookings(filtered.length ? filtered : []);
   };
 
+  // get name of tenant
+  const tenantName = authStore((state) => state.name)
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header Section */}
       <div className="bg-[#f15b5b] text-white py-6 px-8">
-        <h1 className="text-2xl text-white font-bold">Good Morning, Admin</h1>
+        <h1 className="text-2xl text-white font-bold">Good Morning, {tenantName}</h1>
         <p className="text-sm text-white">Welcome back to your dashboard!</p>
       </div>
 
