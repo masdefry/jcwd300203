@@ -5,6 +5,7 @@ import instance from "@/utils/axiosInstance";
 import StatisticsChart from "@/components/dashboard/my-dashboard/StatisticsChart";
 import PropertyCalendar from "@/components/dashboard/my-dashboard/PropertyCalendar";
 import authStore from "@/zustand/authStore";
+import { useRouter } from "next/navigation"; // Updated import
 
 // Define TypeScript types
 type Booking = {
@@ -87,6 +88,9 @@ const MyDashboard = () => {
   // get name of tenant
   const tenantName = authStore((state) => state.name)
 
+  // router to push to a page
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header Section */}
@@ -99,12 +103,12 @@ const MyDashboard = () => {
         {/* Quick Actions */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-lg font-bold text-gray-700">Manage your properties, sales, and reports.</h2>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">View Orders</button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg" onClick={() => {router.push("/dashboard/orders")}}>View Orders</button>
         </div>
 
         {/* Sales Report */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Sales Chart */}
+        <div className="mb-8">
+          {/* Sales Report */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-bold text-gray-700 mb-4">Sales Report</h2>
             <StatisticsChart />
@@ -122,13 +126,7 @@ const MyDashboard = () => {
                 Sort by Revenue
               </button>
             </div>
-          </div>
-
-          {/* Property Calendar */}
-          {/* <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-bold text-gray-700 mb-4">Property Availability</h2>
-            <PropertyCalendar />
-          </div> */}
+          </div> 
         </div>
 
         {/* Bookings Table */}
