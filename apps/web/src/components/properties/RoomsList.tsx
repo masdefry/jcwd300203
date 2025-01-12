@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { RoomDetailsDialog } from './RoomDetailsDialog';
 import { useState } from 'react';
 import Image from 'next/image';
+import authStore from '@/zustand/authStore';
 
 interface RoomsListProps {
   rooms: any[]; // Type this based on your API response
@@ -12,11 +13,16 @@ interface RoomsListProps {
   guests: number;
 }
 
+
+
 export default function RoomsList({ rooms, checkIn, checkOut, guests }: RoomsListProps) {
     const router = useRouter();
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [showAllFacilities, setShowAllFacilities] = useState<Record<string | number, boolean>>({});
     
+    const verified = authStore((state) => state.isVerified)
+    console.log('verified from roomlist:', verified)
+
     const handleReserve = (roomId: string, price: number) => {
       router.push(
         `/checkout?roomId=${roomId}&checkIn=${checkIn.toISOString().split('T')[0]}&checkOut=${checkOut.toISOString().split('T')[0]}&price=${price}&guests=${guests}`
@@ -109,11 +115,11 @@ export default function RoomsList({ rooms, checkIn, checkOut, guests }: RoomsLis
                     </div>
                     <div className="text-sm text-gray-600">per night</div>
                   </div>
-  
+                  
                   <Button
                     className="w-full bg-[#f15b5b] hover:bg-[#e54949]"
                     onClick={() => handleReserve(room.id, room.price)}
-                    disabled={!isAvailable}
+                    disabled={!isAvailable || !verified}
                   >
                     {isAvailable ? 'Reserve' : 'Not Available'}
                   </Button>

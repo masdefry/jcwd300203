@@ -22,7 +22,8 @@ async function resetSequences() {
     'FlexiblePrice_id_seq',
     'Property_id_seq',
     'RoomType_id_seq',
-    'Category_id_seq'
+    'Category_id_seq',
+    'RoomUnavailability_id_seq'
   ];
 
   for (const seq of sequences) {
@@ -495,41 +496,40 @@ const next3Days = generateDateRange(today, 3); // 3 days from today
 const christmasRange = generateDateRange(new Date('2024-12-25'), 4); // Dec 25-28
 const newYearRange = [new Date('2024-12-31')]; // New Year's Eve
 
-// Flexible Prices for each PropertyRoomType
-const flexiblePrices = [];
 
-for (let index = 0; index < propertyRoomTypes.length; index++) {
-  const roomType = propertyRoomTypes[index];
-  const basePrice = roomType.price;
-  const roomTypeId = index + 1; // Assuming IDs are sequential and start from 1
-
-  // Add flexible prices for the next 3 days
-  next3Days.forEach((date) => {
-    flexiblePrices.push({
-      customPrice: Math.round(basePrice * 0.9),
-      customDate: date,
-      roomTypeId: roomTypeId,
-    });
-  });
-
-  // Add flexible prices for the Christmas range
-  christmasRange.forEach((date) => {
-    flexiblePrices.push({
-      customPrice: Math.round(basePrice * 1.2),
-      customDate: date,
-      roomTypeId: roomTypeId,
-    });
-  });
-
-  // Add flexible price for New Year's Eve
-  newYearRange.forEach((date) => {
-    flexiblePrices.push({
-      customPrice: Math.round(basePrice * 1.5),
-      customDate: date,
-      roomTypeId: roomTypeId,
-    });
-  });
+// Helper function to create date ranges
+function createDateRange(start, end) {
+  return {
+    startDate: start,
+    endDate: end
+  };
 }
+
+// Generate specific date ranges
+const nextWeek = new Date(today);
+nextWeek.setDate(today.getDate() + 7);
+
+// Define date ranges for different periods
+const dateRanges = [
+  // Next 3 days range
+  {
+    startDate: today,
+    endDate: new Date(today.getTime() + (2 * 24 * 60 * 60 * 1000)), // today + 2 days
+    priceMultiplier: 0.9 // 10% discount
+  },
+  // Christmas period
+  {
+    startDate: new Date('2024-12-25'),
+    endDate: new Date('2024-12-28'),
+    priceMultiplier: 1.2 // 20% markup
+  },
+  // New Year period
+  {
+    startDate: new Date('2024-12-31'),
+    endDate: new Date('2025-01-01'),
+    priceMultiplier: 1.5 // 50% markup
+  }
+];
 
 async function main() {
   try {
@@ -551,6 +551,7 @@ async function main() {
       await tx.propFacility.deleteMany({});
       await tx.roomFacility.deleteMany({});
       await tx.category.deleteMany({});
+      await tx.roomUnavailability.deleteMany({});
 
       await resetSequences();
 
@@ -644,6 +645,40 @@ async function main() {
         })
       );
 
+      const flexiblePrices = [];
+      createdRoomTypes.forEach(roomType => {
+        const basePrice = roomType.price;
+        dateRanges.forEach(range => {
+          flexiblePrices.push({
+            startDate: range.startDate,
+            endDate: range.endDate,
+            customPrice: Math.round(Number(basePrice) * range.priceMultiplier),
+            roomTypeId: roomType.id
+          });
+        });
+      });
+
+      // Create some room unavailability periods
+      const roomUnavailability = [];
+      createdRoomTypes.forEach(roomType => {
+        // Example: Make some rooms unavailable for maintenance
+        roomUnavailability.push({
+          roomTypeId: roomType.id,
+          startDate: new Date('2024-01-15'),
+          endDate: new Date('2024-01-20'),
+          reason: 'Scheduled maintenance'
+        });
+        
+        // Example: Block some rooms during a special event
+        roomUnavailability.push({
+          roomTypeId: roomType.id,
+          startDate: new Date('2024-02-01'),
+          endDate: new Date('2024-02-05'),
+          reason: 'Reserved for event'
+        });
+      });
+
+
       // Create property facilities
       await Promise.all(
         propertiesFacilities.map(facility =>
@@ -663,34 +698,34 @@ async function main() {
       );
 
       // Generate and create flexible prices
-      const flexiblePrices = [];
-      createdRoomTypes.forEach(roomType => {
-        const basePrice = roomType.price;
+      // const flexiblePrices = [];
+      // createdRoomTypes.forEach(roomType => {
+      //   const basePrice = roomType.price;
         
-        next3Days.forEach(date => {
-          flexiblePrices.push({
-            customPrice: Math.round(basePrice * 0.9),
-            customDate: date,
-            roomTypeId: roomType.id
-          });
-        });
+      //   next3Days.forEach(date => {
+      //     flexiblePrices.push({
+      //       customPrice: Math.round(basePrice * 0.9),
+      //       customDate: date,
+      //       roomTypeId: roomType.id
+      //     });
+      //   });
 
-        christmasRange.forEach(date => {
-          flexiblePrices.push({
-            customPrice: Math.round(basePrice * 1.2),
-            customDate: date,
-            roomTypeId: roomType.id
-          });
-        });
+      //   christmasRange.forEach(date => {
+      //     flexiblePrices.push({
+      //       customPrice: Math.round(basePrice * 1.2),
+      //       customDate: date,
+      //       roomTypeId: roomType.id
+      //     });
+      //   });
 
-        newYearRange.forEach(date => {
-          flexiblePrices.push({
-            customPrice: Math.round(basePrice * 1.5),
-            customDate: date,
-            roomTypeId: roomType.id
-          });
-        });
-      });
+      //   newYearRange.forEach(date => {
+      //     flexiblePrices.push({
+      //       customPrice: Math.round(basePrice * 1.5),
+      //       customDate: date,
+      //       roomTypeId: roomType.id
+      //     });
+      //   });
+      // });
 
       await Promise.all(
         flexiblePrices.map(price =>
@@ -705,19 +740,41 @@ async function main() {
         bookings.map(async (booking) => {
           const checkInDate = booking.checkInDate;
           const expiryDate = new Date(checkInDate.getTime() + pastHourOffset);
-
-          // Find flexible price if exists
+      
+          // Find a flexible price for the booking date range
           const flexiblePrice = await tx.flexiblePrice.findFirst({
             where: {
-              customDate: checkInDate,
-              roomTypeId: createdRoomTypes[booking.roomTypeIndex].id
+              roomTypeId: createdRoomTypes[booking.roomTypeIndex].id,
+              AND: [
+                { startDate: { lte: checkInDate } },
+                { endDate: { gte: checkInDate } }
+              ]
             }
           });
-
-          const price = flexiblePrice ? 
-            flexiblePrice.customPrice : 
-            createdRoomTypes[booking.roomTypeIndex].price;
-
+      
+          // Use flexible price if found; otherwise, use base price
+          const price = flexiblePrice
+            ? flexiblePrice.customPrice
+            : createdRoomTypes[booking.roomTypeIndex].price;
+      
+          // Check for room unavailability (optional, based on business logic)
+          const isUnavailable = await tx.roomUnavailability.findFirst({
+            where: {
+              roomTypeId: createdRoomTypes[booking.roomTypeIndex].id,
+              AND: [
+                { startDate: { lte: booking.checkOutDate } },
+                { endDate: { gte: booking.checkInDate } }
+              ]
+            }
+          });
+      
+          if (isUnavailable) {
+            throw new Error(
+              `Room type ${createdRoomTypes[booking.roomTypeIndex].id} is unavailable for the selected date range.`
+            );
+          }
+      
+          // Create the booking
           return tx.booking.create({
             data: {
               checkInDate: booking.checkInDate,
