@@ -71,7 +71,7 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
               status: {
                 select: {
                   Status: true,
-                  createdAt: true, // Include fields you need for processing
+                  createdAt: true, 
                 },
               },
             },
@@ -80,8 +80,6 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
       },
     },
   });
-
-  console.log("Properties fetched: ", JSON.stringify(properties, null, 2)); // Debugging output
 
   // Process room availability and bookings
   const calendarEvents = properties.flatMap((property) => {
@@ -96,12 +94,6 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
 
         return ["CONFIRMED", "WAITING_FOR_CONFIRMATION", "WAITING_FOR_PAYMENT"].includes(latestStatus);
       });
-
-      // Calculate total rooms booked
-      const totalBookedRooms = activeBookings?.reduce(
-        (total, booking) => total + booking.room_qty,
-        0
-      ) || 0;
 
       // Calculate available rooms
       const availableRoomCount = Math.max(roomType.qty, 0);
@@ -127,12 +119,10 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
           color: "green",
         });
       }
-
+      
       return events;
     });
   });
-
-  console.log("Final calendar events: ", JSON.stringify(calendarEvents, null, 2));
 
   return calendarEvents;
 };

@@ -24,7 +24,23 @@ const Calendar = () => {
   useEffect(() => {
     const initializeEvents = async () => {
       const fetchedEvents = await fetchPropertyReport();
-      setEvents(fetchedEvents);
+
+      // Sort events to prioritize "Booked" events
+      const sortedEvents = fetchedEvents.sort((a: any, b: any) => {
+        // Prioritize "Booked" events over "Available" events
+        if (a.title.startsWith("Booked") && !b.title.startsWith("Booked")) {
+          return -1;
+        }
+        if (!a.title.startsWith("Booked") && b.title.startsWith("Booked")) {
+          return 1;
+        }
+        // If both are "Booked" or both are "Available," sort alphabetically by title
+        return a.title.localeCompare(b.title);
+      }); 
+
+      console.log("sortedEvents: ", sortedEvents)
+
+      setEvents(sortedEvents);
     };
 
     initializeEvents();

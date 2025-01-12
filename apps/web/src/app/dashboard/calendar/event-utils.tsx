@@ -7,6 +7,8 @@ export const fetchPropertyReport = async (): Promise<EventInput[]> => {
     const response = await instance.get('/report/property-report');
     const result = response.data;
 
+    console.log("response from fetch property report: ", response);
+
     if (result.success) {
       // Transform API data into FullCalendar-compatible EventInput format
       return result.data.map((item: any) => ({
