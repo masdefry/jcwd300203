@@ -1,114 +1,87 @@
 'use client'
 
 import Link from "next/link";
-
-import {
-  isParentPageActive,
-  isSinglePageActive,
-} from "../../../../utils/daynamicNavigation";
+import { isSinglePageActive } from "../../../../utils/daynamicNavigation";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const SidebarMenu = () => {
-  const pathname = usePathname()
-
-  const myProperties = [
-    { id: 1, name: "General Elements", route: "/my-properties" },
-    { id: 2, name: "Advanced Elements", route: "/my-properties" },
-    { id: 3, name: "Editors", route: "/my-properties" },
-  ];
-  const reviews = [
-    { id: 1, name: "My Reviews", route: "/my-review" },
-    { id: 2, name: "Visitor Reviews", route: "/my-review" },
-  ];
-  const manageAccount = [
-    {
-      id: 1,
-      name: "My Package",
-      route: "/my-package",
-      icon: "flaticon-box",
-    },
-    {
-      id: 2,
-      name: "My Profile",
-      route: "/my-profile",
-      icon: "flaticon-user",
-    },
-    { id: 3, name: "Logout", route: "/login", icon: "flaticon-logout" },
-  ];
+  const pathname = usePathname();
 
   return (
-    <>
-      <ul className="sidebar-menu">
-        <li className="sidebar_header header">
-          <Link href="/">
-            <Image
-              width={40}
-              height={45}
-              src="/assets/images/header-logo2.png"
-              alt="header-logo2.png"
-            />
-            <span>RentUp</span>
-          </Link>
-        </li>
-        {/* End header */}
+    <div className="h-full">
+      {/* Logo Header */}
+      <div className="flex items-center gap-2 p-4 border-b border-gray-700">
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            width={40}
+            height={45}
+            src="/assets/images/header-logo2.png"
+            alt="RentUp"
+          />
+          <span className="text-xl font-semibold">RentUp</span>
+        </Link>
+      </div>
 
-        <li className="title">
-          <span>Main</span>
-          <ul>
-            <li
-              className={`treeview ${
-                isSinglePageActive("/my-dashboard", pathname)
-                  ? "active"
-                  : ""
-              }`}
+      {/* Navigation Links */}
+      <nav className="mt-6 px-4">
+        <p className="text-gray-400 text-sm uppercase font-medium mb-4">Main</p>
+        
+        <ul className="space-y-2">
+          <li>
+            <Link 
+              href="/dashboard"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                ${isSinglePageActive("/dashboard", pathname) 
+                  ? "bg-[#FF385C] text-white" 
+                  : "text-gray-300 hover:bg-gray-700"}`}
             >
-              <Link href="/my-dashboard">
-                <i className="flaticon-layers"></i>
-                <span> Dashboard</span>
-              </Link>
-            </li>
-            <li
-              className={`treeview ${
-                isSinglePageActive("/my-orders", pathname) ? "active" : ""
-              }`}
-            >
-              <Link href="/my-orders">
-                <i className="flaticon-box"></i>
-                <span> My Orders</span>
-              </Link>
-            </li>
-            <li
-              className={`treeview ${
-                isSinglePageActive("/create-listing", pathname)
-                  ? "active"
-                  : ""
-              }`}
-            >
-              <Link href="/create-listing">
-                <i className="flaticon-plus"></i>
-                <span> Create Listing</span>
-              </Link>
-            </li>
-            <li
-              className={`treeview ${
-                isSinglePageActive("/my-message", pathname)
-                  ? "active"
-                  : ""
-              }`}
-            >
-              <Link href="/my-message">
-                <i className="flaticon-envelope"></i>
-                <span> Message</span>
-              </Link>
-            </li>
+              <i className="flaticon-layers" />
+              <span>Dashboard</span>
+            </Link>
+          </li>
 
+          <li>
+            <Link 
+              href="/dashboard/orders"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                ${isSinglePageActive("/dashboard/orders", pathname) 
+                  ? "bg-[#FF385C] text-white" 
+                  : "text-gray-300 hover:bg-gray-700"}`}
+            >
+              <i className="flaticon-box" />
+              <span>My Orders</span>
+            </Link>
+          </li>
 
-          </ul>
-        </li>
-        {/* End Main */}
-      </ul>
-    </>
+          <li>
+            <Link 
+              href="/dashboard/properties/create"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                ${isSinglePageActive("/dashboard/properties/create", pathname) 
+                  ? "bg-[#FF385C] text-white" 
+                  : "text-gray-300 hover:bg-gray-700"}`}
+            >
+              <i className="flaticon-plus" />
+              <span>Create Listing</span>
+            </Link>
+          </li>
+
+          <li>
+            <Link 
+              href="/dashboard/messages"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                ${isSinglePageActive("/dashboard/messages", pathname) 
+                  ? "bg-[#FF385C] text-white" 
+                  : "text-gray-300 hover:bg-gray-700"}`}
+            >
+              <i className="flaticon-envelope" />
+              <span>Messages</span>
+            </Link>
+          </li>
+        </ul>
+      </nav>
+    </div>
   );
 };
 
