@@ -174,17 +174,55 @@ export const propertyValidationSchema = Yup.object().shape({
                 )
             )
             .min(1, 'At least one room image is required'),
-          specialPrice: Yup.array()
+            specialPrice: Yup.array()
             .of(
               Yup.object().shape({
                 id: Yup.number().nullable(),
-                date: Yup.date().required('Special price date is required'),
+                startDate: Yup.date()
+                  .required('Start date is required'),
+                endDate: Yup.date()
+                  .required('End date is required')
+                  .min(
+                    Yup.ref('startDate'),
+                    'End date must be after start date'
+                  ),
                 price: Yup.number()
                   .required('Special price is required')
                   .positive('Special price must be greater than 0'),
               })
             )
-            .nullable(),
+            .nullable()
+            .optional(),
+          
+          unavailableDates: Yup.array()
+            .of(
+              Yup.object().shape({
+                id: Yup.number().nullable(),
+                startDate: Yup.date()
+                  .required('Start date is required'),
+                endDate: Yup.date()
+                  .required('End date is required')
+                  .min(
+                    Yup.ref('startDate'),
+                    'End date must be after start date'
+                  ),
+                reason: Yup.string()
+                  .required('Reason is required')
+                  .min(5, 'Reason must be at least 5 characters'),
+              })
+            )
+            .nullable()
+            .optional(),
+
+          // Arrays for tracking deletions
+          specialPricesToDelete: Yup.array()
+            .of(Yup.number())
+            .optional(),
+          
+          unavailabilityToDelete: Yup.array()
+            .of(Yup.number())
+            .optional(),
+
         })
       )
       .min(1, 'At least one room type is required'),

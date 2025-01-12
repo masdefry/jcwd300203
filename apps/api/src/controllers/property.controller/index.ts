@@ -9,13 +9,7 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
         const currentDate = new Date()
         currentDate.setHours(0, 0, 0, 0)
 
-        const {search, checkIn, checkOut, guest, sortBy, sortOrder, page, limit} = req.query
-
-        console.log('checkIn: ', checkIn)
-        console.log('checkOut: ', checkOut) 
-
-        console.log('type of checkIn: ', typeof checkIn)
-        console.log('type of checkOut: ', typeof checkOut)
+        const {search, checkIn, checkOut, guest, sortBy, sortOrder, page, limit, priceMin, priceMax, categories, facilities, minRating} = req.query
 
         if (checkIn && typeof checkIn !== "string") throw { msg: "Invalid date", status: 406 };
         if (checkOut && typeof checkOut !== "string") throw { msg: "Invalid date", status: 406 };
@@ -29,17 +23,23 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
         const parsedCheckOut = checkOut ? parseCustomDateList(checkOut) : undefined;
         const guestCount = guest ? Number(guest) : undefined 
 
+        const parsedPriceMin = priceMin ? Number(priceMin) : undefined;
+        const parsedPriceMax = priceMax ? Number(priceMax) : undefined;
+        const parsedMinRating = minRating ? Number(minRating) : undefined;
+        const parsedCategories = categories ? (Array.isArray(categories) ? categories : [categories]).map(Number) : undefined;
+        const parsedFacilities = facilities ? (Array.isArray(facilities) ? facilities : [facilities]).map(Number) : undefined;
+
         const pageNumber = page ? parseInt(page as string, 10) : 1
         const pageSize = limit ? parseInt(limit as string, 10) : 10
         const offset = (pageNumber - 1) * pageSize;
 
-        const allowedSortBy = ['name', 'price'];
+        const allowedSortBy = ['name', 'price', 'rating'];
         const allowedSortOrder = ['asc', 'desc'];
 
         const validSort = allowedSortBy.includes(sortBy as string) ? (sortBy as string) : 'name'
         const validSortOrder = allowedSortOrder.includes (sortOrder as string) ? (sortOrder as string) : 'asc'
 
-        const properties = await getPropertiesListService({parsedCheckIn, parsedCheckOut, search: search || undefined, guest: guest || undefined, offset, pageSize, sortBy: validSort, sortOrder: validSortOrder})
+        const properties = await getPropertiesListService({parsedCheckIn, parsedCheckOut, search: search || undefined, guest: guest || undefined, offset, pageSize, sortBy: validSort, sortOrder: validSortOrder,priceMin: parsedPriceMin, priceMax: parsedPriceMax, categories: parsedCategories, facilities: parsedFacilities, minRating: parsedMinRating})
 
         res.status(200).json({
             error: false,
@@ -54,14 +54,14 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
 export const getPropertyDetails = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const {id} = req.params;
-        const {checkIn, checkOut} = req.query;
+        const {checkIn, checkOut, guest} = req.query;
 
         
         const parsedCheckIn = checkIn ? parseCustomDate(checkIn as any) : undefined
         const parsedCheckOut = checkOut ? parseCustomDate(checkOut as any) : undefined ;
-        console.log(parsedCheckIn)
-        console.log(parsedCheckOut)
-        const data = await getPropertyDetailsService({id, parsedCheckIn, parsedCheckOut})
+        const guestCount = guest ? parseInt(guest as string) : undefined;
+
+        const data = await getPropertyDetailsService({id, parsedCheckIn, parsedCheckOut, guestCount})
         
         res.status(200).json({
             error: false,
@@ -178,22 +178,40 @@ export const editProperty = async(req: Request, res: Response, next: NextFunctio
         // Map room types with their images
         const roomTypesToUpdate = propertyData.roomTypesToUpdate?.map((room: any, index: number) => ({
             ...room,
-            images: roomImages[index] || undefined, // Only include if new images were uploaded
+            images: roomImages[index] || undefined,
             specialPrice: room.specialPrice?.map((sp: any) => ({
-                ...sp,
-                date: new Date(sp.date),
+                id: sp.id, // Preserve ID for existing special prices
+                startDate: new Date(sp.startDate),
+                endDate: new Date(sp.endDate),
                 price: parseFloat(sp.price)
-            }))
+            })),
+            unavailableDates: room.unavailableDates?.map((period: any) => ({
+                id: period.id, // Preserve ID for existing unavailability periods
+                startDate: new Date(period.startDate),
+                endDate: new Date(period.endDate),
+                reason: period.reason
+            })),
+            specialPricesToDelete: room.specialPricesToDelete || [], // Add this
+            unavailabilityToDelete: room.unavailabilityToDelete || [] // Add this
         })) || [];
 
         const roomTypesToAdd = propertyData.roomTypesToAdd?.map((room: any, index: number) => ({
             ...room,
-            images: roomImages[10000 + index] || [], // Use offset for new rooms
+            images: roomImages[10000 + index] || [],
             specialPrice: room.specialPrice?.map((sp: any) => ({
-                date: new Date(sp.date),
+                startDate: new Date(sp.startDate),
+                endDate: new Date(sp.endDate),
                 price: parseFloat(sp.price)
+            })),
+            unavailableDates: room.unavailableDates?.map((period: any) => ({
+                startDate: new Date(period.startDate),
+                endDate: new Date(period.endDate),
+                reason: period.reason
             }))
         })) || [];
+
+        console.log('Processed roomTypesToUpdate:', roomTypesToUpdate); // Debug log
+        console.log('Processed roomTypesToAdd:', roomTypesToAdd); // Debug log
 
         const updatedProperty = await editPropertyService({
             propertyId: Number(id),
@@ -211,8 +229,9 @@ export const editProperty = async(req: Request, res: Response, next: NextFunctio
             roomTypesToUpdate,
             roomTypesToAdd,
             roomTypesToDelete: propertyData.roomTypesToDelete?.map((id: string) => parseInt(id)),
-            imagesToDelete: propertyData.imagesToDelete?.map((id: string) => parseInt(id))
+            imagesToDelete: propertyData.imagesToDelete?.map((id: string) => parseInt(id)),
         });
+
 
         res.status(200).json({
             error: false,

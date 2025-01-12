@@ -111,12 +111,19 @@ export interface FacilitiesResponse {
       name: string;
       icon: string;
     }>;
-    specialPrice?: Array<{
+    flexiblePrices?: Array<{  // Changed from specialPrice to flexiblePrices
       id: number;
-      date: string;
+      startDate: string;      // Changed from date to startDate
+      endDate: string;        // Added endDate
       price: string;
     }>;
-  }
+    unavailability?: Array<{  // Added unavailability
+      id: number;
+      startDate: string;
+      endDate: string;
+      reason: string;
+    }>;
+}
   
   export interface RoomTypeForm {
     id?: number;
@@ -129,9 +136,18 @@ export interface FacilitiesResponse {
     images: Array<File | RoomTypeImage>;
     specialPrice?: Array<{
       id?: number;
-      date: Date | null;
+      startDate: Date | null;
+      endDate: Date | null;
       price: string;
     }>;
+    unavailableDates?: Array<{
+      id?: number;
+      startDate: Date | null;
+      endDate: Date | null;
+      reason: string;
+    }>;
+    specialPricesToDelete?: number[];
+    unavailabilityToDelete?: number[];
   }
   
   export interface PropertyType {
@@ -140,7 +156,11 @@ export interface FacilitiesResponse {
     mainImage: string;
     address: string;
     city: string;
-    categoryId: number;
+    category?: {  
+      id: number;
+      name: string;
+      icon: string;
+    };
     description: string;
     roomCapacity: number;
     images: Array<{
@@ -150,10 +170,23 @@ export interface FacilitiesResponse {
     facilities: Array<{
       id: number;
       name: string;
-      icon: string;
+      icon: string | null;  
     }>;
     roomTypes: RoomTypeResponse[];
-  }
+    averageRating: number;  
+    totalReviews: number;   
+    reviews: Array<{       
+      id: number;
+      rating: number;
+      comment: string;
+      reply: string | null;
+      createdAt: Date;
+      customer: {
+        name: string;
+        profileImage: string | null;
+      };
+    }>;
+}
   
   export interface PropertyDetailsRoomSectionProps {
     values: {

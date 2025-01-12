@@ -82,12 +82,12 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
     if (!usersId || !propertyId || !roomId || !checkInDate || !checkOutDate || !room_qty) throw { msg: "All fields are required", status: 400 };
   
     // Convert incoming `YYYY-MM-DD` to `DD/MM/YYYY` for compatibility with `parseCustomDate`
-    const formattedCheckInDate = checkInDate.split('-').reverse().join('/');
-    const formattedCheckOutDate = checkOutDate.split('-').reverse().join('/');
+    // const formattedCheckInDate = checkInDate.split('-').reverse().join('/');
+    // const formattedCheckOutDate = checkOutDate.split('-').reverse().join('/');
 
     // Parse the dates
-    const parsedCheckInDate = parseCustomDate(formattedCheckInDate);
-    const parsedCheckOutDate = parseCustomDate(formattedCheckOutDate);
+    const parsedCheckInDate = new Date(checkInDate);
+    const parsedCheckOutDate = new Date(checkOutDate);  
 
     // Validate parsed dates
     if (parsedCheckInDate >= parsedCheckOutDate) {

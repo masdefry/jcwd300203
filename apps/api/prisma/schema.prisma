@@ -138,6 +138,7 @@ model RoomType {
   images        RoomImage[]
   facilities    RoomFacility[]
   flexiblePrice FlexiblePrice[]
+  unavailability  RoomUnavailability[]
   bookings      Booking[]
 
   createdAt DateTime  @default(now())
@@ -148,8 +149,21 @@ model RoomType {
 model FlexiblePrice {
   id          Int      @id @default(autoincrement())
   roomTypeId  Int
-  customDate  DateTime
+  startDate   DateTime
+  endDate     DateTime
   customPrice Decimal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id])
+}
+
+model RoomUnavailability {
+  id          Int      @id @default(autoincrement())
+  roomTypeId  Int
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
