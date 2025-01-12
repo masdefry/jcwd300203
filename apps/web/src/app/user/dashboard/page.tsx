@@ -27,6 +27,7 @@ type Order = {
   price: number;
   paymentMethod: string;
   proofOfPayment: string | null;
+  room_qty: number;
 };
 
 const MyBookingsPage = () => {
@@ -78,13 +79,14 @@ const MyBookingsPage = () => {
     }
   };
 
-  const handleCancel = async (orderId: number, customerId: number) => {
+  const handleCancel = async (orderId: number, customerId: number, roomQty: number) => {
     const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
     if (!confirmCancel) return;
 
     try {
       const response = await instance.post(`/orders/${orderId}/cancel`, {
         usersId: customerId,
+        room_qty: roomQty,
       });
       alert(response.data.message);
       window.location.reload();
@@ -166,7 +168,7 @@ const MyBookingsPage = () => {
                 : "bg-red-500 hover:bg-red-600"
             } text-white text-sm py-1 px-3 rounded w-fit`}
             disabled={hasProofOfPayment || isOnlinePayment || isConfirmed}
-            onClick={() => handleCancel(order.id, order.customerId)}
+            onClick={() => handleCancel(order.id, order.customerId, order.room_qty)}
           >
             Cancel
           </button>

@@ -36,6 +36,15 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ error: true, message: "Invalid status value" });
     }
 
+    // Find the booking record
+    const booking = await prisma.booking.findUnique({
+      where: { id: Number(bookingId) },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: true, message: "Booking not found" });
+    }
+
     // Find the Status record using bookingId
     const statusRecord = await prisma.status.findFirst({
       where: { bookingId: Number(bookingId) },
@@ -51,6 +60,18 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       data: { Status: status },
     });
 
+    // Restore room qty if the booking is canceled
+    if (status === "CANCELED") {
+      await prisma.roomType.update({
+        where: { id: booking.roomId }, // Use `roomId` from the booking
+        data: {
+          qty: {
+            increment: booking.room_qty, // Increment the qty by the canceled room_qty
+          },
+        },
+      });
+    }
+    
     return res.status(200).json({
       error: false,
       message: `Booking status updated to ${status}`,
@@ -81,19 +102,20 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
     // Validate request body
     if (!usersId || !propertyId || !roomId || !checkInDate || !checkOutDate || !room_qty) throw { msg: "All fields are required", status: 400 };
   
-    // Convert incoming `YYYY-MM-DD` to `DD/MM/YYYY` for compatibility with `parseCustomDate`
-    // const formattedCheckInDate = checkInDate.split('-').reverse().join('/');
-    // const formattedCheckOutDate = checkOutDate.split('-').reverse().join('/');
-
     // Parse the dates
+    // Convert incoming `checkInDate` and `checkOutDate` directly to Date objects
     const parsedCheckInDate = new Date(checkInDate);
-    const parsedCheckOutDate = new Date(checkOutDate);  
+    const parsedCheckOutDate = new Date(checkOutDate);
 
     // Validate parsed dates
+    if (isNaN(parsedCheckInDate.getTime()) || isNaN(parsedCheckOutDate.getTime())) {
+      throw { msg: "Invalid dates provided", status: 400 };
+    }
+
     if (parsedCheckInDate >= parsedCheckOutDate) {
       throw { msg: "Check-out date must be after check-in date", status: 400 };
     }
-
+ 
     // Call service to create the booking
     const booking = await createRoomReservationService({
       usersId,

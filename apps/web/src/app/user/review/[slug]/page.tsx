@@ -29,7 +29,7 @@ const ReviewSchema = Yup.object().shape({
 const ReviewForm: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const bookingId = Number(pathname.split("/")[2]); // Extract bookingId from the URL
+  const bookingId = Number(pathname.split("/")[3]); // Extract bookingId from the URL
 
   // Fetch all orders for the user
   const { data: orders, isLoading: ordersLoading, error: ordersError } = useQuery({
@@ -102,15 +102,13 @@ const ReviewForm: React.FC = () => {
 
   // Filter the specific booking by bookingId
   const booking = orders?.find((order: any) => order.id === bookingId);
+  console.log("orders: ", orders);
+  console.log("booking: ", booking);
 
   if (!booking) return <div className="text-red-500 text-center">Booking not found.</div>;
 
   return (
     <Wrapper>
-      <Header />
-      <MobileMenu />
-      <PopupSignInUp />
-
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="max-w-xl w-full mx-auto p-6 bg-white shadow-lg rounded-lg">
           <div className="mb-6">

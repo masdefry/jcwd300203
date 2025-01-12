@@ -96,8 +96,8 @@ const Navbar = () => {
             </Link>
 
             {/* Create Listing */}
-            <Link href="/dashboard/listing" className={baseClasses}>
-              Create Listing
+            <Link href="/dashboard/calendar" className={baseClasses}>
+              Calendar 
             </Link>
 
             {/* Properties - Accessible to all roles */}

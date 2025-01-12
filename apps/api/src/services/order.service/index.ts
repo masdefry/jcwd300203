@@ -12,6 +12,7 @@ interface GetOrderListParams {
 interface CancelOrderParams {
   bookingId: number;
   usersId: number;
+  room_qty: number;
 }
 
 interface GetTenantOrderParams {
@@ -116,7 +117,7 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
 };
 
 // cancel order service for user
-export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderParams) => { 
+export const cancelOrderService = async ({ bookingId, usersId, room_qty }: CancelOrderParams) => { 
     // Fetch the booking
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -149,12 +150,22 @@ export const cancelOrderService = async ({ bookingId, usersId }: CancelOrderPara
         },
       },
     });
+
+    // Restore RoomType quantity
+    await prisma.roomType.update({
+      where: { id: booking.roomId },
+      data: {
+        qty: {
+          increment: room_qty, // Increment room quantity
+        },
+      },
+    });
   
     return canceledBooking;
 };
 
 // cancel order service for tenant
-export const cancelUserOrderService = async ({ usersId, bookingId }: { usersId: number; bookingId: number }) => {
+export const cancelUserOrderService = async ({ usersId, bookingId, room_qty }: { usersId: number; bookingId: number, room_qty: number }) => {
   const booking = await prisma.booking.findUnique({
     where: {id: bookingId},
     include: { property: true },
@@ -162,12 +173,21 @@ export const cancelUserOrderService = async ({ usersId, bookingId }: { usersId: 
 
   if (!booking) throw { msg: "Booking not found", status: 404 };
   
-
   // Update the booking status to "CANCELED"
   const canceledBooking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
       status: { create: { Status: BookingStatus.CANCELED } },
+    },
+  });
+
+  // Restore RoomType quantity by adding the canceled room_qty back
+  await prisma.roomType.update({
+    where: { id: booking.roomId },
+    data: {
+      qty: {
+        increment: room_qty,
+      },
     },
   });
 

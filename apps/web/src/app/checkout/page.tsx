@@ -104,12 +104,10 @@ const RoomDetailsCard = () => {
 
       try {
         // Validate and format check-in and check-out dates
-        const formattedCheckIn = checkIn
-          ? new Date(checkIn.replace(/\//g, '-'))
-          : null;
-        const formattedCheckOut = checkOut
-          ? new Date(checkOut.replace(/\//g, '-'))
-          : null;
+        const formattedCheckIn = checkIn ? new Date(checkIn.replace(/\//g, "-")) : null;
+        const formattedCheckOut = checkOut ? new Date(checkOut.replace(/\//g, "-")) : null;
+        console.log(formattedCheckIn)
+        console.log(formattedCheckOut)        
 
         if (!formattedCheckIn || isNaN(formattedCheckIn.getTime())) {
           setError('Invalid check-in date.');
@@ -177,7 +175,7 @@ const RoomDetailsCard = () => {
         </p>
         <p>
           <span className="font-semibold">Available Rooms: </span>
-          {availableRooms} rooms
+          {roomData.qty} rooms
         </p>
       </CardContent>
     </Card>
@@ -274,7 +272,8 @@ export default function ReservationPage() {
 
         // Calculate the total price
         const total = selectedDays.reduce((total: number, day: any) => {
-          return total + day.price * reservationDetails.rooms; // Multiply by the number of rooms
+          const dayPrice = day.price || 0;
+          return total + dayPrice * (reservationDetails.rooms || 1); // Multiply by the number of rooms
         }, 0);
 
         console.log('Final calculated total:', total);
@@ -288,17 +287,17 @@ export default function ReservationPage() {
           })),
         };
       };
-
+  
       const { total, breakdown } = calculateTotalPrice(
         roomData.priceComparison,
         checkIn,
         checkOut,
       );
-
-      setTotalPrice(total);
-      setPriceBreakdown(breakdown); // Save the breakdown for display
+  
+      setTotalPrice(total); // Update total price dynamically
+      setPriceBreakdown(breakdown); // Update breakdown dynamically
     }
-  }, [reservationDetails.rooms, roomData, checkIn, checkOut]);
+  }, [reservationDetails.rooms, roomData, checkIn, checkOut]);   
 
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
@@ -333,162 +332,129 @@ export default function ReservationPage() {
       {/* Modal */}
       <PopupSignInUp />
 
-      <div className="container mx-auto py-6">
-        {/* Room Details Card */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">
-              {roomData.name}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-2">
-              {roomData.description || 'No description available.'}
-            </p>
-            <p>
-              <span className="font-semibold">Price: </span>
-              {new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-              }).format(roomData.price)}{' '}
-              / night
-            </p>
-            <p>
-              <span className="font-semibold">Guest Capacity: </span>
-              {roomData.guestCapacity} guests
-            </p>
-            <p>
-              <span className="font-semibold">Available Rooms: </span>
-              {roomData.priceComparison[0]?.availableRooms} rooms
-            </p>
-          </CardContent>
-        </Card>
+        <div className="container mx-auto py-6">
+          {/* Room Details Card */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">{roomData.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-2">
+                {roomData.description || "No description available."}
+              </p>
+              <p>
+                <span className="font-semibold">Price: </span>
+                {new Intl.NumberFormat("id-ID", {
+                  style: "currency",
+                  currency: "IDR",
+                }).format(roomData.price)}{" "}
+                / night
+              </p>
+              <p>
+                <span className="font-semibold">Guest Capacity: </span>
+                {roomData.guestCapacity} guests
+              </p>
+              <p>
+                <span className="font-semibold">Available Rooms: </span>
+                {roomData.qty} rooms
+              </p>
+            </CardContent>
+          </Card>
 
-        {/* Reservation Details Form */}
-        <Formik
-          initialValues={{
-            guests: 1,
-            rooms: 1,
-            paymentMethod: 'online',
-          }}
-          validationSchema={validationSchema}
-          onSubmit={async (values) => {
-            try {
-              // fetch propertyId in here
-              const propertyId = await fetchPropertyId(roomId);
-              console.log('Final submission details:', {
-                roomId,
-                propertyId,
-                checkIn,
-                checkOut,
-                room_qty: values.rooms,
-                totalPrice, // Log the total price being sent
-              });
-              console.log('Submitted Reservation Details:', values);
+          {/* Reservation Details Form */}
+          <Formik
+            initialValues={{
+              guests: 1,
+              rooms: 1,
+              paymentMethod: "online",
+            }}
+            validationSchema={validationSchema}
+            onSubmit={async (values) => {
+              try {
+                // fetch propertyId in here
+                const propertyId = await fetchPropertyId(roomId);
 
-              // Send the reservation request to the backend
-              const response = await instance.post('/transaction/reserve', {
-                roomId,
-                propertyId,
-                checkInDate: formatDate(checkIn!),
-                checkOutDate: formatDate(checkOut!),
-                room_qty: values.rooms,
-                paymentMethod:
-                  values.paymentMethod === 'online' ? 'GATEWAY' : 'MANUAL',
-              });
-
-              const data = response.data;
-              console.log(data);
-
-              if (data.error) {
-                throw new Error(data.message);
-              }
-
-              if (values.paymentMethod === 'online') {
-                try {
-                  console.log(
-                    'Online payment triggered. Token:',
-                    data.data.token.token,
-                  );
-
-                  // Ensure Snap script is loaded
-                  await loadMidtransScript();
-
-                  // Call Snap payment gateway
-                  if (typeof window.snap !== 'undefined') {
-                    window.snap.pay(data.data.token.token, {
-                      onSuccess: (result) => {
-                        console.log('Payment success:', result);
-                        alert(
-                          'Payment successful! Your reservation is confirmed.',
-                        );
-                        updateBookingStatus(
-                          data.data.booking.id,
-                          BookingStatus.CONFIRMED,
-                        );
-                      },
-                      onPending: (result) => {
-                        console.log('Waiting for payment:', result);
-                        alert('Waiting for your payment!');
-                      },
-                      onError: (result) => {
-                        console.error('Payment error:', result);
-                        alert('Payment failed. Please try again.');
-                        updateBookingStatus(
-                          data.data.booking.id,
-                          BookingStatus.CANCELED,
-                        );
-                      },
-                      onClose: () => {
-                        alert(
-                          'Payment popup closed. Please complete your payment.',
-                        );
-                        updateBookingStatus(
-                          data.data.booking.id,
-                          BookingStatus.CANCELED,
-                        );
-                      },
-                    });
-                  } else {
-                    console.error('Midtrans Snap is not loaded.');
-                    alert(
-                      'Payment system is not initialized. Please try again later.',
-                    );
-                  }
-                } catch (error) {
-                  console.error('Error initializing payment:', error);
-                  alert('Something went wrong during the payment process.');
+                console.log("Submitted Reservation Details:", values);
+                
+                // Send the reservation request to the backend
+                const response = await instance.post("/transaction/reserve", {
+                  roomId,
+                  propertyId,
+                  checkInDate: checkIn,
+                  checkOutDate: checkOut,
+                  room_qty: values.rooms,
+                  paymentMethod: values.paymentMethod === "online" ? "GATEWAY" : "MANUAL",
+                });
+            
+                const data = response.data;
+                console.log(data);
+            
+                if (data.error) {
+                  throw new Error(data.message);
                 }
-              } else {
-                console.log('Manual transfer selected. Awaiting confirmation.');
-                alert(
-                  'Your reservation is awaiting confirmation. Please upload your proof of payment.',
-                );
-                window.location.href = '/reservation-confirmation';
+            
+                if (values.paymentMethod === "online") {
+                  try {
+                    console.log("Online payment triggered. Token:", data.data.token.token);
+            
+                    // Ensure Snap script is loaded
+                    await loadMidtransScript();
+            
+                    // Call Snap payment gateway
+                    if (typeof window.snap !== "undefined") {
+                      window.snap.pay(data.data.token.token, {
+                        onSuccess: (result) => {
+                          console.log("Payment success:", result);
+                          alert("Payment successful! Your reservation is confirmed.");
+                          updateBookingStatus(data.data.booking.id, BookingStatus.CONFIRMED);
+                        },
+                        onPending: (result) => {
+                          console.log("Waiting for payment:", result);
+                          alert("Waiting for your payment!");
+                        },
+                        onError: (result) => {
+                          console.error("Payment error:", result);
+                          alert("Payment failed. Please try again.");
+                          updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
+                        },
+                        onClose: () => {
+                          alert("Payment popup closed. Please complete your payment.");
+                          updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
+                        },
+                      });
+                    } else {
+                      console.error("Midtrans Snap is not loaded.");
+                      alert("Payment system is not initialized. Please try again later.");
+                    }
+                  } catch (error) {
+                    console.error("Error initializing payment:", error);
+                    alert("Something went wrong during the payment process.");
+                  }
+                } else {
+                  console.log("Manual transfer selected. Awaiting confirmation.");
+                  alert("Your reservation is awaiting confirmation. Please upload your proof of payment.");
+                  window.location.href = "/reservation-confirmation";
+                }
+              } catch (error: any) {
+                console.error("Error submitting reservation:", error);
+                alert(error.message || "Something went wrong. Please try again.");
               }
-            } catch (error: any) {
-              console.error('Error submitting reservation:', error);
-              alert(error.message || 'Something went wrong. Please try again.');
-            }
-          }}
-        >
-          {({ values, setFieldValue }) => (
-            <Form>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl font-semibold">
-                    Reservation Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6">
-                    {/* Duration of Stay */}
-                    <div>
-                      <Label>Stay Duration</Label>
-                      <p className="text-lg font-semibold">
-                        {stayDuration || 'Calculating...'}
-                      </p>
-                    </div>
+            }}
+            
+          >
+            {({ values, setFieldValue }) => (
+              <Form>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-semibold">Reservation Details</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-6">
+                      {/* Duration of Stay */}
+                      <div>
+                        <Label>Stay Duration</Label>
+                        <p className="text-lg font-semibold">{stayDuration || "Calculating..."}</p>
+                      </div>
 
                     {/* Guest Count */}
                     <div>

@@ -1244,6 +1244,7 @@ export const getRoomDetailsByIdService = async ({
     description: roomDetails.description,
     price: roomDetails.price,
     guestCapacity: roomDetails.guestCapacity,
+    qty: roomDetails.qty,
     images: roomDetails.images.map((img) => ({
       id: img.id,
       url: img.url,
