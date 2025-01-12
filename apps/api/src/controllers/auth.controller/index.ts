@@ -130,11 +130,11 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
             message: 'Successfully logged in',
             data: {
                 token,
-                email: user?.email,
-                role: user?.role,
-                name: user?.name,
-                profilePicture: user?.profileImage,
-                isVerified: user?.isVerified
+                email: user!.email,
+                role: user!.role,
+                name: user!.name,
+                profilePicture: user!.profileImage,
+                isVerified: user!.isVerified
             }
         })
     } catch (error) {
@@ -236,7 +236,7 @@ export const keepLogin = async(req: Request, res: Response, next: NextFunction) 
             name: user?.name,
             email: user?.email,
             role: user?.role,
-            verified: "isVerified" in user! ? user.isVerified : null,
+            isVerified: "isVerified" in user! ? user.isVerified : null,
             profileImage: user?.profileImage,
             username: user?.username
         }

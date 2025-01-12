@@ -12,8 +12,16 @@ import Link from "next/link";
 import Wrapper from "@/components/layout/Wrapper";
 import Footer from "@/components/common/footer/Footer";
 import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
+import { usePropertyFacilities } from "@/features/properties/hooks/queries/queryFacilities";
+import { useQueryPropertyCategories } from "@/features/properties/hooks/queries/queryPropertyCategories";
+import { Slider } from "@/components/ui/slider";
+import { ArrowUpDown, Building2, ChevronDown, CircleDollarSign, PocketKnife, X } from "lucide-react";
+import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FacilitiesResponse } from "@/features/types/property";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@radix-ui/react-accordion";
 
-// Type definitions remain the same
+
 type SortOption = "price_asc" | "price_desc" | "name_asc" | "name_desc";
 
 interface Property {
@@ -26,17 +34,236 @@ interface Property {
   address: string;
   city: string;
   checkIn: string;
-  checkOut: string
-  facilities: string[] | any;
+  checkOut: string;
+  facilities: any[];
+  rating?: number;
 }
 
 interface PropertyCardProps extends Property {
-    id: number
-
+  id: number;
 }
 
-interface PropertySidebarProps {
-  onSortChange: (value: SortOption) => void;
+function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { data: facilities } = usePropertyFacilities();
+  const { data: categories } = useQueryPropertyCategories();
+  const [priceRange, setPriceRange] = useState([0, 5000000]);
+
+  return (
+    <div className="w-full bg-white rounded-lg shadow-md">
+      {/* Mobile Filter Button */}
+      <button
+        className="lg:hidden w-full flex items-center justify-between p-4 bg-gray-50 rounded-t-lg"
+        onClick={() => setIsFilterOpen(!isFilterOpen)}
+      >
+        <span className="font-medium">Filters</span>
+        {isFilterOpen ? <X className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+      </button>
+
+      <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block p-4`}>
+        <Accordion type="multiple" className="w-full space-y-2">
+          {/* Sort Section */}
+          <AccordionItem value="sort" className="border rounded-lg px-2">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                <span>Sort By</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4 p-1">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sort"
+                    value="price_asc"
+                    onChange={(e) => onSortChange(e.target.value)}
+                    className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
+                  />
+                  <span className="text-sm">Price: Low to High</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sort"
+                    value="price_desc"
+                    onChange={(e) => onSortChange(e.target.value)}
+                    className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
+                  />
+                  <span className="text-sm">Price: High to Low</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sort"
+                    value="name_asc"
+                    onChange={(e) => onSortChange(e.target.value)}
+                    className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
+                  />
+                  <span className="text-sm">Name: A to Z</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sort"
+                    value="name_desc"
+                    onChange={(e) => onSortChange(e.target.value)}
+                    className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
+                  />
+                  <span className="text-sm">Name: Z to A</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="sort"
+                    value="rating_desc"
+                    onChange={(e) => onSortChange(e.target.value)}
+                    className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
+                  />
+                  <span className="text-sm">Rating: High to Low</span>
+                </label>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Price Range */}
+          <AccordionItem value="price" className="border rounded-lg px-2">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <CircleDollarSign className="h-4 w-4" />
+                <span>Price Range</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="px-2 py-4">
+                <Slider
+                  defaultValue={[0, 5000000]}
+                  max={5000000}
+                  step={100000}
+                  onValueChange={setPriceRange}
+                  className="w-full "
+                />
+                <div className="flex justify-between mt-4 text-sm text-gray-600">
+                  <span>Rp {priceRange[0].toLocaleString()}</span>
+                  <span>Rp {priceRange[1].toLocaleString()}</span>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Property Type */}
+          <AccordionItem value="property-type" className="border rounded-lg px-2">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <span>Property Type</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 py-2">
+                {categories?.map((category) => (
+                  <label key={category.id} className="flex items-center space-x-3 cursor-pointer">
+                    <Checkbox
+                      id={`category-${category.id}`}
+                      onCheckedChange={(checked) => onFilterChange('category', category.id, checked)}
+                      className="text-[#FF385C] data-[state=checked]:bg-[#FF385C] data-[state=checked]:border-[#FF385C]"
+                    />
+                    <div className="flex items-center space-x-2">
+                      {category.icon && (
+                        <Image
+                          src={`http://localhost:4700/images/${category.icon}`}
+                          alt={category.name}
+                          width={20}
+                          height={20}
+                          className="opacity-75"
+                        />
+                      )}
+                      <span className="text-sm">{category.name}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Facilities */}
+          <AccordionItem value="facilities" className="border rounded-lg px-2">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <PocketKnife className="h-4 w-4" />
+                <span>Facilities</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 py-2">
+                {facilities?.data?.propertiesFacilities?.map((facility) => (
+                  <label key={facility.id} className="flex items-center space-x-3 cursor-pointer">
+                    <Checkbox
+                      id={`facility-${facility.id}`}
+                      onCheckedChange={(checked) => onFilterChange('facility', facility.id, checked)}
+                      className="text-[#FF385C] data-[state=checked]:bg-[#FF385C] data-[state=checked]:border-[#FF385C]"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <Image
+                        src={`http://localhost:4700/images/${facility.icon}`}
+                        alt={facility.name}
+                        width={20}
+                        height={20}
+                        className="opacity-75"
+                      />
+                      <span className="text-sm">{facility.name}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          {/* Room Facilities */}
+          <AccordionItem value="room-facilities" className="border rounded-lg px-2">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <PocketKnife className="h-4 w-4" />
+                <span>Room Facility</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-3 py-2">
+                {facilities?.data?.roomFacilities?.map((facility) => (
+                  <label key={facility.id} className="flex items-center space-x-3 cursor-pointer">
+                    <Checkbox
+                      id={`facility-${facility.id}`}
+                      onCheckedChange={(checked) => onFilterChange('facility', facility.id, checked)}
+                      className="text-[#FF385C] data-[state=checked]:bg-[#FF385C] data-[state=checked]:border-[#FF385C]"
+                    />
+                    <div className="flex items-center space-x-2">
+                      <Image
+                        src={`http://localhost:4700/images/${facility.icon}`}
+                        alt={facility.name}
+                        width={20}
+                        height={20}
+                        className="opacity-75"
+                      />
+                      <span className="text-sm">{facility.name}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Apply Filters Button */}
+        <Button 
+          className="w-full bg-[#FF385C] hover:bg-[#FF385C]/90 text-white mt-6"
+          onClick={() => {
+            // Handle apply filters
+          }}
+        >
+          Show Results
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function PropertyCard({
@@ -50,209 +277,209 @@ function PropertyCard({
   checkIn,
   checkOut,
   facilities,
+  rating,
 }: PropertyCardProps) {
   const formattedCheckIn = checkIn.replace(/-/g, '/');
   const formattedCheckOut = checkOut.replace(/-/g, '/');
 
   return (
-    <Card className="w-full rounded-lg shadow-lg overflow-hidden hover:scale-[1.02] transition-transform">
-      <div className="relative w-full h-48 bg-gray-100">
+    <Card className="flex flex-col md:flex-row overflow-hidden hover:shadow-lg transition-shadow duration-300">
+      <div className="relative w-full md:w-1/3 h-64 md:h-auto">
         <Image
           src={`http://localhost:4700/images/${mainImage}`}
           alt={name}
           layout="fill"
           objectFit="cover"
-          className="rounded-t-lg"
         />
       </div>
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl font-semibold">{name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-lg font-bold text-primary">
-          {price !== 0 ? `From ${price.toLocaleString()} per night` : `No room available`}
-        </p>
-        <div className="flex justify-between mt-4 text-sm text-gray-600">
-          <span>{category}</span>
-          <span>{address}</span>
-          <span>{city}</span>
-        </div>
-        <div className="mt-4">
-          <h4 className="text-md font-medium">Facilities:</h4>
-          <ul className="grid grid-cols-2 gap-2 mt-2">
-            {facilities.map((facility: any) => (
-              <li key={facility.id} className="flex items-center space-x-2">
-                <Image
-                  src={`http://localhost:4700/images/${facility.icon}`}
-                  alt={facility.name}
-                  width={20}
-                  height={20}
-                />
-                <span>{facility.name}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </CardContent>
-      <CardFooter className="px-6 pb-6">
-        <Link
-          href={`/property/${id.toLocaleString()}?checkIn=${formattedCheckIn}&checkOut=${formattedCheckOut}`}
-        >
-          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">View Details</Button>
-        </Link>
-      </CardFooter>
+      <div className="flex-1">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-xl font-bold mb-2">{name}</CardTitle>
+              <div className="text-sm text-gray-600">
+                <p>{category} • {city}</p>
+                <p>{address}</p>
+              </div>
+            </div>
+            {rating && (
+              <div className="bg-blue-600 text-white px-2 py-1 rounded">
+                {rating}
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mt-4">
+            <h4 className="text-md font-medium mb-2">Facilities:</h4>
+            <div className="flex flex-wrap gap-2">
+              {facilities?.map((facility) => (
+                <span key={facility.id} className="flex items-center space-x-1 bg-gray-100 px-2 py-1 rounded text-sm">
+                  <Image
+                    src={`http://localhost:4700/images/${facility.icon}`}
+                    alt={facility.name}
+                    width={16}
+                    height={16}
+                  />
+                  <span>{facility.name}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-between items-center">
+          <div>
+            <p className="text-2xl font-bold text-[#FF385C]">
+              {price !== 0 ? `Rp ${price.toLocaleString()}` : 'No rooms available'}
+            </p>
+            <p className="text-sm text-gray-600">per night</p>
+          </div>
+          <Link
+            href={`/property/${id}?checkIn=${formattedCheckIn}&checkOut=${formattedCheckOut}`}
+          >
+            <Button className="bg-[#FF385C] hover:bg-[#FF385C]/90 text-white">
+              View Details
+            </Button>
+          </Link>
+        </CardFooter>
+      </div>
     </Card>
   );
 }
 
-// Sidebar for Sorting
-function PropertySidebar({ onSortChange }: PropertySidebarProps) {
-  return (
-    <div className="p-4 bg-background border rounded-lg">
-      <h2 className="text-lg font-semibold mb-4">Sort Properties</h2>
-      <RadioGroup defaultValue="price_asc" onValueChange={onSortChange}>
-        <div className="flex items-center space-x-2 mb-2">
-          <RadioGroupItem value="price_asc" id="price_asc" />
-          <Label htmlFor="price_asc">Price (Low to High)</Label>
-        </div>
-        <div className="flex items-center space-x-2 mb-2">
-          <RadioGroupItem value="price_desc" id="price_desc" />
-          <Label htmlFor="price_desc">Price (High to Low)</Label>
-        </div>
-        <div className="flex items-center space-x-2 mb-2">
-          <RadioGroupItem value="name_asc" id="name_asc" />
-          <Label htmlFor="name_asc">Name (A-Z)</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="name_desc" id="name_desc" />
-          <Label htmlFor="name_desc">Name (Z-A)</Label>
-        </div>
-      </RadioGroup>
-    </div>
-  );
-}
-
 export const SearchProperty = () => {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    // Handle URL parameters safely
-    const searchQuery = searchParams.get('search') || '';
-    const checkIn = searchParams.get('checkIn') || '';
-    const checkOut = searchParams.get('checkOut') || '';
-    const guest = searchParams.get('guest') || '';
-    const sortBy = searchParams.get('sortBy') || 'price';
-    const orderBy = searchParams.get('orderBy') || 'asc';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-  
-    const sortOption = `${sortBy}_${orderBy}` as SortOption;
-  
-    const { data, isLoading, isError, error } = useQuery({
-      queryKey: ["properties", searchQuery, checkIn, checkOut, guest, sortOption, page],
-      queryFn: async () => {
-        const res = await instance.get("/property", {
-          params: {
-            search: searchQuery || undefined,
-            checkIn: checkIn || undefined,
-            checkOut: checkOut || undefined,
-            guest: guest || undefined,
-            sortBy: sortOption.split("_")[0],
-            sortOrder: sortOption.split("_")[1],
-            page,
-            limit,
-          },
-        });
-        return res.data.data;
-      },
-    });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedFilters, setSelectedFilters] = useState({
+    categories: [],
+    facilities: [],
+  });
 
-    console.log('data from search page:',data)
-  
-    // Handle sort change
-    const handleSortChange = (newSortOption: SortOption) => {
-      const [newSortBy, newOrderBy] = newSortOption.split('_');
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('sortBy', newSortBy);
-      params.set('orderBy', newOrderBy);
-      router.push(`?${params.toString()}`);
-    };
-  
-    // Handle pagination
-    const handlePageChange = (newPage: number) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('page', newPage.toString());
-      router.push(`?${params.toString()}`);
-    };
-  
-    return (
-        <Wrapper>
-          <main>
-            <div className="container mx-auto p-4 pt-48">
-              <SearchForm />
-              <div className="flex flex-col md:flex-row gap-4 pt-10">
-                <div className="w-full md:w-1/4">
-                  <PropertySidebar onSortChange={handleSortChange} />
-                </div>
-                <div className="w-full md:w-3/4">
-                  {isLoading ? (
-                    <p>Loading...</p>
-                  ) : isError ? (
-                    <p className="text-red-500">Error: {(error as Error)?.message}</p>
-                  ) : !data || data.length === 0 ? (
-                    <p>No properties found.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {data.map((property: Property) => (
-                        <PropertyCard 
-                        key={property?.id} 
-                        {...property} 
-                        id = {property?.id}
-                        category = {property?.category}
-                        address = {property?.address}
-                        city = {property?.city}
-                        checkIn = {checkIn}
-                        checkOut = {checkOut}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-center mt-6 gap-4">
-                <Button 
-                  onClick={() => handlePageChange(page - 1)} 
-                  disabled={page === 1}
-                >
-                  Previous
-                </Button>
-                <span className="px-4">Page {page}</span>
-                <Button 
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={!data || data.length < limit}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </main>
+  const searchQuery = searchParams.get('search') || '';
+  const checkIn = searchParams.get('checkIn') || '';
+  const checkOut = searchParams.get('checkOut') || '';
+  const guest = searchParams.get('guest') || '';
+  const sortBy = searchParams.get('sortBy') || 'price';
+  const orderBy = searchParams.get('orderBy') || 'asc';
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '10');
 
-          {/* Footer */}
-          <section className="footer_one">
-            <div className="container">
-              <div className="row">
-                <Footer />
-              </div>
-            </div>
-          </section>
+  const sortOption = `${sortBy}_${orderBy}` as SortOption;
 
-          {/* Footer Bottom Area */}
-          <section className="footer_middle_area pt40 pb40">
-            <div className="container">
-              <CopyrightFooter />
-            </div>
-          </section>
-        </Wrapper>
-      );
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["properties", searchQuery, checkIn, checkOut, guest, sortOption, page],
+    queryFn: async () => {
+      const res = await instance.get("/property", {
+        params: {
+          search: searchQuery || undefined,
+          checkIn: checkIn || undefined,
+          checkOut: checkOut || undefined,
+          guest: guest || undefined,
+          sortBy: sortOption.split("_")[0],
+          sortOrder: sortOption.split("_")[1],
+          page,
+          limit,
+        },
+      });
+      return res.data.data;
+    },
+  });
+
+  const handleSortChange = (newSortOption: SortOption) => {
+    const [newSortBy, newOrderBy] = newSortOption.split('_');
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('sortBy', newSortBy);
+    params.set('orderBy', newOrderBy);
+    router.push(`?${params.toString()}`);
   };
-  
-  export default SearchProperty;
+
+  const handleFilterChange = (type: string, id: number, checked: boolean) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [type]: checked 
+        ? [...prev[type], id]
+        : prev[type].filter(item => item !== id)
+    }));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', newPage.toString());
+    router.push(`?${params.toString()}`);
+  };
+
+  return (
+    <Wrapper>
+      <main className="min-h-screen bg-gray-50">
+        <div className="container mx-auto p-4 pt-32">
+          <SearchForm />
+          <div className="flex flex-col lg:flex-row gap-6 mt-8">
+            <aside className="w-full lg:w-1/4">
+              <PropertySidebar 
+                onSortChange={handleSortChange}
+                onFilterChange={handleFilterChange}
+                selectedFilters={selectedFilters}
+              />
+            </aside>
+            <div className="flex-1 space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF385C]"></div>
+                </div>
+              ) : isError ? (
+                <div className="text-red-500 text-center p-4 bg-white rounded-lg shadow">
+                  <p>Error: {(error as Error)?.message}</p>
+                </div>
+              ) : !data || data.length === 0 ? (
+                <div className="text-center p-8 bg-white rounded-lg shadow">
+                  <p className="text-gray-600">No properties found matching your criteria.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.map((property: Property) => (
+                    <PropertyCard 
+                      key={property.id}
+                      {...property}
+                      checkIn={checkIn}
+                      checkOut={checkOut}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {data && data.length > 0 && (
+                <div className="flex justify-center gap-4 mt-8">
+                  <Button 
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    variant="outline"
+                    className="border-gray-200 hover:bg-gray-50"
+                  >
+                    Previous
+                  </Button>
+                  <span className="px-4 py-2 bg-white rounded-md border border-gray-200">
+                    Page {page}
+                  </span>
+                  <Button 
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={!data || data.length < limit}
+                    variant="outline"
+                    className="border-gray-200 hover:bg-gray-50"
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+      <CopyrightFooter />
+    </Wrapper>
+  );
+};
+
+export default SearchProperty;

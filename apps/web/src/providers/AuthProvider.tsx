@@ -62,14 +62,18 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         const fetchKeepAuth = async () => {
             try {
                 const res = await instance.get('/auth');
+                console.log('Login response isVerified:', res?.data?.data?.isVerified);
+
                 setKeepAuth({
                     name: res?.data?.data?.name,
                     role: res?.data?.data?.role,
                     email: res?.data?.data?.email,
                     profileImage: res?.data?.data?.profileImage,
-                    isVerified: res?.data?.data?.verified
+                    isVerified: res?.data?.data?.isVerified
                 });
                 console.log('Role from keepauth: ', res?.data?.data?.role)
+                console.log('Verification from keepauth:', res?.data?.data?.isVerified) 
+                console.log('response: ', res?.data?.data)
             } catch (err) {
                 console.log(err);
                 authLogout();
@@ -111,10 +115,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
     
-            // If the user is logged in and tries to access auth routes, redirect them
             if (authRoutes.includes(pathname) && isValidToken(token)) {
-                setErrorMessage('You are already logged in');
-                setIsAuthorized(false)
                 router.push('/');
                 return;
             }

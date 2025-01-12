@@ -7,6 +7,11 @@ export interface IGetPropertyList {
     sortOrder: string;
     offset: number;
     pageSize: number;
+    priceMin?: number;
+    priceMax?: number;
+    categories?: number[];
+    facilities?: number[];
+    minRating?: number;
 }
 
 export interface ICreateProperty {
@@ -38,6 +43,33 @@ export interface IGetRoomDetailsById {
   parsedCheckOut?: Date;
 }
 
+interface ISpecialPrice {
+    startDate: Date;
+    endDate: Date;
+    price: number;
+  }
+  
+  interface IUnavailability {
+    startDate: Date;
+    endDate: Date;
+    reason?: string;
+  }
+  
+  export interface IRoomType {
+    id: number;
+    name: string;
+    price: string | number;
+    description: string;
+    qty: string | number;
+    guestCapacity: string | number;
+    images?: string[];
+    facilities?: number[];
+    specialPrice?: ISpecialPrice[];
+    unavailableDates?: IUnavailability[];
+    specialPricesToDelete?: number[];
+    unavailabilityToDelete?: number[];
+}
+
 export interface IEditProperty {
     propertyId: number;
     tenantId: number;
@@ -51,34 +83,10 @@ export interface IEditProperty {
     mainImage?: string;
     propertyImages?: string[];
     facilityIds?: number[];
-    roomTypesToUpdate?: Array<{
-        id: number;
-        name?: string;
-        price?: number | string;
-        description?: string;
-        qty?: number | string;
-        guestCapacity?: number | string;
-        facilities?: number[];
-        images?: string[];
-        specialPrice?: Array<{
-            id?: number;
-            date: Date;
-            price: number;
-        }>;
-    }>;
-    roomTypesToAdd?: Array<{
-        name: string;
-        price: number | string;
-        description: string;
-        qty: number | string;
-        guestCapacity: number | string;
-        facilities: number[];
-        images?: string[];
-        specialPrice?: Array<{
-            date: Date;
-            price: number;
-        }>;
-    }>;
+    roomTypesToUpdate?: IRoomType[];
+    roomTypesToAdd?: IRoomType[];
     roomTypesToDelete?: number[];
     imagesToDelete?: number[];
+    specialPricesToDelete?: number[];
+    unavailabilityToDelete?: number[];
 }

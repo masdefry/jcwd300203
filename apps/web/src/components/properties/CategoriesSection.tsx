@@ -29,6 +29,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   error,
   touched,
 }) => {
+  
   if (isLoading) {
     return (
       <Select disabled>
@@ -48,7 +49,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       </Select>
     );
   }
-
+  console.log('categories data: ', categories)
   return (
     <Field name={name}>
       {({ field, form }: any) => (

@@ -52,12 +52,12 @@ export const createRoomReservationService = async ({
   const customPrice = await prisma.flexiblePrice.findFirst({
     where: {
       roomTypeId: roomId,
-      customDate: {
-        gte: checkInDate,
-        lte: checkOutDate,
-      },
+      OR: [
+        { startDate: { lte: checkOutDate }, endDate: { gte: checkInDate } },
+        { startDate: { lte: checkInDate }, endDate: { gte: checkInDate } },
+      ],
     },
-    orderBy: { customDate: "desc" },
+    orderBy: { startDate: "asc" },
   });
   
   // Retrieve fallback price from RoomType table
