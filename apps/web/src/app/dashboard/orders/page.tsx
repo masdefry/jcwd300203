@@ -212,14 +212,14 @@ const MyOrdersPage = () => {
     <Wrapper>
       {/* Main container with flex layout */}
       <div className="flex min-h-screen relative">
-        {/* Sidebar - Fixed on desktop, sliding on mobile */}
+        {/* Sidebar - Fixed on desktop, sliding on mobile
         <div
           className={`w-72 bg-[#13213c] min-h-screen fixed md:static z-40 transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           }`}
         >
           <SidebarMenu />
-        </div>
+        </div> */}
 
         {/* Mobile overlay */}
         {isSidebarOpen && (
