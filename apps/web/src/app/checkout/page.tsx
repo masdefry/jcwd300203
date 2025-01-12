@@ -92,7 +92,9 @@ const RoomDetailsCard = () => {
         // Validate and format check-in and check-out dates
         const formattedCheckIn = checkIn ? new Date(checkIn.replace(/\//g, "-")) : null;
         const formattedCheckOut = checkOut ? new Date(checkOut.replace(/\//g, "-")) : null;
-  
+        console.log(formattedCheckIn)
+        console.log(formattedCheckOut)        
+
         if (!formattedCheckIn || isNaN(formattedCheckIn.getTime())) {
           setError("Invalid check-in date.");
           return;
@@ -233,18 +235,19 @@ export default function ReservationPage() {
       const calculateTotalPrice = (priceComparison: any[], checkIn: string, checkOut: string) => {
         const checkInDate = new Date(checkIn);
         const checkOutDate = new Date(checkOut);
-
+  
         // Filter the priceComparison array for the selected dates
         const selectedDays = priceComparison.filter((day: any) => {
           const currentDate = new Date(day.date);
           return currentDate >= checkInDate && currentDate < checkOutDate;
         });
-
+  
         // Calculate the total price
         const total = selectedDays.reduce((total: number, day: any) => {
-          return total + day.price * reservationDetails.rooms; // Multiply by the number of rooms
+          const dayPrice = day.price || 0;
+          return total + dayPrice * (reservationDetails.rooms || 1); // Multiply by the number of rooms
         }, 0);
-
+  
         // Return the total and a breakdown for each day
         return {
           total,
@@ -254,17 +257,17 @@ export default function ReservationPage() {
           })),
         };
       };
-
+  
       const { total, breakdown } = calculateTotalPrice(
         roomData.priceComparison,
         checkIn,
         checkOut
       );
-      
-      setTotalPrice(total);
-      setPriceBreakdown(breakdown); // Save the breakdown for display
+  
+      setTotalPrice(total); // Update total price dynamically
+      setPriceBreakdown(breakdown); // Update breakdown dynamically
     }
-  }, [reservationDetails.rooms, roomData, checkIn, checkOut]);
+  }, [reservationDetails.rooms, roomData, checkIn, checkOut]);   
 
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
@@ -334,7 +337,7 @@ export default function ReservationPage() {
                 const propertyId = await fetchPropertyId(roomId);
 
                 console.log("Submitted Reservation Details:", values);
-            
+                
                 // Send the reservation request to the backend
                 const response = await instance.post("/transaction/reserve", {
                   roomId,

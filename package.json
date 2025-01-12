@@ -49,6 +49,7 @@
     "react-modal-video": "^2.0.2",
     "react-pro-sidebar": "^1.1.0",
     "react-slick": "^0.30.2",
+    "rsuite": "^5.76.3",
     "sass": "^1.82.0"
   }
 }

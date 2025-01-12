@@ -125,10 +125,10 @@ const MyDashboard = () => {
           </div>
 
           {/* Property Calendar */}
-          <div className="bg-white shadow rounded-lg p-6">
+          {/* <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-bold text-gray-700 mb-4">Property Availability</h2>
             <PropertyCalendar />
-          </div>
+          </div> */}
         </div>
 
         {/* Bookings Table */}

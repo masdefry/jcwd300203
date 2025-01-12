@@ -59,7 +59,6 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
   };
 };
 
-// services/report.service.ts
 export const getPropertyReportService = async ({ tenantId }: { tenantId: number }) => {
   // Fetch all properties with their rooms and bookings for the specific tenant
   const properties = await prisma.property.findMany({
@@ -69,17 +68,12 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
         include: {
           bookings: {
             where: {
-              status: {
-                some: {
-                  Status: {
-                    in: [
-                      BookingStatus.CONFIRMED,
-                      BookingStatus.WAITING_FOR_CONFIRMATION,
-                      BookingStatus.WAITING_FOR_PAYMENT,
-                    ],
-                  },
-                },
-              },
+              OR: [
+                { status: { some: { Status: BookingStatus.CONFIRMED } } },
+                { status: { some: { Status: BookingStatus.WAITING_FOR_CONFIRMATION } } },
+                { status: { some: { Status: BookingStatus.WAITING_FOR_PAYMENT } } },
+                { status: { some: { Status: BookingStatus.CANCELED } } },
+              ],
             },
             select: {
               id: true,
@@ -98,27 +92,40 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
     return property.roomTypes.flatMap((roomType: any) => {
       const events = [];
 
+      // Process bookings to separate active bookings and canceled bookings
+      const activeBookings = roomType.bookings?.filter((booking: any) =>
+        ["CONFIRMED", "WAITING_FOR_CONFIRMATION", "WAITING_FOR_PAYMENT"].includes(
+          booking.status[0]?.Status
+        )
+      );
+
+      const canceledBookings = roomType.bookings?.filter((booking: any) =>
+        booking.status[0]?.Status === "CANCELED"
+      );
+
+      // Count active and canceled bookings
+      const activeRoomCount = activeBookings?.length || 0;
+      const canceledRoomCount = canceledBookings?.length || 0;
+
       // Add "Booked" events for rooms with active bookings
-      roomType.bookings.forEach((booking: any) => {
-        if (
-          booking.status.some((s: any) =>
-            ["CONFIRMED", "WAITING_FOR_CONFIRMATION", "WAITING_FOR_PAYMENT"].includes(s.Status)
-          )
-        ) {
+      if (activeBookings && activeBookings.length > 0) {
+        activeBookings.forEach((booking: any) => {
           events.push({
-            title: `Booked: ${property.name} - Room ${roomType.id}`,
+            title: `Booked: ${property.name} - Room ${roomType.name}`,
             start: booking.checkInDate,
             end: booking.checkOutDate,
             status: "Booked",
             color: "red",
           });
-        }
-      });
+        });
+      }
 
-      // If no bookings exist, mark room as "Available"
-      if (!roomType.bookings || roomType.bookings.length === 0) {
+      // Calculate the total available rooms by considering canceled rooms
+      const availableRoomCount = roomType.qty - activeRoomCount;
+
+      if (availableRoomCount > 0) {
         events.push({
-          title: `Available: ${property.name} - Room ${roomType.id}`,
+          title: `Available: ${property.name} - Room ${roomType.name} (${availableRoomCount + canceledRoomCount} available)`,
           start: new Date(), // Available starting today
           end: new Date(new Date().setMonth(new Date().getMonth() + 1)), // Available for a month ahead
           status: "Available",

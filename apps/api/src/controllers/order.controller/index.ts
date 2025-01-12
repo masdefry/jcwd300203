@@ -69,10 +69,10 @@ export const sendOrderReminders = async() => {
 export const cancelOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { bookingId } = req.params; // The ID of the booking to cancel
-      const { usersId } = req.body; // Logged-in user's ID
+      const { usersId, room_qty } = req.body; // Logged-in user's ID
       
       // Call service to cancel the order
-      const result = await cancelOrderService({ bookingId: Number(bookingId), usersId: Number(usersId) });
+      const result = await cancelOrderService({ bookingId: Number(bookingId), usersId: Number(usersId), room_qty: Number(room_qty)});
   
       res.status(200).json({
         error: false,
@@ -87,10 +87,10 @@ export const cancelOrder = async (req: Request, res: Response, next: NextFunctio
 // cancel order service for tenant
 export const cancelUserOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { usersId } = req.body;
+    const { usersId, room_qty } = req.body;
     const { bookingId } = req.params;
 
-    const result = await cancelUserOrderService({ usersId: Number(usersId), bookingId: Number(bookingId) });
+    const result = await cancelUserOrderService({ usersId: Number(usersId), bookingId: Number(bookingId), room_qty: Number(room_qty) });
 
     res.status(200).json({
       error: false,

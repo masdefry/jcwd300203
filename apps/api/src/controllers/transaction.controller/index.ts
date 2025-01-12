@@ -81,19 +81,20 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
     // Validate request body
     if (!usersId || !propertyId || !roomId || !checkInDate || !checkOutDate || !room_qty) throw { msg: "All fields are required", status: 400 };
   
-    // Convert incoming `YYYY-MM-DD` to `DD/MM/YYYY` for compatibility with `parseCustomDate`
-    const formattedCheckInDate = checkInDate.split('-').reverse().join('/');
-    const formattedCheckOutDate = checkOutDate.split('-').reverse().join('/');
-
     // Parse the dates
-    const parsedCheckInDate = parseCustomDate(formattedCheckInDate);
-    const parsedCheckOutDate = parseCustomDate(formattedCheckOutDate);
+    // Convert incoming `checkInDate` and `checkOutDate` directly to Date objects
+    const parsedCheckInDate = new Date(checkInDate);
+    const parsedCheckOutDate = new Date(checkOutDate);
 
     // Validate parsed dates
+    if (isNaN(parsedCheckInDate.getTime()) || isNaN(parsedCheckOutDate.getTime())) {
+      throw { msg: "Invalid dates provided", status: 400 };
+    }
+
     if (parsedCheckInDate >= parsedCheckOutDate) {
       throw { msg: "Check-out date must be after check-in date", status: 400 };
     }
-
+ 
     // Call service to create the booking
     const booking = await createRoomReservationService({
       usersId,

@@ -28,6 +28,7 @@ type Order = {
   customerId: number;
   price: number;
   proofOfPayment: string | null;
+  room_qty: number;
 };
 
 const MyOrdersPage = () => {
@@ -70,7 +71,7 @@ const MyOrdersPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleCancel = async (orderId: number, hasProofOfPayment: boolean) => {
+  const handleCancel = async (orderId: number, roomQty: number, hasProofOfPayment: boolean) => {
     const confirmCancel = window.confirm(
       hasProofOfPayment
         ? "Are you sure you want to cancel this order? You can still upload proof of payment even if canceled."
@@ -79,7 +80,7 @@ const MyOrdersPage = () => {
     if (!confirmCancel) return;
 
     try {
-      const response = await instance.post(`/orders/tenant/${orderId}/cancel`);
+      const response = await instance.post(`/orders/tenant/${orderId}/cancel`, { room_qty: roomQty });
       alert(response.data.message);
       window.location.reload();
     } catch (error: any) {
@@ -183,7 +184,7 @@ const MyOrdersPage = () => {
           {!hasProofOfPayment && isPending && (
             <button
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-              onClick={() => handleCancel(order.id, hasProofOfPayment)}
+              onClick={() => handleCancel(order.id, order.room_qty, hasProofOfPayment)}
             >
               Cancel
             </button>

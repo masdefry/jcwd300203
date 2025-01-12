@@ -63,3 +63,8 @@
       @apply bg-background text-foreground;
     }
   }
+
+  .calendar-app {
+    margin-top:  30px; 
+    padding-top: 10px; 
+  }
