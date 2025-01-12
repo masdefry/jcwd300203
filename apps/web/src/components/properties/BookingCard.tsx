@@ -94,7 +94,7 @@ export default function BookingCard({
           <div
             className={`text-xs ${isBeforeToday ? 'text-gray-300' : 'text-gray-500 selected-price'}`}
           >
-            {(parseInt(priceData.price) / 1000000).toFixed(1)}M
+            {(parseInt(priceData?.price) / 1000000).toFixed(1)}M
           </div>
         )}
       </div>
