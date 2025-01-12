@@ -384,7 +384,7 @@ export const SearchProperty = () => {
       return res.data.data;
     },
   });
-
+  
   const handleSortChange = (newSortOption: SortOption) => {
     const [newSortBy, newOrderBy] = newSortOption.split('_');
     const params = new URLSearchParams(searchParams.toString());

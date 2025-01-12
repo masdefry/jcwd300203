@@ -111,7 +111,7 @@ export default function RoomsList({ rooms, checkIn, checkOut, guests }: RoomsLis
                 <div className="space-y-4">
                   <div className="text-right">
                     <div className="text-2xl font-bold">
-                      IDR {room.price.toLocaleString('id-ID')}
+                      IDR {room?.currentPrice?.toLocaleString('id-ID')}
                     </div>
                     <div className="text-sm text-gray-600">per night</div>
                   </div>
