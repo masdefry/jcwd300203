@@ -36,6 +36,15 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ error: true, message: "Invalid status value" });
     }
 
+    // Find the booking record
+    const booking = await prisma.booking.findUnique({
+      where: { id: Number(bookingId) },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: true, message: "Booking not found" });
+    }
+
     // Find the Status record using bookingId
     const statusRecord = await prisma.status.findFirst({
       where: { bookingId: Number(bookingId) },
@@ -51,6 +60,18 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       data: { Status: status },
     });
 
+    // Restore room qty if the booking is canceled
+    if (status === "CANCELED") {
+      await prisma.roomType.update({
+        where: { id: booking.roomId }, // Use `roomId` from the booking
+        data: {
+          qty: {
+            increment: booking.room_qty, // Increment the qty by the canceled room_qty
+          },
+        },
+      });
+    }
+    
     return res.status(200).json({
       error: false,
       message: `Booking status updated to ${status}`,

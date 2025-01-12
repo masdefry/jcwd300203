@@ -159,7 +159,7 @@ const RoomDetailsCard = () => {
         </p>
         <p>
           <span className="font-semibold">Available Rooms: </span>
-          {availableRooms} rooms
+          {roomData.qty} rooms
         </p>
       </CardContent>
     </Card>
@@ -318,7 +318,7 @@ export default function ReservationPage() {
               </p>
               <p>
                 <span className="font-semibold">Available Rooms: </span>
-                {roomData.priceComparison[0]?.availableRooms} rooms
+                {roomData.qty} rooms
               </p>
             </CardContent>
           </Card>

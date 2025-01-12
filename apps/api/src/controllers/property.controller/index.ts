@@ -334,7 +334,7 @@ export const getRoomDetailsById = async (req: Request, res: Response, next: Next
         parsedCheckOut,
       });
 
-      console.log(roomDetails)
+      console.log("roomDetails from controller: ", roomDetails)
   
       if (!roomDetails) {
         return res.status(404).json({ error: "Room not found." });
