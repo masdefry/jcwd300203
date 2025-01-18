@@ -56,9 +56,9 @@ const SidebarMenu = () => {
 
           <li>
             <Link 
-              href="/dashboard/properties/create"
+              href="/dashboard/listing"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
-                ${isSinglePageActive("/dashboard/properties/create", pathname) 
+                ${isSinglePageActive("/dashboard/listing", pathname) 
                   ? "bg-[#FF385C] text-white" 
                   : "text-gray-300 hover:bg-gray-700"}`}
             >
@@ -67,7 +67,7 @@ const SidebarMenu = () => {
             </Link>
           </li>
 
-          <li>
+          {/* <li>
             <Link 
               href="/dashboard/messages"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
@@ -78,7 +78,7 @@ const SidebarMenu = () => {
               <i className="flaticon-envelope" />
               <span>Messages</span>
             </Link>
-          </li>
+          </li> */}
         </ul>
       </nav>
     </div>

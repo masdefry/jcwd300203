@@ -5,22 +5,21 @@ import instance from "@/utils/axiosInstance";
 import StatisticsChart from "@/components/dashboard/my-dashboard/StatisticsChart";
 import PropertyCalendar from "@/components/dashboard/my-dashboard/PropertyCalendar";
 import authStore from "@/zustand/authStore";
-import { useRouter } from "next/navigation"; // Updated import
+import { useRouter } from "next/navigation";
 
-// Define TypeScript types
 type Booking = {
   propertyName: string;
   customer: string;
-  checkIn: string; // ISO Date String
-  checkOut: string; // ISO Date String
+  checkIn: string;
+  checkOut: string;
   totalRooms: number;
   status: string;
   revenue: number;
 };
 
 type DateRange = {
-  start: string | null; // ISO Date String or null
-  end: string | null; // ISO Date String or null
+  start: string | null;
+  end: string | null;
 };
 
 const MyDashboard = () => {
@@ -28,19 +27,30 @@ const MyDashboard = () => {
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [sortBy, setSortBy] = useState<"date" | "revenue">("date");
   const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null });
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    // Add responsive listener
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+
+    // Set initial value
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const response = await instance.get<{ success: boolean; data: { bookings: Booking[] } }>("/report/sales-report");
         const result = response.data;
-  
-        console.log("response: ", response);
-  
-        // Access `bookings` from `data` instead of directly from `result`
+        
         if (result.success && Array.isArray(result.data.bookings)) {
           setBookings(result.data.bookings);
-          setFilteredBookings(result.data.bookings); // Default view
+          setFilteredBookings(result.data.bookings);
         } else {
           console.error("Invalid data structure:", result);
         }
@@ -52,7 +62,6 @@ const MyDashboard = () => {
     fetchBookings();
   }, []);
 
-  // Sorting function
   const handleSort = (key: "date" | "revenue") => {
     if (!Array.isArray(filteredBookings)) {
       console.error("filteredBookings is not an array");
@@ -68,9 +77,8 @@ const MyDashboard = () => {
     });
     setFilteredBookings(sorted);
     setSortBy(key);
-  }; 
+  };
 
-  // Filter by Date Range
   const handleFilterByDate = () => {
     if (!dateRange.start || !dateRange.end) {
       console.warn("Date range is not set properly.");
@@ -85,100 +93,105 @@ const MyDashboard = () => {
     setFilteredBookings(filtered.length ? filtered : []);
   };
 
-  // get name of tenant
-  const tenantName = authStore((state) => state.name)
-
-  // router to push to a page
+  const tenantName = authStore((state) => state.name);
   const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header Section */}
-      <div className="bg-[#f15b5b] text-white py-6 px-8">
-        <h1 className="text-2xl text-white font-bold">Good Morning, {tenantName}</h1>
-        <p className="text-sm text-white">Welcome back to your dashboard!</p>
+      {/* Header Section - Made responsive */}
+      <div className="bg-[#f15b5b] text-white py-4 sm:py-6 px-4 sm:px-8">
+        <h1 className="text-xl sm:text-2xl text-white font-bold">Good Morning, {tenantName}</h1>
+        <p className="text-xs sm:text-sm text-white">Welcome back to your dashboard!</p>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Quick Actions */}
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-lg font-bold text-gray-700">Manage your properties, sales, and reports.</h2>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg" onClick={() => {router.push("/dashboard/orders")}}>View Orders</button>
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {/* Quick Actions - Made responsive */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg font-bold text-gray-700">Manage your properties, sales, and reports.</h2>
+          <button className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg" onClick={() => {router.push("/dashboard/orders")}}>
+            View Orders
+          </button>
         </div>
 
-        {/* Sales Report */}
-        <div className="mb-8">
-          {/* Sales Report */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-bold text-gray-700 mb-4">Sales Report</h2>
-            <StatisticsChart />
-            <div className="flex justify-between mt-4">
+        {/* Sales Report - Made responsive */}
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-bold text-gray-700 mb-4">Sales Report</h2>
+            <div className="w-full overflow-x-auto">
+              <StatisticsChart />
+            </div>
+            <div className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-4 mt-4">
               <button
-                className={`px-4 py-2 rounded-lg ${sortBy === "date" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
+                className={`px-4 py-2 rounded-lg w-full sm:w-auto ${sortBy === "date" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
                 onClick={() => handleSort("date")}
               >
                 Sort by Date
               </button>
               <button
-                className={`px-4 py-2 rounded-lg ${sortBy === "revenue" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
+                className={`px-4 py-2 rounded-lg w-full sm:w-auto ${sortBy === "revenue" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}
                 onClick={() => handleSort("revenue")}
               >
                 Sort by Revenue
               </button>
             </div>
-          </div> 
+          </div>
         </div>
 
-        {/* Bookings Table */}
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">Bookings</h2>
-          <div className="flex gap-4 mb-4">
+        {/* Bookings Table - Made responsive */}
+        <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <h2 className="text-base sm:text-lg font-bold text-gray-700 mb-4">Bookings</h2>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
             <input
               type="date"
-              className="px-4 py-2 border rounded-lg"
+              className="w-full sm:w-auto px-4 py-2 border rounded-lg"
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
             />
             <input
               type="date"
-              className="px-4 py-2 border rounded-lg"
+              className="w-full sm:w-auto px-4 py-2 border rounded-lg"
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
             />
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg" onClick={handleFilterByDate}>
+            <button 
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg"
+              onClick={handleFilterByDate}
+            >
               Filter by Range
             </button>
           </div>
-          <table className="w-full border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="p-4 border">Property Name</th>
-                <th className="p-4 border">Customer</th>
-                <th className="p-4 border">Check-In</th>
-                <th className="p-4 border">Check-Out</th>
-                <th className="p-4 border">Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBookings && filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
-                      <tr key={booking.checkIn} className="hover:bg-gray-100">
-                        <td className="p-4 border">{booking.propertyName}</td>
-                        <td className="p-4 border">{booking.customer}</td>
-                        <td className="p-4 border">{new Date(booking.checkIn).toLocaleDateString()}</td>
-                        <td className="p-4 border">{new Date(booking.checkOut).toLocaleDateString()}</td>
-                        <td className="p-4 border">
-                          {booking.revenue.toLocaleString("id-ID", { style: "currency", currency: "IDR" })}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="p-4 border text-center" colSpan={5}>
-                        No bookings available.
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-200">
+              <thead>
+                <tr className="bg-gray-100 text-left">
+                  <th className="p-2 sm:p-4 border text-sm sm:text-base">Property Name</th>
+                  <th className="p-2 sm:p-4 border text-sm sm:text-base">Customer</th>
+                  <th className="p-2 sm:p-4 border text-sm sm:text-base">Check-In</th>
+                  <th className="p-2 sm:p-4 border text-sm sm:text-base">Check-Out</th>
+                  <th className="p-2 sm:p-4 border text-sm sm:text-base">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBookings && filteredBookings.length > 0 ? (
+                  filteredBookings.map((booking) => (
+                    <tr key={booking.checkIn} className="hover:bg-gray-100">
+                      <td className="p-2 sm:p-4 border text-sm sm:text-base">{booking.propertyName}</td>
+                      <td className="p-2 sm:p-4 border text-sm sm:text-base">{booking.customer}</td>
+                      <td className="p-2 sm:p-4 border text-sm sm:text-base">{new Date(booking.checkIn).toLocaleDateString()}</td>
+                      <td className="p-2 sm:p-4 border text-sm sm:text-base">{new Date(booking.checkOut).toLocaleDateString()}</td>
+                      <td className="p-2 sm:p-4 border text-sm sm:text-base">
+                        {booking.revenue.toLocaleString("id-ID", { style: "currency", currency: "IDR" })}
                       </td>
                     </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="p-2 sm:p-4 border text-center text-sm sm:text-base" colSpan={5}>
+                      No bookings available.
+                    </td>
+                  </tr>
                 )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
