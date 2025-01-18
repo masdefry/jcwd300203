@@ -43,7 +43,7 @@ interface PropertyCardProps extends Property {
   id: number;
 }
 
-function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }) {
+function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { data: facilities } = usePropertyFacilities();
   const { data: categories } = useQueryPropertyCategories();
