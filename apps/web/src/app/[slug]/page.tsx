@@ -476,8 +476,20 @@ export const SearchProperty = () => {
         </div>
       </main>
 
-      <Footer />
-      <CopyrightFooter />
+      {/* Footer sections */}
+      <section className="footer_one">
+        <div className="container">
+          <div className="row">
+            <Footer />
+          </div>
+        </div>
+      </section>
+
+      <section className="footer_middle_area pt40 pb40">
+        <div className="container">
+          <CopyrightFooter />
+        </div>
+      </section>
     </Wrapper>
   );
 };
