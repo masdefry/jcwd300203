@@ -1,10 +1,20 @@
 import { prisma } from "@/connection";
 import { BookingStatus } from "@prisma/client";
 
-export const getSalesReportService = async ({ tenantId, startDate, endDate, sortBy }: any) => {
+export const getSalesReportService = async ({ 
+  tenantId, 
+  startDate, 
+  endDate, 
+  sortBy, 
+  page = 1, 
+  limit = 2 
+}: any) => {
   if (!tenantId) {
     throw { msg: "Tenant ID is required", status: 400 };
   }
+
+  // Calculate pagination values
+  const skip = (page - 1) * limit;
 
   const where: any = {
     property: { tenantId: tenantId }, // Filter by tenantId
@@ -19,12 +29,15 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
     if (isNaN(parsedStartDate.getTime())) throw { msg: "Invalid start date", status: 400 };
     where.createdAt = { ...where.createdAt, gte: parsedStartDate };
   }
-
   if (endDate) {
     const parsedEndDate = new Date(endDate);
     if (isNaN(parsedEndDate.getTime())) throw { msg: "Invalid end date", status: 400 };
     where.createdAt = { ...where.createdAt, lte: parsedEndDate };
   }
+
+  // Count total bookings for pagination
+  const totalBookings = await prisma.booking.count({ where });
+  const totalPages = Math.ceil(totalBookings / limit);
 
   // Fetch bookings with confirmed status for the specific tenant
   const bookings = await prisma.booking.findMany({
@@ -37,6 +50,8 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
     orderBy: {
       createdAt: sortBy || "asc", // Sort by createdAt or provided criteria
     },
+    skip: skip,
+    take: limit,
   });
 
   // Calculate total revenue for the tenant's bookings
@@ -56,6 +71,7 @@ export const getSalesReportService = async ({ tenantId, startDate, endDate, sort
   return {
     totalRevenue,
     bookings: formattedBookings,
+    totalPages,
   };
 };
 

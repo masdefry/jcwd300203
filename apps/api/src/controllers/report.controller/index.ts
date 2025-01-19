@@ -7,16 +7,32 @@ export const salesReport = async (req: Request, res: Response, next: NextFunctio
   try {
     const { usersId } = req.body; 
     const tenantId = usersId;
-
-
     if (!tenantId) {
       return res.status(400).json({ success: false, message: "Tenant ID is required" });
     }
+    
+    // Extract pagination parameters
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 2;
 
     const { startDate, endDate, sortBy } = req.query;
-
-    const report = await getSalesReportService({ tenantId, startDate, endDate, sortBy });
-    res.status(200).json({ success: true, data: report });
+    const report = await getSalesReportService({ 
+      tenantId, 
+      startDate, 
+      endDate, 
+      sortBy, 
+      page, 
+      limit 
+    });
+    
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        ...report,
+        totalPages: report.totalPages,
+        currentPage: page
+      } 
+    });
   } catch (error) {
     next(error);
   }
