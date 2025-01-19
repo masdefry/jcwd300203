@@ -1,27 +1,38 @@
 import { prisma } from '@/connection';
 import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById } from './types';
 import { deleteFiles } from '@/utils/delete.files';
+import { calculateDistance } from '@/utils/calculate.distance';
 
-export const getPropertiesListService = async ({
-  parsedCheckIn,
-  parsedCheckOut,
-  search,
-  guest,
-  sortBy,
-  sortOrder,
-  offset,
-  pageSize,
-  priceMin,
-  priceMax,
-  categories,
-  facilities,
-  minRating,
-}: IGetPropertyList) => {
+export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList) => {
   const guestCount = Number(guest);
   const currentDate = new Date();
 
+  const parsedLat = latitude ? parseFloat(latitude) : undefined;
+  const parsedLng = longitude ? parseFloat(longitude) : undefined;
+  const parsedRadius = radius ? parseFloat(radius) : undefined;
+
+  const locationConditions: { AND?: Array<{ latitude: { gte: string, lte: string } } | { longitude: { gte: string, lte: string } }> } = {};
+  if (parsedLat && parsedLng && parsedRadius) {
+    locationConditions['AND'] = [
+      {
+        latitude: {
+          gte: String(parsedLat - parsedRadius / 111.32),
+          lte: String(parsedLat + parsedRadius / 111.32)
+        }
+      },
+      {
+        longitude: {
+          gte: String(parsedLng - parsedRadius / (111.32 * Math.cos(parsedLat * Math.PI / 180))),
+          lte: String(parsedLng + parsedRadius / (111.32 * Math.cos(parsedLat * Math.PI / 180)))
+        }
+      }
+    ];
+  }
+
+
   const properties = await prisma.property.findMany({
     where: {
+      ...locationConditions,
       deletedAt: null,
       // Add category filter
       ...(categories?.length ? {
@@ -127,6 +138,22 @@ export const getPropertiesListService = async ({
       
       if (price === null || roomPrice < price) price = roomPrice;
     });
+
+    let locationScore = 0;
+    if (parsedLat && parsedLng && property.latitude && property.longitude) {
+      const propertyLat = parseFloat(property.latitude);
+      const propertyLng = parseFloat(property.longitude);
+      
+      if (!isNaN(propertyLat) && !isNaN(propertyLng)) {
+        const distance = calculateDistance(
+          parsedLat,
+          parsedLng,
+          propertyLat,
+          propertyLng
+        );
+        locationScore = Math.max(0, 5 - distance / 1000);
+      }
+    }
 
     // Calculate average rating
     const averageRating = property.reviews.length > 0
@@ -352,6 +379,8 @@ export const getPropertyDetailsService = async ({
         return {
           id: propertyDetails.id,
           name: propertyDetails.name,
+          latitude: propertyDetails.latitude,
+          longitude: propertyDetails.longitude,
           address: propertyDetails.address,
           city: propertyDetails.city,
           description: propertyDetails.description,
@@ -576,23 +605,18 @@ export const getPropertyDetailsTenantService = async ({
         endDate: price.endDate,
         price: Number(price.customPrice),
       })),
-      unavailableDates: [
-        // From unavailability table
-        ...roomType.unavailability.map(unavailable => ({
-          startDate: unavailable.startDate,
-          endDate: unavailable.endDate,
-          reason: unavailable.reason || 'Marked as unavailable',
-          type: 'BLOCKED'
-        })),
-        // From bookings
-        ...roomType.bookings.map(booking => ({
-          startDate: booking.checkInDate,
-          endDate: booking.checkOutDate,
-          reason: 'Booked',
-          type: 'BOOKED',
-          bookedQuantity: booking.room_qty
-        }))
-      ].sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
+      unavailableDates: roomType.unavailability.map(unavailable => ({
+        id: unavailable.id,          // Add this to make deletion work
+        startDate: unavailable.startDate,
+        endDate: unavailable.endDate,
+        reason: unavailable.reason || 'Marked as unavailable',
+      })),
+      bookedDates: roomType.bookings.map(booking => ({
+        startDate: booking.checkInDate,
+        endDate: booking.checkOutDate,
+        reason: 'Booked',
+        bookedQuantity: booking.room_qty
+      })),
       currentBookings: roomType.bookings.map(booking => ({
         checkInDate: booking.checkInDate,
         checkOutDate: booking.checkOutDate,
@@ -737,6 +761,8 @@ export const createPropertyService = async({usersId, authorizationRole, property
           name: propertyData.name,
           address: propertyData.address,
           city: propertyData.city,
+          latitude: propertyData.latitude,
+          longitude: propertyData.longitude,
           categoryId: Number(propertyData.categoryId),
           description: propertyData.description,
           roomCapacity: Number(propertyData.roomCapacity),
@@ -836,12 +862,12 @@ export const editPropertyService = async({
   mainImage,
   propertyImages,
   facilityIds,
+  latitude,
+  longitude,
   roomTypesToUpdate = [],
   roomTypesToAdd = [],
   roomTypesToDelete = [],
-  imagesToDelete = [],
-  unavailabilityToDelete = [],
-  specialPricesToDelete = []
+  imagesToDelete = []
 }: IEditProperty) => {
   const tenant = await prisma.tenant.findUnique({
       where: {
@@ -863,7 +889,9 @@ export const editPropertyService = async({
           images: true,
           roomTypes: {
               include: {
-                  images: true
+                  images: true,
+                  flexiblePrice: true,
+                  unavailability: true
               }
           }
       }
@@ -886,7 +914,9 @@ export const editPropertyService = async({
                   ...(categoryId !== undefined && { categoryId }),
                   ...(description && { description }),
                   ...(roomCapacity !== undefined && { roomCapacity }),
-                  ...(mainImage && { mainImage })
+                  ...(mainImage && { mainImage }),
+                  ...(latitude && {latitude}),
+                  ...(longitude && {longitude})
               }
           });
       }
@@ -928,41 +958,8 @@ export const editPropertyService = async({
           });
       }
 
-      // 5. Handle special price deletions
-      if (roomTypesToUpdate.length > 0) {
-        // Collect all special price IDs to delete from all rooms
-        const allSpecialPricesToDelete = roomTypesToUpdate
-            .flatMap(room => room.specialPricesToDelete || [])
-            .filter(id => id); // Filter out any undefined/null values
-    
-        if (allSpecialPricesToDelete.length > 0) {
-            console.log('Deleting special prices:', allSpecialPricesToDelete);
-            await tx.flexiblePrice.deleteMany({
-                where: {
-                    id: { in: allSpecialPricesToDelete },
-                    roomType: {
-                        propertyId
-                    }
-                }
-            });
-        }
-    }
-
-      // 6. Handle unavailability deletions
-      if (unavailabilityToDelete.length > 0) {
-          await tx.roomUnavailability.deleteMany({
-              where: {
-                  id: { in: unavailabilityToDelete },
-                  roomType: {
-                      propertyId
-                  }
-              }
-          });
-      }
-
-      // 7. Delete room types if specified
+      // 5. Handle room types to delete
       if (roomTypesToDelete.length > 0) {
-          // Get images of rooms to be deleted
           const roomsToDelete = existingProperty.roomTypes.filter(room => roomTypesToDelete.includes(room.id));
           roomsToDelete.forEach(room => {
               room.images.forEach(img => {
@@ -978,7 +975,7 @@ export const editPropertyService = async({
           });
       }
 
-      // 8. Update existing room types
+      // 6. Update existing room types
       for (const room of roomTypesToUpdate) {
           const existingRoom = await tx.roomType.findFirst({
               where: {
@@ -994,7 +991,7 @@ export const editPropertyService = async({
 
           if (!existingRoom) continue;
 
-          // Update basic room info if provided
+          // Update basic room info
           const roomUpdateData: any = {};
           if (room.name) roomUpdateData.name = room.name;
           if (room.price) roomUpdateData.price = parseFloat(room.price as string);
@@ -1009,6 +1006,30 @@ export const editPropertyService = async({
               });
           }
 
+          // Handle special price deletions
+          if (room.specialPricesToDelete && room.specialPricesToDelete.length > 0) {
+            await tx.flexiblePrice.deleteMany({
+                where: {
+                    id: { 
+                        in: room.specialPricesToDelete.map(id => Number(id))
+                    },
+                    roomTypeId: room.id
+                }
+            });
+        }
+
+          // Handle unavailability deletions
+          if (room.unavailabilityToDelete && room.unavailabilityToDelete.length > 0) {
+            await tx.roomUnavailability.deleteMany({
+                where: {
+                    id: { 
+                        in: room.unavailabilityToDelete.map(id => Number(id))
+                    },
+                    roomTypeId: room.id
+                }
+            });
+        }
+
           // Update room images if provided
           if (room.images?.length) {
               // Store old images for deletion
@@ -1016,7 +1037,7 @@ export const editPropertyService = async({
                   imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
               });
 
-              // Delete existing images from database
+              // Delete existing images
               await tx.roomImage.deleteMany({
                   where: { roomId: room.id }
               });
@@ -1030,7 +1051,7 @@ export const editPropertyService = async({
               });
           }
 
-          // Update room facilities if provided
+          // Update room facilities
           if (room.facilities?.length) {
               await tx.roomType.update({
                   where: { id: room.id },
@@ -1042,34 +1063,45 @@ export const editPropertyService = async({
               });
           }
 
-          // Handle special pricing if provided
-          if (Array.isArray(room.specialPrice)) {
-              // Add new special prices
-              await tx.flexiblePrice.createMany({
-                  data: room.specialPrice.map(sp => ({
-                      roomTypeId: room.id,
-                      startDate: sp.startDate,
-                      endDate: sp.endDate,
-                      customPrice: sp.price
-                  }))
-              });
-          }
+          // Add new special prices
+          if (room.specialPrice?.length) {
+            const newSpecialPrices = room.specialPrice
+                .filter(sp => !sp.id)
+                .map(sp => ({
+                    roomTypeId: room.id,
+                    startDate: new Date(sp.startDate),
+                    endDate: new Date(sp.endDate),
+                    customPrice: Number(sp.price) // Changed from parseFloat
+                }));
+        
+            if (newSpecialPrices.length > 0) {
+                await tx.flexiblePrice.createMany({
+                    data: newSpecialPrices
+                });
+            }
+        }
+        
 
-          // Handle unavailability if provided
-          if (Array.isArray(room.unavailableDates)) {
-              // Add new unavailability periods
-              await tx.roomUnavailability.createMany({
-                  data: room.unavailableDates.map(period => ({
-                      roomTypeId: room.id,
-                      startDate: period.startDate,
-                      endDate: period.endDate,
-                      reason: period.reason
-                  }))
-              });
-          }
+          // Add new unavailability periods
+          if (room.unavailableDates?.length) {
+            const newUnavailabilityDates = room.unavailableDates
+                .filter(period => !period.id)
+                .map(period => ({
+                    roomTypeId: room.id,
+                    startDate: new Date(period.startDate),
+                    endDate: new Date(period.endDate),
+                    reason: period.reason || ''
+                }));
+        
+            if (newUnavailabilityDates.length > 0) {
+                await tx.roomUnavailability.createMany({
+                    data: newUnavailabilityDates
+                });
+            }
+        }
       }
 
-      // 9. Add new room types
+      // 7. Add new room types
       for (const room of roomTypesToAdd) {
           const newRoom = await tx.roomType.create({
               data: {
@@ -1085,7 +1117,7 @@ export const editPropertyService = async({
               }
           });
 
-          // Add room images if provided
+          // Add room images
           if (room.images?.length) {
               await tx.roomImage.createMany({
                   data: room.images.map(url => ({
@@ -1095,19 +1127,19 @@ export const editPropertyService = async({
               });
           }
 
-          // Add special pricing if provided
+          // Add special pricing
           if (room.specialPrice?.length) {
               await tx.flexiblePrice.createMany({
                   data: room.specialPrice.map(sp => ({
                       roomTypeId: newRoom.id,
                       startDate: sp.startDate,
                       endDate: sp.endDate,
-                      customPrice: sp.price
+                      customPrice: Number(sp.price)
                   }))
               });
           }
 
-          // Add unavailability periods if provided
+          // Add unavailability periods
           if (room.unavailableDates?.length) {
               await tx.roomUnavailability.createMany({
                   data: room.unavailableDates.map(period => ({
@@ -1120,15 +1152,15 @@ export const editPropertyService = async({
           }
       }
 
-      // Delete old image files after database operations succeed
+      // Delete old image files
       if (imagesToBeDeleted.length > 0) {
           deleteFiles({ imagesUploaded: { images: imagesToBeDeleted } });
       }
 
       return { propertyId };
   }, {
-      maxWait: 15000, // Maximum time (ms) to wait to acquire a transaction lock
-      timeout: 20000, // Maximum time (ms) the transaction can run
+      maxWait: 15000,
+      timeout: 20000,
   });
 };
 

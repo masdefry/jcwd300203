@@ -4,11 +4,12 @@ import { useQueryPropertyCategories } from '@/features/properties/hooks/queries/
 import { AddCategoryDialog } from './AddCategoryDialog';
 import { CategorySelect } from './CategoriesSection';
 import { useFormikContext } from 'formik';
+import { MapPicker } from './MapPicker';
 
 export const BasicInformation: React.FC = () => {
   const { data: categories, isLoading } = useQueryPropertyCategories();
   const { touched } = useFormikContext();
-  
+
   return (
     <div className="space-y-4">
       <div>
@@ -43,13 +44,17 @@ export const BasicInformation: React.FC = () => {
           className="text-red-500 text-sm mt-1"
         />
       </div>
+      <div>
+        <MapPicker />
+      </div>
 
       <div>
         <label className="block text-sm font-medium mb-1">Address</label>
         <Field
           name="address"
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50"
           type="text"
+          readOnly
         />
         <ErrorMessage
           name="address"
@@ -63,8 +68,9 @@ export const BasicInformation: React.FC = () => {
           <label className="block text-sm font-medium mb-1">City</label>
           <Field
             name="city"
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-gray-50"
             type="text"
+            readOnly
           />
           <ErrorMessage
             name="city"
@@ -72,9 +78,10 @@ export const BasicInformation: React.FC = () => {
             className="text-red-500 text-sm mt-1"
           />
         </div>
-
         <div>
-          <label className="block text-sm font-medium mb-1">Room Capacity</label>
+          <label className="block text-sm font-medium mb-1">
+            Room Capacity
+          </label>
           <Field
             name="roomCapacity"
             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"

@@ -48,6 +48,8 @@ model Property {
   mainImage    String
   address      String
   city         String
+  longitude    String?
+  latitude    String?  
   categoryId   Int?
   description  String          @default("No description provided") @db.Text
   roomCapacity Int

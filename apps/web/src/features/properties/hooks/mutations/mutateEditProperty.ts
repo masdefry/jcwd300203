@@ -29,7 +29,7 @@ export const useEditProperty = () => {
         toast.success(res?.message);
         queryClient.invalidateQueries({ queryKey: ['propertyDetails'] });
         queryClient.invalidateQueries({ queryKey: ['properties'] });
-        router.push('/dashboard/properties');
+        // router.push('/dashboard/properties');
       },
       onError: (err: any) => {
         errorHandler(err);

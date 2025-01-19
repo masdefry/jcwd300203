@@ -20,9 +20,14 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FacilitiesResponse } from "@/features/types/property";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@radix-ui/react-accordion";
+import Script from "next/script";
 
 
-type SortOption = "price_asc" | "price_desc" | "name_asc" | "name_desc";
+
+// Define more specific types
+type SortOption = "price_asc" | "price_desc" | "name_asc" | "name_desc" | "rating_desc";
+
+type FilterType = 'category' | 'facility' | 'roomFacility';
 
 interface Property {
   id: number;
@@ -43,11 +48,31 @@ interface PropertyCardProps extends Property {
   id: number;
 }
 
-function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }) {
+interface SelectedFilters {
+  categories: number[];
+  facilities: number[];
+  roomFacilities: number[]; // Added room facilities
+}
+
+interface PropertySidebarProps {
+  onSortChange: (option: string) => void;
+  onFilterChange: (type: 'category' | 'facility' | 'roomFacility', id: number, checked: string|boolean) => void;
+  selectedFilters: SelectedFilters;
+  onPriceRangeChange: (range: [number, number]) => void;
+  priceRange: [number, number];
+}
+
+function PropertySidebar({
+  onSortChange,
+  onFilterChange,
+  selectedFilters,
+  onPriceRangeChange,
+  priceRange = [0, 5000000], // Ensure default value
+}: PropertySidebarProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { data: facilities } = usePropertyFacilities();
   const { data: categories } = useQueryPropertyCategories();
-  const [priceRange, setPriceRange] = useState([0, 5000000]);
+  const router = useRouter();
 
   return (
     <div className="w-full bg-white rounded-lg shadow-md">
@@ -128,28 +153,28 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }) {
 
           {/* Price Range */}
           <AccordionItem value="price" className="border rounded-lg px-2">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-2">
-                <CircleDollarSign className="h-4 w-4" />
-                <span>Price Range</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="px-2 py-4">
-                <Slider
-                  defaultValue={[0, 5000000]}
-                  max={5000000}
-                  step={100000}
-                  onValueChange={setPriceRange}
-                  className="w-full "
-                />
-                <div className="flex justify-between mt-4 text-sm text-gray-600">
-                  <span>Rp {priceRange[0].toLocaleString()}</span>
-                  <span>Rp {priceRange[1].toLocaleString()}</span>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+  <AccordionTrigger className="hover:no-underline">
+    <div className="flex items-center gap-2">
+      <CircleDollarSign className="h-4 w-4" />
+      <span>Price Range</span>
+    </div>
+  </AccordionTrigger>
+  <AccordionContent>
+    <div className="px-2 py-4">
+      <Slider
+        defaultValue={priceRange ?? [0, 5000000]} // Ensure default
+        max={5000000}
+        step={100000}
+        onValueChange={onPriceRangeChange}
+        className="w-full"
+      />
+      <div className="flex justify-between mt-4 text-sm text-gray-600">
+      <span>Rp {priceRange?.[0]?.toLocaleString() ?? '0'}</span>
+      <span>Rp {priceRange?.[1]?.toLocaleString() ?? '5,000,000'}</span>
+      </div>
+    </div>
+  </AccordionContent>
+</AccordionItem>
 
           {/* Property Type */}
           <AccordionItem value="property-type" className="border rounded-lg px-2">
@@ -254,13 +279,46 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }) {
 
         {/* Apply Filters Button */}
         <Button 
-          className="w-full bg-[#FF385C] hover:bg-[#FF385C]/90 text-white mt-6"
-          onClick={() => {
-            // Handle apply filters
-          }}
-        >
-          Show Results
-        </Button>
+  className="w-full bg-[#FF385C] hover:bg-[#FF385C]/90 text-white mt-6"
+  onClick={() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Handle categories
+    if (selectedFilters.categories.length > 0) {
+      selectedFilters.categories.forEach((id: number) => {
+        params.append('categories', id.toString());
+      });
+    } else {
+      params.delete('categories');
+    }
+    
+    // Handle facilities
+    if (selectedFilters.facilities.length > 0) {
+      selectedFilters.facilities.forEach((id: number) => {
+        params.append('facilities', id.toString());
+      });
+    } else {
+      params.delete('facilities');
+    }
+    
+    // Handle room facilities
+    if (selectedFilters.roomFacilities.length > 0) {
+      selectedFilters.roomFacilities.forEach((id: number) => {
+        params.append('roomFacilities', id.toString());
+      });
+    } else {
+      params.delete('roomFacilities');
+    }
+    
+    // Handle price range
+    params.set('priceMin', priceRange[0].toString());
+    params.set('priceMax', priceRange[1].toString());
+    
+    router.push(`?${params.toString()}`, { scroll: false });
+  }}
+>
+  Show Results
+</Button>
       </div>
     </div>
   );
@@ -350,10 +408,13 @@ function PropertyCard({
 export const SearchProperty = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedFilters, setSelectedFilters] = useState({
+  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
     categories: [],
     facilities: [],
+    roomFacilities: []
   });
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000]);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   const searchQuery = searchParams.get('search') || '';
   const checkIn = searchParams.get('checkIn') || '';
@@ -364,27 +425,10 @@ export const SearchProperty = () => {
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
 
+  // Ensure type safety for sortOption
   const sortOption = `${sortBy}_${orderBy}` as SortOption;
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["properties", searchQuery, checkIn, checkOut, guest, sortOption, page],
-    queryFn: async () => {
-      const res = await instance.get("/property", {
-        params: {
-          search: searchQuery || undefined,
-          checkIn: checkIn || undefined,
-          checkOut: checkOut || undefined,
-          guest: guest || undefined,
-          sortBy: sortOption.split("_")[0],
-          sortOrder: sortOption.split("_")[1],
-          page,
-          limit,
-        },
-      });
-      return res.data.data;
-    },
-  });
-  
+  // Type-safe handlers
   const handleSortChange = (newSortOption: SortOption) => {
     const [newSortBy, newOrderBy] = newSortOption.split('_');
     const params = new URLSearchParams(searchParams.toString());
@@ -393,15 +437,67 @@ export const SearchProperty = () => {
     router.push(`?${params.toString()}`);
   };
 
-  const handleFilterChange = (type: string, id: number, checked: boolean) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [type]: checked 
-        ? [...prev[type], id]
-        : prev[type].filter(item => item !== id)
-    }));
+  const handleFilterChange = (
+    type: FilterType,
+    id: number,
+    checked: boolean
+  ) => {
+    setSelectedFilters((prev) => {
+      const key = type === 'category' ? 'categories' :
+                 type === 'facility' ? 'facilities' : 'roomFacilities';
+      
+      return {
+        ...prev,
+        [key]: checked 
+          ? [...prev[key], id]
+          : prev[key].filter(item => item !== id)
+      };
+    });
   };
 
+  const handlePriceRangeChange = (newRange: [number, number]) => {
+    setPriceRange(newRange);
+  };
+
+  // Query with proper type handling
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: [
+      "properties",
+      searchQuery,
+      checkIn,
+      checkOut,
+      guest,
+      sortOption,
+      page,
+      selectedFilters,
+      priceRange
+    ],
+    queryFn: async () => {
+      const queryParams = {
+        search: searchQuery || undefined,
+        checkIn: checkIn || undefined,
+        checkOut: checkOut || undefined,
+        guest: guest || undefined,
+        sortBy: sortOption.split("_")[0],
+        sortOrder: sortOption.split("_")[1],
+        page,
+        limit,
+        priceMin: priceRange[0],
+        priceMax: priceRange[1],
+        ...(selectedFilters.categories.length > 0 && { categories: selectedFilters.categories }),
+        ...(selectedFilters.facilities.length > 0 && { facilities: selectedFilters.facilities }),
+        ...(selectedFilters.roomFacilities.length > 0 && { roomFacilities: selectedFilters.roomFacilities })
+      };
+
+      // Clean undefined values
+      Object.keys(queryParams).forEach(key => 
+        queryParams[key] === undefined && delete queryParams[key]
+      );
+
+      const res = await instance.get("/property", { params: queryParams });
+      return res.data.data as Property[];
+    },
+  });
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', newPage.toString());
@@ -410,15 +506,18 @@ export const SearchProperty = () => {
 
   return (
     <Wrapper>
+     
       <main className="min-h-screen bg-gray-50">
         <div className="container mx-auto p-4 pt-32">
           <SearchForm />
           <div className="flex flex-col lg:flex-row gap-6 mt-8">
             <aside className="w-full lg:w-1/4">
               <PropertySidebar 
-                onSortChange={handleSortChange}
-                onFilterChange={handleFilterChange}
-                selectedFilters={selectedFilters}
+                 onSortChange={handleSortChange}
+                 onFilterChange={handleFilterChange}
+                 selectedFilters={selectedFilters}
+                 onPriceRangeChange={handlePriceRangeChange}
+                 priceRange={priceRange}
               />
             </aside>
             <div className="flex-1 space-y-4">

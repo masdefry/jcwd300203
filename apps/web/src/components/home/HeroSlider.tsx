@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Slider from "react-slick";
 import SearchForm from "./SearchForm";
+import { LoadScript } from "@react-google-maps/api";
 
 const HeroSlider = () => {
   const settings = {
@@ -96,6 +97,7 @@ const HeroSlider = () => {
   ];
 
   return (
+
     <Slider {...settings} arrows={false}>
       {sliderContent.map((singleItem) => (
         <div
@@ -207,6 +209,7 @@ const HeroSlider = () => {
         </div>
       ))}
     </Slider>
+
   );
 };
 

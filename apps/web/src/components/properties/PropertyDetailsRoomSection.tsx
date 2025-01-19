@@ -44,7 +44,7 @@ export const PropertyDetailsRoomSection: React.FC<
     }
     return undefined;
   };
-
+  console.log('values from room type:', values);
   const onRemoveImage = (roomIndex: number, imageIndex: number) => {
     handleImagePreview.removeRoomImage(roomIndex, imageIndex);
     const updatedRoomTypes = [...values.roomTypes];
@@ -351,14 +351,28 @@ export const PropertyDetailsRoomSection: React.FC<
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const updatedRoomTypes = [...values.roomTypes];
+                                  const updatedRoomTypes = [
+                                    ...values.roomTypes,
+                                  ];
                                   if (specialPrice.id) {
                                     // Initialize the delete array if it doesn't exist
-                                    if (!updatedRoomTypes[index].specialPricesToDelete) {
-                                      updatedRoomTypes[index].specialPricesToDelete = [];
+                                    if (
+                                      !updatedRoomTypes[index]
+                                        .specialPricesToDelete
+                                    ) {
+                                      updatedRoomTypes[
+                                        index
+                                      ].specialPricesToDelete = [];
                                     }
-                                    updatedRoomTypes[index].specialPricesToDelete.push(specialPrice.id);
-                                    setFieldValue('roomTypes', updatedRoomTypes);
+                                    updatedRoomTypes[
+                                      index
+                                    ].specialPricesToDelete.push(
+                                      specialPrice.id,
+                                    );
+                                    setFieldValue(
+                                      'roomTypes',
+                                      updatedRoomTypes,
+                                    );
                                   }
                                   removePrice(priceIndex);
                                 }}
@@ -384,16 +398,20 @@ export const PropertyDetailsRoomSection: React.FC<
                       className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       onClick={() => {
                         const updatedRoomTypes = [...values.roomTypes];
-                        // Initialize the array if it doesn't exist
-                        if (!updatedRoomTypes[index].unavailableDates) {
-                          updatedRoomTypes[index].unavailableDates = [];
-                        }
-                        // Add new unavailability period
-                        updatedRoomTypes[index].unavailableDates.push({
+                        const newUnavailabilityPeriod = {
                           startDate: new Date(),
                           endDate: new Date(),
                           reason: '',
-                        });
+                          type: 'BLOCKED', // Add type to match response structure
+                        };
+
+                        if (!updatedRoomTypes[index].unavailableDates) {
+                          updatedRoomTypes[index].unavailableDates = [];
+                        }
+
+                        updatedRoomTypes[index].unavailableDates.push(
+                          newUnavailabilityPeriod,
+                        );
                         setFieldValue('roomTypes', updatedRoomTypes);
                       }}
                     >
@@ -405,142 +423,157 @@ export const PropertyDetailsRoomSection: React.FC<
                   <FieldArray name={`roomTypes.${index}.unavailableDates`}>
                     {({ remove: removeUnavailability }) => (
                       <div className="space-y-2">
-                        {roomType.unavailableDates?.map(
-                          (period: any, periodIndex: number) => (
-                            <div
-                              key={periodIndex}
-                              className="flex items-end gap-4 p-3 border rounded"
-                            >
-                              <div className="flex-1">
-                                <label className="block text-sm font-medium mb-1">
-                                  Start Date
-                                </label>
-                                <DatePicker
-                                  selected={
-                                    period?.startDate
-                                      ? new Date(period.startDate)
-                                      : null
-                                  }
-                                  onChange={(date) => {
-                                    const updatedRoomTypes = [
-                                      ...values.roomTypes,
-                                    ];
-                                    if (
-                                      !updatedRoomTypes[index].unavailableDates
-                                    ) {
-                                      updatedRoomTypes[index].unavailableDates =
-                                        [];
-                                    }
-                                    if (
-                                      !updatedRoomTypes[index].unavailableDates[
-                                        periodIndex
-                                      ]
-                                    ) {
-                                      updatedRoomTypes[index].unavailableDates[
-                                        periodIndex
-                                      ] = {
-                                        startDate: null,
-                                        endDate: null,
-                                        reason: '',
-                                      };
-                                    }
-                                    updatedRoomTypes[index].unavailableDates[
-                                      periodIndex
-                                    ].startDate = date;
-                                    setFieldValue(
-                                      'roomTypes',
-                                      updatedRoomTypes,
-                                    );
-                                  }}
-                                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                                  dateFormat="MMMM d, yyyy"
-                                  minDate={new Date()}
-                                />
-                              </div>
+                        {Array.isArray(roomType.unavailableDates) &&
+                          roomType.unavailableDates.map(
+                            (period: any, periodIndex: number) => {
+                              console.log('Period being rendered:', period); // Debug log
+                              return (
+                                <div
+                                  key={periodIndex}
+                                  className="flex items-end gap-4 p-3 border rounded"
+                                >
+                                  <div className="flex-1">
+                                    <label className="block text-sm font-medium mb-1">
+                                      Start Date
+                                    </label>
+                                    <DatePicker
+                                      selected={
+                                        period?.startDate
+                                          ? new Date(period.startDate)
+                                          : null
+                                      }
+                                      onChange={(date) => {
+                                        const updatedRoomTypes = [
+                                          ...values.roomTypes,
+                                        ];
+                                        if (
+                                          !updatedRoomTypes[index]
+                                            .unavailableDates
+                                        ) {
+                                          updatedRoomTypes[
+                                            index
+                                          ].unavailableDates = [];
+                                        }
 
-                              <div className="flex-1">
-                                <label className="block text-sm font-medium mb-1">
-                                  End Date
-                                </label>
-                                <DatePicker
-                                  selected={
-                                    period?.endDate
-                                      ? new Date(period.endDate)
-                                      : null
-                                  }
-                                  onChange={(date) => {
-                                    const updatedRoomTypes = [
-                                      ...values.roomTypes,
-                                    ];
-                                    if (
-                                      !updatedRoomTypes[index].unavailableDates
-                                    ) {
-                                      updatedRoomTypes[index].unavailableDates =
-                                        [];
-                                    }
-                                    if (
-                                      !updatedRoomTypes[index].unavailableDates[
-                                        periodIndex
-                                      ]
-                                    ) {
-                                      updatedRoomTypes[index].unavailableDates[
-                                        periodIndex
-                                      ] = {
-                                        startDate: null,
-                                        endDate: null,
-                                        reason: '',
-                                      };
-                                    }
-                                    updatedRoomTypes[index].unavailableDates[
-                                      periodIndex
-                                    ].endDate = date;
-                                    setFieldValue(
-                                      'roomTypes',
-                                      updatedRoomTypes,
-                                    );
-                                  }}
-                                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                                  dateFormat="MMMM d, yyyy"
-                                  minDate={
-                                    period?.startDate
-                                      ? new Date(period.startDate)
-                                      : new Date()
-                                  }
-                                />
-                              </div>
+                                        updatedRoomTypes[
+                                          index
+                                        ].unavailableDates[periodIndex] = {
+                                          ...updatedRoomTypes[index]
+                                            .unavailableDates[periodIndex],
+                                          startDate: date,
+                                        };
 
-                              <div className="flex-1">
-                                <label className="block text-sm font-medium mb-1">
-                                  Reason
-                                </label>
-                                <Field
-                                  name={`roomTypes.${index}.unavailableDates.${periodIndex}.reason`}
-                                  type="text"
-                                  className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                                />
-                              </div>
+                                        setFieldValue(
+                                          'roomTypes',
+                                          updatedRoomTypes,
+                                        );
+                                      }}
+                                      className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                      dateFormat="MMMM d, yyyy h:mm aa"
+                                      showTimeSelect
+                                      timeFormat="HH:mm"
+                                      timeIntervals={15}
+                                      minDate={new Date()}
+                                    />
+                                  </div>
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updatedRoomTypes = [...values.roomTypes];
-                                  if (period.id) {
-                                    // Initialize the delete array if it doesn't exist
-                                    if (!updatedRoomTypes[index].unavailabilityToDelete) {
-                                      updatedRoomTypes[index].unavailabilityToDelete = [];
-                                    }
-                                    updatedRoomTypes[index].unavailabilityToDelete.push(period.id);
-                                    setFieldValue('roomTypes', updatedRoomTypes);
-                                  }
-                                  removeUnavailability(periodIndex);
-                                }}
-                                className="text-red-500 hover:text-red-700 mb-1"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                            </div>
-                          ),
-                        )}
+                                  <div className="flex-1">
+                                    <label className="block text-sm font-medium mb-1">
+                                      End Date
+                                    </label>
+                                    <DatePicker
+                                      selected={
+                                        period?.endDate
+                                          ? new Date(period.endDate)
+                                          : null
+                                      }
+                                      onChange={(date) => {
+                                        const updatedRoomTypes = [
+                                          ...values.roomTypes,
+                                        ];
+                                        if (
+                                          !updatedRoomTypes[index]
+                                            .unavailableDates
+                                        ) {
+                                          updatedRoomTypes[
+                                            index
+                                          ].unavailableDates = [];
+                                        }
+
+                                        updatedRoomTypes[
+                                          index
+                                        ].unavailableDates[periodIndex] = {
+                                          ...updatedRoomTypes[index]
+                                            .unavailableDates[periodIndex],
+                                          endDate: date,
+                                        };
+
+                                        setFieldValue(
+                                          'roomTypes',
+                                          updatedRoomTypes,
+                                        );
+                                      }}
+                                      className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                      dateFormat="MMMM d, yyyy h:mm aa"
+                                      showTimeSelect
+                                      timeFormat="HH:mm"
+                                      timeIntervals={15}
+                                      minDate={
+                                        period?.startDate
+                                          ? new Date(period.startDate)
+                                          : new Date()
+                                      }
+                                    />
+                                  </div>
+
+                                  <div className="flex-1">
+                                    <label className="block text-sm font-medium mb-1">
+                                      Reason
+                                    </label>
+                                    <Field
+                                      name={`roomTypes.${index}.unavailableDates.${periodIndex}.reason`}
+                                      type="text"
+                                      className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                                    />
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updatedRoomTypes = [
+                                        ...values.roomTypes,
+                                      ];
+                                      if (period.id) {
+                                        // Track the ID to delete
+                                        if (
+                                          !updatedRoomTypes[index]
+                                            .unavailabilityToDelete
+                                        ) {
+                                          updatedRoomTypes[
+                                            index
+                                          ].unavailabilityToDelete = [];
+                                        }
+                                        updatedRoomTypes[
+                                          index
+                                        ].unavailabilityToDelete.push(
+                                          period.id,
+                                        );
+                                        setFieldValue(
+                                          'roomTypes',
+                                          updatedRoomTypes,
+                                        );
+                                      }
+                                      // Remove from the current array regardless of whether it has an ID
+                                      removeUnavailability(periodIndex);
+                                    }}
+                                    className="text-red-500 hover:text-red-700 mb-1"
+                                  >
+                                    <X className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              );
+                            },
+                          )}
                       </div>
                     )}
                   </FieldArray>

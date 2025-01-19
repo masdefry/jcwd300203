@@ -12,6 +12,8 @@ export const propertyValidationSchema = Yup.object().shape({
     address: Yup.string()
       .required('Address is required')
       .min(5, 'Address must be at least 5 characters'),
+      latitude: Yup.string().required('Latitude is required'),  
+      longitude: Yup.string().required('Longitude is required'), 
     description: Yup.string()
       .required('Property description is required')
       .min(20, 'Description must be at least 20 characters'),
@@ -85,6 +87,8 @@ export const propertyValidationSchema = Yup.object().shape({
       .min(20, 'Description must be at least 20 characters'),
     city: Yup.string()
       .required('City is required'),
+      latitude: Yup.string().required('Latitude is required'),  
+      longitude: Yup.string().required('Longitude is required'), 
     roomCapacity: Yup.number()
       .required('Room capacity is required')
       .positive('Must be a positive number')
