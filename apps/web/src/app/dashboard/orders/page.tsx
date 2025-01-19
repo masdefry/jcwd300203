@@ -39,24 +39,15 @@ const MyOrdersPage = () => {
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(3);
+  const itemsPerPage = 3; // Fixed to 3 items per page
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response: {
-          data: {
-            error: boolean;
-            message: string;
-            data: {
-              orders: Order[];
-              totalPages: number;
-              currentPage: number;
-            };
-          };
-        } = await instance.get(
+        const response = await instance.get(
           `/orders/tenant?page=${currentPage}&limit=${itemsPerPage}&status=${activeTab}`
         );
         const { orders, totalPages, currentPage: fetchedCurrentPage } = response.data.data;
@@ -70,15 +61,18 @@ const MyOrdersPage = () => {
       }
     };
     fetchOrders();
-  }, [currentPage, activeTab, itemsPerPage]);
+  }, [currentPage, activeTab]);
 
-  const handlePageLimitChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setItemsPerPage(Number(event.target.value));
-  };
+  // Reset to first page when changing tabs
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  }; 
 
   const pendingOrders = orders.filter((order) =>
     order.status.some(

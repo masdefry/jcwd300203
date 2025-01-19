@@ -104,43 +104,15 @@ return {
 };
 };
 
-export const getTenantOrderListService = async ({ usersId, status, page = 1, limit = 10 }: GetTenantOrderParams) => {
+export const getTenantOrderListService = async ({ 
+  usersId, 
+  status, 
+  page = 1, 
+  limit = 10 
+}: GetTenantOrderParams) => {
   const skip = (page - 1) * limit;
 
-  // Fetch bookings while excluding any that have a related status of "CANCELED"
-  const orders = await prisma.booking.findMany({
-    where: {
-      property: {
-        tenantId: usersId,
-      },
-      status: {
-        none: {
-          Status: BookingStatus.CANCELED,
-        },
-      },
-      ...(status && {
-        status: {
-          some: {
-            Status: BookingStatus[status as keyof typeof BookingStatus],
-          },
-        },
-      }),
-    },
-    include: {
-      status: {
-        orderBy: { createdAt: 'desc' }, // Ensure latest status is prioritized
-        take: 1, // Only fetch the latest status for clarity
-      },
-      property: true,
-      customer: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    skip,
-    take: limit,
-  });
-
+  // First get the total count of matching orders
   const totalOrders = await prisma.booking.count({
     where: {
       property: {
@@ -161,12 +133,51 @@ export const getTenantOrderListService = async ({ usersId, status, page = 1, lim
     },
   });
 
-  const totalPages = Math.ceil(totalOrders / limit);
+  // Calculate total pages
+  const totalPages = Math.max(1, Math.ceil(totalOrders / limit));
+  
+  // Adjust page number if it exceeds total pages
+  const adjustedPage = Math.min(page, totalPages);
+  const adjustedSkip = (adjustedPage - 1) * limit;
+
+  // Fetch orders with adjusted pagination
+  const orders = await prisma.booking.findMany({
+    where: {
+      property: {
+        tenantId: usersId,
+      },
+      status: {
+        none: {
+          Status: BookingStatus.CANCELED,
+        },
+      },
+      ...(status && {
+        status: {
+          some: {
+            Status: BookingStatus[status as keyof typeof BookingStatus],
+          },
+        },
+      }),
+    },
+    include: {
+      status: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+      property: true,
+      customer: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip: adjustedSkip,
+    take: limit,
+  });
 
   return {
     orders,
-    totalPages,
-    currentPage: page,
+    totalPages: totalPages,
+    currentPage: adjustedPage,
   };
 };
 
