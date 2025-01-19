@@ -91,9 +91,9 @@ const Navbar = () => {
             </Link>
 
             {/* My Messages */}
-            <Link href="/dashboard/messages" className={baseClasses}>
+            {/* <Link href="/dashboard/messages" className={baseClasses}>
               Messages
-            </Link>
+            </Link> */}
 
             {/* Create Listing */}
             <Link href="/dashboard/calendar" className={baseClasses}>
@@ -160,14 +160,14 @@ const Navbar = () => {
 
           
           {/* my messages */}
-          <DropdownMenuItem
+          {/* <DropdownMenuItem
             onClick={() =>
               window.location.href = role === 'tenant' ? '/dashboard/messages' : '/user/messages'
             }
           >
             <Inbox className="mr-2 h-4 w-4" />
             <span>My Messages</span>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
 
           <DropdownMenuSeparator />
 
@@ -253,10 +253,21 @@ const Navbar = () => {
                 <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard' : '/user/dashboard') ? 'text-[#f15b5b]' : ''}`}>
                   {role === 'tenant' ? 'My Dashboard' : 'My Bookings'}
                 </span>
-              </Link> 
-              
+              </Link>
+
+              {/* My Orders Link */}
+              <Link 
+                href={role === 'tenant' ? '/dashboard/orders' : '/user/dashboard'}
+                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard/orders' : '/user/dashboard') ? 'text-[#f15b5b]' : ''}`}>
+                  {role === 'tenant' ? 'My Orders' : 'My Bookings'}
+                </span>
+              </Link>
+
               {/* My Messages Link */}
-              <Link
+              {/* <Link
                 href={role === "tenant" ? "/dashboard/messages" : "/user/messages"}
                 className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -270,7 +281,7 @@ const Navbar = () => {
                 >
                   My Messages
                 </span>
-              </Link>
+              </Link> */}
 
               {/* My Reviews Link */}
               {role !== "tenant" && (

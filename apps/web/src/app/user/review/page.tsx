@@ -1,14 +1,10 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import instance from "@/utils/axiosInstance";
 import authStore from "@/zustand/authStore";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
-
-import Header from "@/components/home/Header";
-import MobileMenu from "@/components/common/header/MobileMenu";
-import PopupSignInUp from "@/components/common/PopupSignInUp";
 import Footer from "@/components/common/footer/Footer";
 import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
 
@@ -24,9 +20,44 @@ interface Booking {
   propertyId: number;
 }
 
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const PaginationControls: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => (
+  <div className="flex justify-center mt-4 gap-2">
+    <button
+      onClick={() => onPageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+      className="px-3 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300"
+    >
+      Previous
+    </button>
+    <span className="px-3 py-1 bg-gray-100 rounded">
+      Page {currentPage} of {totalPages}
+    </span>
+    <button
+      onClick={() => onPageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+      className="px-3 py-1 bg-blue-500 text-white rounded disabled:bg-gray-300"
+    >
+      Next
+    </button>
+  </div>
+);
+
 const Bookings: React.FC = () => {
   const router = useRouter();
   const currentDate = new Date();
+  const [currentStaysPage, setCurrentStaysPage] = useState(1);
+  const [pastStaysPage, setPastStaysPage] = useState(1);
+  const itemsPerPage = 3;
 
   const token = authStore((state) => state.token);
   const decodedToken: any = jwtDecode(token);
@@ -51,6 +82,19 @@ const Bookings: React.FC = () => {
   const pastStays = (bookings || []).filter(
     (booking: Booking) => new Date(booking.checkOutDate) < currentDate
   );
+
+  // Pagination calculations
+  const getCurrentPageItems = (items: Booking[], page: number) => {
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return items.slice(start, end);
+  };
+
+  const currentStaysTotalPages = Math.max(1, Math.ceil(currentStays.length / itemsPerPage));
+  const pastStaysTotalPages = Math.max(1, Math.ceil(pastStays.length / itemsPerPage));
+
+  const paginatedCurrentStays = getCurrentPageItems(currentStays, currentStaysPage);
+  const paginatedPastStays = getCurrentPageItems(pastStays, pastStaysPage);
 
   const renderTableRows = (bookingList: Booking[], isPast: boolean) => {
     return bookingList.map((booking) => (
@@ -84,20 +128,29 @@ const Bookings: React.FC = () => {
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">Current Stays</h2>
           <div className="overflow-x-auto w-full">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="px-4 py-2 border text-center">Property Name</th>
-                    <th className="px-4 py-2 border text-center">Location</th>
-                    <th className="px-4 py-2 border text-center">Check-in Date</th>
-                    <th className="px-4 py-2 border text-center">Check-out Date</th>
-                    <th className="px-4 py-2 border text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>{renderTableRows(currentStays, false)}</tbody>
-              </table>
-            </div>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="px-4 py-2 border text-center">Property Name</th>
+                  <th className="px-4 py-2 border text-center">Location</th>
+                  <th className="px-4 py-2 border text-center">Check-in Date</th>
+                  <th className="px-4 py-2 border text-center">Check-out Date</th>
+                  <th className="px-4 py-2 border text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {renderTableRows(paginatedCurrentStays, false)}
+              </tbody>
+            </table>
+            {currentStays.length > 0 && (
+              <PaginationControls
+                currentPage={currentStaysPage}
+                totalPages={currentStaysTotalPages}
+                onPageChange={setCurrentStaysPage}
+              />
+            )}
           </div>
+        </div>
 
         {/* Past Stays */}
         <div>
@@ -113,13 +166,22 @@ const Bookings: React.FC = () => {
                   <th className="px-4 py-2 border text-center">Action</th>
                 </tr>
               </thead>
-              <tbody>{renderTableRows(pastStays, true)}</tbody>
+              <tbody>
+                {renderTableRows(paginatedPastStays, true)}
+              </tbody>
             </table>
+            {pastStays.length > 0 && (
+              <PaginationControls
+                currentPage={pastStaysPage}
+                totalPages={pastStaysTotalPages}
+                onPageChange={setPastStaysPage}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer sections */}
       <section className="footer_one">
         <div className="container">
           <div className="row">
@@ -128,7 +190,6 @@ const Bookings: React.FC = () => {
         </div>
       </section>
 
-      {/* Footer Bottom Area */}
       <section className="footer_middle_area pt40 pb40">
         <div className="container">
           <CopyrightFooter />

@@ -37,11 +37,22 @@ const MyBookingsPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<"pending" | "confirmed">("pending");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const itemsPerPage = 3; // 2 orders per page 
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await instance.get<{ data: Order[] }>("orders/");
+        const response = await instance.get<{ 
+          data: Order[], 
+          totalPages: number,
+          currentPage: number 
+        }>(`orders/?page=${currentPage}&limit=${itemsPerPage}`);
+        
         setOrders(response.data.data || []);
+        setTotalPages(response.data.totalPages || 1);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch orders.");
@@ -50,7 +61,7 @@ const MyBookingsPage = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [currentPage, activeTab]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -189,6 +200,10 @@ const MyBookingsPage = () => {
     );
   };
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
@@ -244,10 +259,33 @@ const MyBookingsPage = () => {
               )}
             </div>
           )}
+
+          {/* Pagination Controls */}
+          <div className="flex justify-center mt-8">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 bg-gray-200 rounded">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer sections remain the same */}
       <section className="footer_one">
         <div className="container">
           <div className="row">
@@ -256,7 +294,6 @@ const MyBookingsPage = () => {
         </div>
       </section>
 
-      {/* Footer Bottom Area */}
       <section className="footer_middle_area pt40 pb40">
         <div className="container">
           <CopyrightFooter />
@@ -267,19 +304,3 @@ const MyBookingsPage = () => {
 };
 
 export default MyBookingsPage;
-
-//  {/* Footer */}
-//  <section className="footer_one">
-//  <div className="container">
-//    <div className="row">
-//      <Footer />
-//    </div>
-//  </div>
-// </section>
-
-// {/* Footer Bottom Area */}
-// <section className="footer_middle_area pt40 pb40">
-//  <div className="container">
-//    <CopyrightFooter />
-//  </div>
-// </section>
