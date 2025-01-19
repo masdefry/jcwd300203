@@ -29,6 +29,11 @@ const MyDashboard = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null });
   const [isMobileView, setIsMobileView] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const itemsPerPage = 3; // Limit to 3 orders per page as requested
+
   useEffect(() => {
     // Add responsive listener
     const handleResize = () => {
@@ -45,12 +50,20 @@ const MyDashboard = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await instance.get<{ success: boolean; data: { bookings: Booking[] } }>("/report/sales-report");
+        const response = await instance.get<{ 
+          success: boolean; 
+          data: { 
+            bookings: Booking[],
+            totalPages: number
+          } 
+        }>(`/report/sales-report?page=${currentPage}&limit=${itemsPerPage}`);
+        
         const result = response.data;
         
         if (result.success && Array.isArray(result.data.bookings)) {
           setBookings(result.data.bookings);
           setFilteredBookings(result.data.bookings);
+          setTotalPages(result.data.totalPages || 1);
         } else {
           console.error("Invalid data structure:", result);
         }
@@ -60,7 +73,7 @@ const MyDashboard = () => {
     };
   
     fetchBookings();
-  }, []);
+  }, [currentPage]);
 
   const handleSort = (key: "date" | "revenue") => {
     if (!Array.isArray(filteredBookings)) {
@@ -91,6 +104,10 @@ const MyDashboard = () => {
     });
   
     setFilteredBookings(filtered.length ? filtered : []);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   const tenantName = authStore((state) => state.name);
@@ -174,7 +191,7 @@ const MyDashboard = () => {
                   filteredBookings.map((booking) => (
                     <tr key={booking.checkIn} className="hover:bg-gray-100">
                       <td className="p-2 sm:p-4 border text-sm sm:text-base">{booking.propertyName}</td>
-                      <td className="p-2 sm:p-4 border text-sm sm:text-base">{booking.customer}</td>
+                      <td className="p -2 sm:p-4 border text-sm sm:text-base">{booking.customer}</td>
                       <td className="p-2 sm:p-4 border text-sm sm:text-base">{new Date(booking.checkIn).toLocaleDateString()}</td>
                       <td className="p-2 sm:p-4 border text-sm sm:text-base">{new Date(booking.checkOut).toLocaleDateString()}</td>
                       <td className="p-2 sm:p-4 border text-sm sm:text-base">
@@ -191,6 +208,29 @@ const MyDashboard = () => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex justify-center mt-8">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 bg-gray-200 rounded">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>

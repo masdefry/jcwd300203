@@ -7,6 +7,8 @@ interface GetOrderListParams {
   date?: string;
   orderNumber?: string;
   status?: string;
+  page?: number;
+  limit?: number;
 }
 
 interface CancelOrderParams {
@@ -17,70 +19,94 @@ interface CancelOrderParams {
 
 interface GetTenantOrderParams {
   usersId: number,
-  status: string
+  status: string, 
+  page?: number;               
+  limit?: number;         
 }
   
-export const getOrderListService = async ({ usersId, authorizationRole, date, orderNumber, status }: GetOrderListParams) => {
-  // Build query filters
-  const filters: any = {
-    customerId: usersId,
-    status: {
-      none: {
-        Status: BookingStatus.CANCELED, // Exclude canceled orders
-      },
+export const getOrderListService = async ({ 
+  usersId, 
+  authorizationRole, 
+  date, 
+  orderNumber, 
+  status, 
+  page = 1, 
+  limit = 5 
+}: GetOrderListParams) => {
+// Calculate pagination values
+const skip = (page - 1) * limit;
+
+// Build query filters
+const filters: any = {
+  customerId: usersId,
+  status: {
+    none: {
+      Status: BookingStatus.CANCELED, // Exclude canceled orders
     },
-  };
-
-  if (date) {
-    const parsedDate = new Date(date);
-    if (!isNaN(parsedDate.getTime())) {
-      filters.checkInDate = { gte: parsedDate };
-    }
-  }
-
-  if (orderNumber) {
-    filters.id = Number(orderNumber); // Assuming order number corresponds to the booking ID
-  }
-
-  if (status) {
-    filters.status = {
-      some: {
-        Status: BookingStatus[status as keyof typeof BookingStatus], // Match status dynamically
-      },
-    };
-  }
-
-  // Fetch orders
-  const orders = await prisma.booking.findMany({
-    where: filters,
-    include: {
-      status: {
-        orderBy: { createdAt: "desc" }, // Ensure latest status is prioritized
-        take: 1, // Fetch only the latest status for clarity
-        select: { Status: true },
-      },
-      property: {
-        select: {
-          name: true,
-          address: true,
-        },
-      },
-      room: {
-        select: {
-          name: true,
-          price: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  return orders;
+  },
 };
 
-export const getTenantOrderListService = async ({ usersId, status }: GetTenantOrderParams) => {
+if (date) {
+  const parsedDate = new Date(date);
+  if (!isNaN(parsedDate.getTime())) {
+    filters.checkInDate = { gte: parsedDate };
+  }
+}
+
+if (orderNumber) {
+  filters.id = Number(orderNumber); // Assuming order number corresponds to the booking ID
+}
+
+if (status) {
+  filters.status = {
+    some: {
+      Status: BookingStatus[status as keyof typeof BookingStatus], // Match status dynamically
+    },
+  };
+}
+
+// Fetch total count for pagination
+const totalOrders = await prisma.booking.count({ where: filters });
+const totalPages = Math.ceil(totalOrders / limit);
+
+// Fetch orders with pagination
+const orders = await prisma.booking.findMany({
+  where: filters,
+  include: {
+    status: {
+      orderBy: { createdAt: "desc" }, // Ensure latest status is prioritized
+      take: 1, // Fetch only the latest status for clarity
+      select: { Status: true },
+    },
+    property: {
+      select: {
+        name: true,
+        address: true,
+      },
+    },
+    room: {
+      select: {
+        name: true,
+        price: true,
+      },
+    },
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+  skip: skip,
+  take: limit,
+});
+
+return { 
+  orders, 
+  totalPages 
+};
+};
+
+export const getTenantOrderListService = async ({ usersId, status, page = 1, limit = 10 }: GetTenantOrderParams) => {
+  const skip = (page - 1) * limit;
+
   // Fetch bookings while excluding any that have a related status of "CANCELED"
   const orders = await prisma.booking.findMany({
     where: {
@@ -89,7 +115,7 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
       },
       status: {
         none: {
-          Status: BookingStatus.CANCELED, 
+          Status: BookingStatus.CANCELED,
         },
       },
       ...(status && {
@@ -111,9 +137,37 @@ export const getTenantOrderListService = async ({ usersId, status }: GetTenantOr
     orderBy: {
       createdAt: "desc",
     },
+    skip,
+    take: limit,
   });
 
-  return orders;
+  const totalOrders = await prisma.booking.count({
+    where: {
+      property: {
+        tenantId: usersId,
+      },
+      status: {
+        none: {
+          Status: BookingStatus.CANCELED,
+        },
+      },
+      ...(status && {
+        status: {
+          some: {
+            Status: BookingStatus[status as keyof typeof BookingStatus],
+          },
+        },
+      }),
+    },
+  });
+
+  const totalPages = Math.ceil(totalOrders / limit);
+
+  return {
+    orders,
+    totalPages,
+    currentPage: page,
+  };
 };
 
 // cancel order service for user

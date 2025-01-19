@@ -38,22 +38,47 @@ const MyOrdersPage = () => {
   const [activeTab, setActiveTab] = useState<"pending" | "confirmed">("pending");
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(3);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await instance.get<{ data: Order[] }>("orders/tenant");
-        setOrders(response.data.data || []);
+        const response: {
+          data: {
+            error: boolean;
+            message: string;
+            data: {
+              orders: Order[];
+              totalPages: number;
+              currentPage: number;
+            };
+          };
+        } = await instance.get(
+          `/orders/tenant?page=${currentPage}&limit=${itemsPerPage}&status=${activeTab}`
+        );
+        const { orders, totalPages, currentPage: fetchedCurrentPage } = response.data.data;
+        setOrders(orders);
+        setTotalPages(totalPages);
+        setCurrentPage(fetchedCurrentPage);
         setLoading(false);
       } catch (error) {
         setError("Failed to fetch orders.");
         setLoading(false);
       }
     };
-
     fetchOrders();
-  }, []);
+  }, [currentPage, activeTab, itemsPerPage]);
+
+  const handlePageLimitChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(event.target.value));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   const pendingOrders = orders.filter((order) =>
     order.status.some(
@@ -80,7 +105,9 @@ const MyOrdersPage = () => {
     if (!confirmCancel) return;
 
     try {
-      const response = await instance.post(`/orders/tenant/${orderId}/cancel`, { room_qty: roomQty });
+      const response = await instance.post(`/orders/tenant/${orderId}/cancel`, {
+        room_qty: roomQty,
+      });
       alert(response.data.message);
       window.location.reload();
     } catch (error: any) {
@@ -88,13 +115,8 @@ const MyOrdersPage = () => {
     }
   };
 
-  const handleConfirmPayment = async (
-    bookingId: number,
-    action: "approve" | "reject"
-  ) => {
-    const confirmAction = window.confirm(
-      `Are you sure you want to ${action} this payment?`
-    );
+  const handleConfirmPayment = async (bookingId: number, action: "approve" | "reject") => {
+    const confirmAction = window.confirm(`Are you sure you want to ${action} this payment?`);
     if (!confirmAction) return;
 
     try {
@@ -105,8 +127,7 @@ const MyOrdersPage = () => {
       window.location.reload();
     } catch (error: any) {
       alert(
-        error.response?.data?.message ||
-          `Failed to ${action} the payment. Please try again.`
+        error.response?.data?.message || `Failed to ${action} the payment. Please try again.`
       );
     }
   };
@@ -267,9 +288,7 @@ const MyOrdersPage = () => {
                   {pendingOrders.length > 0 ? (
                     pendingOrders.map((order) => renderCard(order))
                   ) : (
-                    <p className="text-center text-gray-500">
-                      No pending orders available.
-                    </p>
+                    <p className="text-center text-gray-500">No pending orders available.</p>
                   )}
                 </div>
               )}
@@ -278,12 +297,50 @@ const MyOrdersPage = () => {
                   {confirmedOrders.length > 0 ? (
                     confirmedOrders.map((order) => renderCard(order))
                   ) : (
-                    <p className="text-center text-gray-500">
-                      No confirmed orders available.
-                    </p>
+                    <p className="text-center text-gray-500">No confirmed orders available.</p>
                   )}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Pagination Controls */}
+          {/* <div className="flex items-center justify-end mb-4"> */}
+            {/* <label htmlFor="itemsPerPage" className="mr-2">
+              Items per page:
+            </label>
+            <select
+              id="itemsPerPage"
+              value={itemsPerPage}
+              onChange={handlePageLimitChange}
+              className="px-4 py-2 border rounded-md"
+            >
+              <option value={1}>1</option> */}
+              {/* <option value={10}>10</option> */}
+              {/* <option value={20}>20</option> */}
+            {/* </select> */}
+          {/* </div> */}
+
+          {/* Pagination Controls */}
+          <div className="flex justify-center mt-8">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 bg-gray-200 rounded">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+              >
+                Next
+              </button>
             </div>
           </div>
 
