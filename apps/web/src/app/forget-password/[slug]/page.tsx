@@ -22,8 +22,8 @@ export default function ConfirmResetPassword({ params }: any) {
   
     const { mutate: mutateResetPassword, isPending } = useMutation({
       mutationFn: async ({ password }: any) => {
-        return instance.post(
-          '/auth/reset-password',
+        return instance.patch(
+          '/auth/reset/password',
           { password },
           {
             headers: {

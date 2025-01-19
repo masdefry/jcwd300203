@@ -15,14 +15,19 @@ export  const getPropertiesList = async(req: Request, res: Response, next: NextF
         if (checkOut && typeof checkOut !== "string") throw { msg: "Invalid date", status: 406 };
         if (search && typeof search !== "string") throw { msg: "Invalid search input", status: 406 };
         if (guest && typeof guest !== "string") throw { msg: "Invalid guest count", status: 406 };
-
+        if (req.query.latitude && typeof req.query.latitude !== "string") throw { msg: "Invalid latitude", status: 406 };
+        if (req.query.longitude && typeof req.query.longitude !== "string") throw { msg: "Invalid longitude", status: 406 };
+        if (req.query.radius && typeof req.query.radius !== "string") throw { msg: "Invalid radius", status: 406 };
+        if (req.query.latitude && isNaN(parseFloat(req.query.latitude as string))) throw { msg: "Invalid latitude value", status: 406 };
+        if (req.query.longitude && isNaN(parseFloat(req.query.longitude as string))) throw { msg: "Invalid longitude value", status: 406 };
+        if (req.query.radius && isNaN(parseFloat(req.query.radius as string))) throw { msg: "Invalid radius value", status: 406 };
         if (search && !checkIn && !checkOut && !guest) throw {msg: 'Please complete the input', status:400}
 
         const parsedCheckIn = checkIn ? parseCustomDateList(checkIn) : undefined;
         if (parsedCheckIn! < currentDate) throw {msg: 'Invalid Date', status: 406}
         const parsedCheckOut = checkOut ? parseCustomDateList(checkOut) : undefined;
         const guestCount = guest ? Number(guest) : undefined 
-
+        
         const parsedPriceMin = priceMin ? Number(priceMin) : undefined;
         const parsedPriceMax = priceMax ? Number(priceMax) : undefined;
         const parsedMinRating = minRating ? Number(minRating) : undefined;
@@ -108,7 +113,7 @@ export const getPropertyDetailsTenant = async(req: Request, res: Response, next:
 
 export const createProperty = async(req: Request, res: Response, next: NextFunction) => {
     try {
-        const {usersId, authorizationRole, name, address, city, categoryId, description, roomCapacity, facilityIds, roomTypes} = req.body;
+        const {usersId, authorizationRole, name, address, city, categoryId, description, roomCapacity, facilityIds, roomTypes, latitude, longitude} = req.body;
         console.log('Initial request body:', req.body);
         
         if (!name || !address || !city || !description || !roomCapacity || !roomTypes) throw { msg: 'Missing required fields', status: 400 };
@@ -120,6 +125,8 @@ export const createProperty = async(req: Request, res: Response, next: NextFunct
           
         const data = await createPropertyService({usersId, authorizationRole,
             propertyData: {
+                latitude,
+                longitude,
                 name,
                 address,
                 city,
@@ -217,6 +224,8 @@ export const editProperty = async(req: Request, res: Response, next: NextFunctio
             propertyId: Number(id),
             tenantId: usersId,
             tenantRole: authorizationRole,
+            latitude: propertyData.latitude,
+            longitude: propertyData.longitude,
             name: propertyData.name,
             address: propertyData.address,
             city: propertyData.city,

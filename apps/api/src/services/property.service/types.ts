@@ -12,6 +12,10 @@ export interface IGetPropertyList {
     categories?: number[];
     facilities?: number[];
     minRating?: number;
+    latitude?: string;
+    longitude?: string;
+    radius?: string;  // in kilometers
+    searchType?: 'city' | 'radius' | 'both';
 }
 
 export interface ICreateProperty {
@@ -21,6 +25,8 @@ export interface ICreateProperty {
       name: string;
       address: string;
       city: string;
+      latitude?: string;
+      longitude?: string;
       categoryId: string | number;
       description: string;
       roomCapacity: number;
@@ -44,15 +50,17 @@ export interface IGetRoomDetailsById {
 }
 
 interface ISpecialPrice {
+    id?: number,
     startDate: Date;
     endDate: Date;
     price: number;
   }
   
   interface IUnavailability {
+    id?: number;
     startDate: Date;
     endDate: Date;
-    reason?: string;
+    reason: string;
   }
   
   export interface IRoomType {
@@ -71,6 +79,8 @@ interface ISpecialPrice {
 }
 
 export interface IEditProperty {
+    latitude?: string;
+    longitude?: string;
     propertyId: number;
     tenantId: number;
     tenantRole: string;

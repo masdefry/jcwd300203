@@ -15,6 +15,7 @@ import LoadingWithSpinner from '@/components/Loading';
 import NotFound from '@/components/404';
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { any } from 'cypress/types/bluebird';
 
 const PropertyDetailsPage = () => {
   const { property, isLoading, propertyId } = usePropertyDetailsTenant();
@@ -36,6 +37,8 @@ const PropertyDetailsPage = () => {
     const propertyData = {
       name: values.name,
       address: values.address,
+      latitude: values.latitude,
+      longitude: values.longitude,
       city: values.city,
       categoryId: values.categoryId,
       description: values.description,
@@ -66,6 +69,7 @@ const PropertyDetailsPage = () => {
         ...room,
         images: room.images?.filter((img: any) => !(img instanceof File)) || [],
         specialPrice: room.specialPrice?.map((sp: any) => ({
+          id: sp.id,
           startDate: sp.startDate,
           endDate: sp.endDate,
           price: sp.price,
@@ -81,7 +85,7 @@ const PropertyDetailsPage = () => {
     // Add the property data
     formData.append('data', JSON.stringify(propertyData));
     console.log('Property Data before JSON:', propertyData);
-  
+    
     // Handle main image
     if (values.mainImage instanceof File) formData.append('mainImage', values.mainImage);
 
@@ -93,17 +97,14 @@ const PropertyDetailsPage = () => {
       formData.append('propertyImages', image);
     });
 
-    // Handle room images for existing rooms
     values.roomTypes.forEach((room: any, index: number) => {
       if (room.id) {
-        // Handle existing room images
         const newRoomImages =
           room.images?.filter((img: any) => img instanceof File) || [];
         newRoomImages.forEach((image: File) => {
           formData.append(`roomTypeImages${index}`, image);
         });
       } else {
-        // Handle new room images
         const newRoomImages =
           room.images?.filter((img: any) => img instanceof File) || [];
         newRoomImages.forEach((image: File) => {
@@ -124,7 +125,7 @@ const PropertyDetailsPage = () => {
 
   // Use a ref to track if initial previews have been set
   const initialPreviewsSet = useRef(false);
-
+  
  useEffect(() => {
     if (property && !initialPreviewsSet.current) {
       if (property.mainImage) {
@@ -181,20 +182,30 @@ const PropertyDetailsPage = () => {
       guestCapacity: room.guestCapacity || 0,
       facilities: room.facilities?.map((f) => f.id) || [],
       images: room.images || [],
-      specialPrice:
-        room.flexiblePrices?.map((sp) => ({  // Changed from flexiblePrice to flexiblePrices
-          id: sp.id,
-          startDate: new Date(sp.startDate),
-          endDate: new Date(sp.endDate),
-          price: sp.price,
-        })) || [],
-      unavailableDates:
-        room.unavailability?.map((u) => ({  // You might need to adjust this based on the new structure
-          id: u.id,
-          startDate: new Date(u.startDate),
-          endDate: new Date(u.endDate),
-          reason: u.reason || '',
-        })) || [],
+      specialPrice: room.flexiblePrices
+            ?.filter((sp: any) => {
+              // Keep if it has an ID (existing) or if it's new and has all required fields
+              return sp.id || (sp.startDate && sp.endDate && sp.price);
+            })
+            .map((sp: any) => ({
+              id: sp.id, // Keep the ID for existing special prices
+              startDate: sp.startDate,
+              endDate: sp.endDate,
+              price: sp.price,
+            })),
+          // Only include unavailability dates that have IDs (existing ones) or new ones
+          unavailableDates: room.unavailableDates
+            ?.filter((period: any) => {
+              // Keep if it has an ID (existing) or if it's new and has all required fields
+              return period.id || (period.startDate && period.endDate);
+            })
+            .map((period: any) => ({
+              id: period.id, // Keep the ID for existing periods
+              startDate: period.startDate,
+              endDate: period.endDate,
+              reason: period.reason,
+              type: period.type || 'BLOCKED'
+            })),
       specialPricesToDelete: [], 
       unavailabilityToDelete: [], 
     })) || [],
@@ -402,7 +413,7 @@ const PropertyDetailsPage = () => {
                     <div key={room.id} className="border rounded-lg p-4">
                       <h4 className="font-semibold mb-2">{room.name}</h4>
                       <div className="space-y-2">
-                        {room.currentBookings.map((booking, idx) => (
+                        {room.currentBookings.map((booking: any, idx: number) => (
                           <div key={idx} className="bg-gray-50 p-3 rounded">
                             <p>Check In: {new Date(booking.checkInDate).toLocaleDateString()}</p>
                             <p>Check Out: {new Date(booking.checkOutDate).toLocaleDateString()}</p>

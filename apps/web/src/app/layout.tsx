@@ -16,6 +16,7 @@ import ReactQueryProvider from '../providers/TanstackProvider';
 import AuthProvider from '../providers/AuthProvider';
 import React from 'react';
 import Navbar from '@/components/Header';
+import Script from 'next/script';
 
 if (typeof window !== "undefined") {
   require("bootstrap/dist/js/bootstrap");
@@ -39,6 +40,12 @@ export default function RootLayout({
           src="https://app.sandbox.midtrans.com/snap/snap.js"
           data-client-key="SB-Mid-client-Qu-bODSBhUtjUUQM"
         ></script>
+        <Script
+  src={`https://maps.googleapis.com/maps/api/js?key=AIzaSyBv-2SIB61t1CMsdbE3sU64zZSefhjdNiA&libraries=places`}
+  strategy="afterInteractive"
+  onLoad={() => console.log('Google Maps loaded')}
+  onError={(e) => console.error('Error loading Google Maps:', e)}
+/>
       </head>
 
       <body className={inter.className}>

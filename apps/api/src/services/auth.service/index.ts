@@ -216,6 +216,7 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
     })
 
     const user = customer || tenant
+    console.log('Found user:', user); // Debug log
 
     if(!user) throw {msg: 'Invalid email, please try with a valid email', status: 404}
 
@@ -223,8 +224,9 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
     let tokenExpiry = user.tokenExpiry
 
     const currentTime = new Date ()
+    console.log('Current token and expiry:', { resetPasswordToken, tokenExpiry }); // Debug log
 
-    if (!resetPasswordToken && !tokenExpiry) {
+    if (!resetPasswordToken || !tokenExpiry || currentTime > tokenExpiry) {
         resetPasswordToken = jwt.sign({ data: { email } }, ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
         tokenExpiry = addMinutes(currentTime, 5);
 
@@ -278,7 +280,7 @@ if (!password) throw { msg: 'Password is required', status: 400 };
       }
     });
 
-    const tenant = await prisma.customer.findUnique({
+    const tenant = await prisma.tenant.findUnique({
       where: {
         resetPasswordToken: resetPasswordToken,
         tokenExpiry: { gt: currentTime }

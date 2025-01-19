@@ -111,13 +111,13 @@ export interface FacilitiesResponse {
       name: string;
       icon: string;
     }>;
-    flexiblePrices?: Array<{  // Changed from specialPrice to flexiblePrices
+    flexiblePrices?: Array<{  
       id: number;
-      startDate: string;      // Changed from date to startDate
-      endDate: string;        // Added endDate
+      startDate: string;     
+      endDate: string;        
       price: string;
     }>;
-    unavailability?: Array<{  // Added unavailability
+    unavailableDates?: Array<{  
       id: number;
       startDate: string;
       endDate: string;
