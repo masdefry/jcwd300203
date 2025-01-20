@@ -71,8 +71,6 @@ function PropertySidebar({
   priceRange = [0, 5000000], 
 }: PropertySidebarProps) {
 
-function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
-
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { data: facilities } = usePropertyFacilities();
   const { data: categories } = useQueryPropertyCategories();
