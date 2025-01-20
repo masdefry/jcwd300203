@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 
 interface ICreateTokenParams {
-    id: number | undefined;   
-    role: string | undefined; 
+    id: number ;   
+    role: string ; 
 }
 
 export const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET as string 

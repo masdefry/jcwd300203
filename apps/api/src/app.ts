@@ -11,7 +11,8 @@ import { PORT } from './config';
 import cookieParser from 'cookie-parser';
 import router from './routers';
 import { startScheduler } from './utils/scheduler';
-import { scheduleBookingCleanup } from './services/transaction.service';
+import { scheduleBookingCleanup, startOrderReminderCronJob } from './services/transaction.service';
+import path from "path";
 
 export default class App {
   private app: Express;
@@ -57,7 +58,7 @@ export default class App {
           console.error('Error:', err);
   
           // Send a JSON response with error details for API requests
-          res.status(500).json({
+          res.status(err.status || 500).json({
             error: 'An internal server error occurred.',
             message: err.msg || 'Something went wrong',
             stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
@@ -76,6 +77,15 @@ export default class App {
   public start(): void {
     // schedule booking cleanup
     scheduleBookingCleanup()
+
+    // Start the order reminder cron job
+    startOrderReminderCronJob();
+
+    // Expose the "public" directory
+    const publicDirectory = path.join(__dirname, "public/images/proof-of-payment");
+    console.log(publicDirectory)
+
+    this.app.use("/images", express.static(publicDirectory));
 
     this.app.listen(PORT, () => {
       console.log(`  ➜ [ ϟϟ API ϟϟ ] Local: http://localhost:${PORT}/`);

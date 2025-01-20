@@ -4,6 +4,18 @@ import instance from "@/utils/axiosInstance";
 import authStore from "@/zustand/authStore";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
+import { jwtDecode } from "jwt-decode";
+import LoadingWithSpinner from "@/components/Loading";
+
+interface DecodedToken{
+    data: {
+      id: string;
+      role: string;
+      email: string;
+    };
+    exp: number;
+    iat: number;
+  }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
@@ -15,22 +27,53 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     const setKeepAuth = authStore((state: any) => state.setKeepAuth);
     const authLogout = authStore((state: any) => state.setAuthLogout);
-    const role = authStore((state: any) => state.role);
-    const token = authStore((state: any) => state.token);
+    const token = localStorage?.getItem('authToken');
 
-    const isValidToken = (token: string | null | undefined): boolean => !!token && token.trim() !== "";
+    const getRole = (token: string): string => {
+        try {
+            const decoded = jwtDecode<DecodedToken>(token);
+            return decoded.data.role;
+        } catch (error) {
+            console.error('Error decoding token for role:', error);
+            return '';
+        }
+    }
+
+    const role = getRole(token!);
+        
+    const isValidToken = (token: string | null | undefined): boolean => {
+        if (!token || token.trim() === "") return false;
+        try {
+            const decoded = jwtDecode<{ exp: number }>(token); 
+            const currentTime = Math.floor(Date.now() / 1000); 
+            return decoded.exp > currentTime;
+        } catch (error) {
+            return false; 
+        }
+    };
+
+    useEffect(() => {
+        console.log('Current role:', role);
+        console.log('Current pathname:', pathname);
+        console.log('Is token valid:', isValidToken(token));
+    }, [role, pathname, token]);
 
     useEffect(() => {
         const fetchKeepAuth = async () => {
             try {
                 const res = await instance.get('/auth');
+                console.log('Login response isVerified:', res?.data?.data?.isVerified);
+
                 setKeepAuth({
                     name: res?.data?.data?.name,
                     role: res?.data?.data?.role,
                     email: res?.data?.data?.email,
                     profileImage: res?.data?.data?.profileImage,
-                    isVerified: res?.data?.data?.verified
+                    isVerified: res?.data?.data?.isVerified
                 });
+                console.log('Role from keepauth: ', res?.data?.data?.role)
+                console.log('Verification from keepauth:', res?.data?.data?.isVerified) 
+                console.log('response: ', res?.data?.data)
             } catch (err) {
                 console.log(err);
                 authLogout();
@@ -51,40 +94,77 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const authRoutes = ['/login/user', '/login/tenant', '/register/user', '/register/tenant', '/forget-password'];
 
-        if (!isLoading) {
+        if (isLoading) return; // Wait until loading is complete
+
+        if(!isLoading){
+            const isPublicRoute = (path: string) => {
+                return path === '/' || path === '/about' || path === '/contact';
+            };
+    
+            const isTenantRoute = (path: string) => {
+                return ['/listing', '/dashboard', '/dashboard/', '/listing/'].some(route => path.startsWith(route));
+            };
+    
+            const isCustomerRoute = (path: string) => {
+                return ['/user', '/user/profile', '/user/'].some(route => path.startsWith(route));
+            };
+    
+            // Allow access to public routes without authentication
+            if (isPublicRoute(pathname)) {
+                setIsAuthorized(true);
+                return;
+            }
+    
             if (authRoutes.includes(pathname) && isValidToken(token)) {
-                setErrorMessage('You are already logged in');
                 router.push('/');
                 return;
             }
-
-            if (pathname.startsWith('/dashboard') && role !== 'tenant') {
-                setErrorMessage('Unauthorized access');
-                setIsAuthorized(false);
-                return;
+    
+            // Check for tenant routes
+            if (isTenantRoute(pathname)) {
+                if (!isValidToken(token)) {
+                    setErrorMessage('Please login first');
+                    setIsAuthorized(false);
+                    return;
+                }
+                if (role !== 'tenant') {
+                    setErrorMessage('Unauthorized access - Tenant only');
+                    setIsAuthorized(false);
+                    return;
+                }
             }
-
-            if (pathname.startsWith('/user') && role !== 'customer') {
-                setErrorMessage('Unauthorized access');
-                setIsAuthorized(false);
-                return;
+    
+            // Check for customer routes
+            if (isCustomerRoute(pathname)) {
+                if (!isValidToken(token)) {
+                    setErrorMessage('Please login first');
+                    setIsAuthorized(false);
+                    return;
+                }
+                if (role !== 'customer') {
+                    setErrorMessage('Unauthorized access - Customer only');
+                    setIsAuthorized(false);
+                    return;
+                }
             }
-
-            if(pathname.startsWith('/change-email') && role === '' && !isValidToken(token)) {
-                setErrorMessage('Invalid Token');
-                setIsAuthorized(false);
-                return;
+    
+            // Handle specific routes that require a valid token
+            if (pathname.startsWith('/change-email') || pathname.startsWith('/verify-account')) {
+                if (!isValidToken(token)) {
+                    setErrorMessage('Invalid Token');
+                    setIsAuthorized(false);
+                    return;
+                }
             }
-
-            if(pathname.startsWith('/verify-account') && role === '' && !isValidToken(token)) {
-                setErrorMessage('Invalid Token');
-                setIsAuthorized(false);
-                return;
-            }
-
+    
+            // If all checks pass, set authorized to true
             setIsAuthorized(true);
+            setErrorMessage(null);
         }
-    }, [isLoading, token, pathname, role, router]);
+        
+    }, [isLoading, token, pathname, role]);
+
+
 
     useEffect(() => {
         if (!isAuthorized && !hasTriggered) {
@@ -98,16 +178,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     if (isLoading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                <div className="animate-fade-in transition-opacity duration-1000">
-                    <div className="w-16 h-16 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin"></div>
-                    <p className="mt-4 text-gray-600 text-lg animate-pulse">Loading...</p>
-                </div>
-            </div>
+            <LoadingWithSpinner/>
         );
     }
 
-    if (!isAuthorized && errorMessage) {
+    if (!isAuthorized) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-gray-50 flex-col animate-fadeInOpacity duration-1000">
                 <h1 className="text-2xl text-red-500 font-bold pb-5 animate-fadeInUp transition-all duration-1000">

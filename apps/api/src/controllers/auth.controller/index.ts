@@ -17,14 +17,7 @@ export const verifyEmailCustomer = async(req: Request, res: Response, next: Next
             message: 'A verification email has been sent, please check your email',
             data: {}
         }) 
-    } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: true,
-                msg: error.msg,
-                data: {}
-            });
-        }
+    } catch (error) {
         next (error);
     }
 }
@@ -88,9 +81,8 @@ export const registerTenant = async (req: RequestWithFiles, res: Response, next:
         const profileImage = req.files?.profileImage?.[0];  
         const idCardImage = req.files?.idCardImage?.[0];  
 
-        if (!username || !password || !name) {
-            throw { message: 'Input cannot be blank', status: 406 };
-        }
+        if (!username || !password || !name) throw { msg: 'Input cannot be blank', status: 406 };
+        
        
         const hashedPassword = await hashPassword(password);
 
@@ -121,8 +113,8 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
         const user = await loginCustomerService({emailOrUsername, password})
 
         const verifyPassword = await comparePassword(password, user!.password)
-        if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
-        
+        if (!verifyPassword) throw {msg: 'False password, please try again', status: 406};
+
         const token = await createToken({id: user?.id, role: user?.role});
         const refreshToken = await createRefreshToken({id: user?.id, role: user?.role});
 
@@ -138,19 +130,14 @@ export const loginCustomer = async(req: Request, res: Response, next: NextFuncti
             message: 'Successfully logged in',
             data: {
                 token,
-                email: user?.email,
-                name: user?.name,
-                profilePicture: user?.profileImage
+                email: user!.email,
+                role: user!.role,
+                name: user!.name,
+                profilePicture: user!.profileImage,
+                isVerified: user!.isVerified
             }
         })
-    } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: true,
-                message: error.msg,
-                data: {}
-            });
-        }
+    } catch (error) {
         next(error);
     }
 }
@@ -163,15 +150,15 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
         const user = await loginTenantService({emailOrUsername, password})
 
         const verifyPassword = comparePassword(password, user!.password)
-        if (!verifyPassword) throw {message: 'False password, please try again', status: 406};
-        
+        if (!verifyPassword) throw {msg: 'False password, please try again', status: 406};
+
         const token = await createToken({id: user?.id, role: user?.role})
         const refreshToken = await createRefreshToken({id: user?.id, role: user?.role});
 
         res.cookie('refreshToken', refreshToken ,{
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000, // 1 Day
+            maxAge: 24 * 60 * 60 * 1000, 
             sameSite: 'strict'
         })
 
@@ -181,18 +168,12 @@ export const loginTenant = async(req: Request, res: Response, next: NextFunction
             data: {
                 token,
                 email: user?.email,
+                role: user?.role,
                 name: user?.name,
                 profilePicture: user?.profileImage
             }
         })
-    } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: true,
-                msg: error.msg,
-                data: {}
-            });
-        }
+    } catch (error) {
         next (error);
     }
 }
@@ -223,8 +204,8 @@ export const loginWithSocialMedia = async(req: Request, res: Response, next: Nex
                 }
             })
         }
-
-        const token = createToken({id: dataUser?.id, role: dataUser?.role});
+        
+        const token = createToken({id: dataUser!.id, role: dataUser!.role});
 
         res.status(200).json({
             error: false,
@@ -232,6 +213,7 @@ export const loginWithSocialMedia = async(req: Request, res: Response, next: Nex
             data: {
                 token,
                 email: findUser?.email,
+                role: findUser?.role,
                 name: findUser?.name,
                 profilePicture: findUser?.profileImage
             }
@@ -253,7 +235,8 @@ export const keepLogin = async(req: Request, res: Response, next: NextFunction) 
         data: {
             name: user?.name,
             email: user?.email,
-            verified: "isVerified" in user! ? user.isVerified : null,
+            role: user?.role,
+            isVerified: "isVerified" in user! ? user.isVerified : null,
             profileImage: user?.profileImage,
             username: user?.username
         }
@@ -310,14 +293,7 @@ export const changeCustomerPassword = async(req: Request, res: Response, next: N
             message: 'Password successfully changed',
             data: {}
         })
-    } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: true,
-                msg: error.msg,
-                data: {}
-            });
-        }
+    } catch (error) {
         next(error)
     }
 }
@@ -374,21 +350,18 @@ export const changeEmail = async(req: Request, res: Response, next: NextFunction
         
         const tokenWithBearer = req.headers['newemailtoken'];
     
-        if (!tokenWithBearer) {
-          throw { message: 'Token not provided', status: 400 };
-        }
+        if (!tokenWithBearer) throw { msg: 'Token not provided', status: 400 };
+        
     
         const tokenString = Array.isArray(tokenWithBearer) ? tokenWithBearer.join(' ') : tokenWithBearer;
     
         const tokenParts = tokenString.split(' '); 
-        if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-          throw { message: 'Invalid token format', status: 406 };
-        }
+        if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') throw { msg: 'Invalid token format', status: 406 };
+        
         const token = tokenParts[1]; 
     
-        if (!token || token === '') {
-          throw { message: 'Invalid token, please try again', status: 406 };
-        }
+        if (!token || token === '') throw { msg: 'Invalid token, please try again', status: 406 };
+        
     
         await changeEmailService({ usersId, authorizationRole, token });
 
@@ -397,14 +370,7 @@ export const changeEmail = async(req: Request, res: Response, next: NextFunction
             message: 'Email successfully updated',
             data: {}
         })
-    } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: true,
-                msg: error.msg,
-                data: {}
-            });
-        }
+    } catch (error) {
         next(error)
     }
 }
@@ -478,14 +444,7 @@ export const verifyCustomer = async(req: Request, res: Response, next: NextFunct
             message: 'Account verification succeeded',
             data: {}
         })
-    } catch (error: any) {
-        if (error.status) {
-            return res.status(error.status).json({
-                error: true,
-                msg: error.msg,
-                data: {}
-            });
-        }
+    } catch (error) {
         next(error)
     }
 }

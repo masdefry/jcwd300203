@@ -1,21 +1,38 @@
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 interface CustomAxiosError {
   response?: {
     data: {
-      msg: string;
+      error?: boolean;
+      message: string; // This will contain the err.msg from backend
+      stack?: string;
     };
     status?: number; 
   };
+  message?: string;
 }
 
 export const errorHandler = (err: unknown) => {
   const axiosErr = err as CustomAxiosError;
 
   if (axiosErr.response) {
-    toast.error(axiosErr.response.data.msg || 'Something went wrong');
-    console.log(axiosErr);
+    const errorMessage = axiosErr.response.data.message || 'Something went wrong';
+    toast.error(errorMessage);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error:', {
+        status: axiosErr.response.status,
+        message: errorMessage,
+        fullError: axiosErr.response.data
+      });
+    }
+  } else if (axiosErr.message) {
+    // Handle network errors
+    toast.error(axiosErr.message);
+    console.error('Network Error:', axiosErr.message);
   } else {
+    // Fallback for unknown errors
     toast.error('An unknown error occurred.');
+    console.error('Unknown Error:', axiosErr);
   }
 };

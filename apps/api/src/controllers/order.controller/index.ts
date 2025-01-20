@@ -5,47 +5,71 @@ import { BookingStatus } from "@prisma/client";
 
 // get order list
 export const getOrderList = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const {usersId, authorizationRole } = req.body;
-        const { date, orderNumber, status } = req.query;
+  try {
+      const { usersId, authorizationRole } = req.body;
+      const { 
+          date, 
+          orderNumber, 
+          status, 
+          page = 1, 
+          limit = 5 
+      } = req.query;
 
-        // Call service with query parameters
-        const orders = await getOrderListService({
-            usersId,
-            authorizationRole,
-            date: typeof date === "string" ? date : undefined,
-            orderNumber: typeof orderNumber === "string" ? orderNumber : undefined,
-            status: typeof status === "string" ? status : undefined,
-        });
+      // Convert page and limit to numbers
+      const pageNumber = Number(page);
+      const limitNumber = Number(limit);
 
-        res.status(200).json({
-            error: false,
-            message: "Order list retrieved successfully",
-            data: orders,
-        });
-    } catch (error) {
-        next(error);
-    }
+      // Call service with query parameters
+      const { orders, totalPages } = await getOrderListService({
+          usersId,
+          authorizationRole,
+          date: typeof date === "string" ? date : undefined,
+          orderNumber: typeof orderNumber === "string" ? orderNumber : undefined,
+          status: typeof status === "string" ? status : undefined,
+          page: pageNumber,
+          limit: limitNumber
+      });
+
+      res.status(200).json({
+          error: false,
+          message: "Order list retrieved successfully",
+          data: orders,
+          totalPages: totalPages,
+          currentPage: pageNumber
+      });
+  } catch (error) {
+      next(error);
+  }
 };
 
 // get tenant order list
-export const getTenantOrderList = async(req: Request, res: Response, next: NextFunction ) => {
+export const getTenantOrderList = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { usersId } = req.body
-    const { status } = req.query
-    
-    const orders = await getTenantOrderListService({ usersId: Number(usersId), status: status as string }) 
-    
+    const { usersId } = req.body;
+    const { status } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const { orders, totalPages, currentPage } = await getTenantOrderListService({
+      usersId: Number(usersId),
+      status: status as string,
+      page,
+      limit,
+    });
+
     res.status(200).json({
       error: false,
       message: "Order list retrieved successfully",
-      data: orders,
-    }) 
-    
+      data: {
+        orders,
+        totalPages,
+        currentPage,
+      },
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 export const sendOrderReminders = async() => {
   const today = new Date();
@@ -69,10 +93,10 @@ export const sendOrderReminders = async() => {
 export const cancelOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { bookingId } = req.params; // The ID of the booking to cancel
-      const { usersId } = req.body; // Logged-in user's ID
-  
+      const { usersId, room_qty } = req.body; // Logged-in user's ID
+      
       // Call service to cancel the order
-      const result = await cancelOrderService({ bookingId: Number(bookingId), usersId: Number(usersId) });
+      const result = await cancelOrderService({ bookingId: Number(bookingId), usersId: Number(usersId), room_qty: Number(room_qty)});
   
       res.status(200).json({
         error: false,
@@ -87,10 +111,10 @@ export const cancelOrder = async (req: Request, res: Response, next: NextFunctio
 // cancel order service for tenant
 export const cancelUserOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { usersId } = req.body;
+    const { usersId, room_qty } = req.body;
     const { bookingId } = req.params;
 
-    const result = await cancelUserOrderService({ usersId: Number(usersId), bookingId: Number(bookingId) });
+    const result = await cancelUserOrderService({ usersId: Number(usersId), bookingId: Number(bookingId), room_qty: Number(room_qty) });
 
     res.status(200).json({
       error: false,

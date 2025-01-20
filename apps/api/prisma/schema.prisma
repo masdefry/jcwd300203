@@ -43,58 +43,80 @@ model Customer {
 }
 
 model Property {
-  id           Int                @id @default(autoincrement())
+  id           Int             @id @default(autoincrement())
   name         String
-  mainImage    String 
+  mainImage    String
   address      String
-  city         String 
-  category     String?
+  city         String
+  longitude    String?
+  latitude    String?  
+  categoryId   Int?
+  description  String          @default("No description provided") @db.Text
   roomCapacity Int
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
   tenantId     Int
   bookings     Booking[]
-  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  tenant       Tenant          @relation(fields: [tenantId], references: [id])
+  category     Category?       @relation(fields: [categoryId], references: [id])
   images       PropertyImage[]
   facilities   PropFacility[]
   roomTypes    RoomType[]
   reviews      Review[]
 }
 
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String 
+  icon String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  properties Property[]
+
+  @@unique([name]) 
+
+}
+
 model PropertyImage {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   url        String
   propertyId Int
-  createdAt  DateTime @default(now())
-  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+  property   Property  @relation(fields: [propertyId], references: [id])
 }
 
 model RoomImage {
-  id     Int    @id @default(autoincrement())
+  id     Int      @id @default(autoincrement())
   url    String
   roomId Int
-  room   RoomType   @relation(fields: [roomId], references: [id])
+  room   RoomType @relation(fields: [roomId], references: [id])
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 }
 
 model Booking {
-  id           Int      @id @default(autoincrement())
-  checkInDate  DateTime
-  checkOutDate DateTime
-  roomId       Int
-  propertyId   Int
-  customerId   Int
-  room_qty     Int
+  id             Int      @id @default(autoincrement())
+  checkInDate    DateTime
+  checkOutDate   DateTime
+  roomId         Int
+  propertyId     Int
+  customerId     Int
+  room_qty       Int
   proofOfPayment String?
-  price        Decimal?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  expiryDate   DateTime @default(dbgenerated("(now() + interval '1 hour')")) 
-  customer     Customer @relation(fields: [customerId], references: [id])
-  property     Property @relation(fields: [propertyId], references: [id])
-  room         RoomType @relation(fields: [roomId], references: [id])
-  status       Status[]
+  price          Decimal?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  expiryDate     DateTime @default(dbgenerated("(now() + interval '1 hour')"))
+  customer       Customer @relation(fields: [customerId], references: [id])
+  property       Property @relation(fields: [propertyId], references: [id])
+  room           RoomType @relation(fields: [roomId], references: [id])
+  status         Status[]
 }
 
 model Status {
@@ -106,44 +128,60 @@ model Status {
 }
 
 model RoomType {
-  id           Int           @id @default(autoincrement())
-  name         String
-  price        Decimal
-  qty          Int           // Total quantity of this room type
-  guestCapacity Int          // Maximum number of guests for this room type
-  propertyId   Int
-  property     Property      @relation(fields: [propertyId], references: [id])
-  
-  images       RoomImage[]
-  facilities   RoomFacility[]
-  flexiblePrice FlexiblePrice[]
-  bookings     Booking[]
+  id            Int      @id @default(autoincrement())
+  name          String
+  price         Decimal
+  description   String   @db.Text
+  qty           Int
+  guestCapacity Int 
+  propertyId    Int
+  property      Property @relation(fields: [propertyId], references: [id])
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  images        RoomImage[]
+  facilities    RoomFacility[]
+  flexiblePrice FlexiblePrice[]
+  unavailability  RoomUnavailability[]
+  bookings      Booking[]
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  updatedAt DateTime  @updatedAt
 }
 
 model FlexiblePrice {
-  id             Int      @id @default(autoincrement())
-  roomTypeId     Int     
-  customDate     DateTime 
-  customPrice    Decimal  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  roomTypeId  Int
+  startDate   DateTime
+  endDate     DateTime
+  customPrice Decimal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  roomType       RoomType @relation(fields: [roomTypeId], references: [id])
+  roomType RoomType @relation(fields: [roomTypeId], references: [id])
+}
+
+model RoomUnavailability {
+  id          Int      @id @default(autoincrement())
+  roomTypeId  Int
+  startDate   DateTime
+  endDate     DateTime
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id])
 }
 
 model PropFacility {
-  id         Int        @id @default(autoincrement())
-  name       String
-  icon       String?
+  id   Int     @id @default(autoincrement())
+  name String
+  icon String?
 
   Property Property[]
 }
 
 model RoomFacility {
-  id    Int     @id @default(autoincrement())
+  id    Int        @id @default(autoincrement())
   name  String
   icon  String?
   rooms RoomType[]
@@ -151,7 +189,7 @@ model RoomFacility {
 
 model Review {
   id         Int      @id @default(autoincrement())
-  rating     Int      
+  rating     Int
   comment    String
   reply      String?
   createdAt  DateTime @default(now())

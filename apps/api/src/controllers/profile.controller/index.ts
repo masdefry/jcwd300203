@@ -72,11 +72,14 @@ export const editTenantProfile = async (req: Request, res: Response, next: NextF
 
         const uploadedImage = req.files
 
+        console.log('Received files:', uploadedImage);
+        console.log('Request body:', { usersId, name, username });
+
         await editTenantProfileService({usersId, name, username, uploadedImage} as IEditCustomerProfile)
 
         res.status(200).json({
             error: false,
-            message: 'Profile retrieved',
+            message: 'Profile Successfully updated',
             data: {}
         })
     } catch (error) {

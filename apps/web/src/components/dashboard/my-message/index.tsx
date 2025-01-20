@@ -5,74 +5,61 @@ import ChatBox from "./ChatBox";
 
 const index = () => {
   return (
-    <>
-      {/* <!-- Main Header Nav --> */}
-      <Header />
-
-      {/* <!--  Mobile Menu --> */}
-      <MobileMenu />
-
-      <div className="dashboard_sidebar_menu">
-        <div
-          className="offcanvas offcanvas-dashboard offcanvas-start"
-          tabIndex={-1}
-          id="DashboardOffcanvasMenu"
-          data-bs-scroll="true"
-        >
-          <SidebarMenu />
+    <div className="flex flex-col h-[calc(100vh-64px)] lg:h-screen bg-gray-50">
+        {/* Header */}
+        <div className="px-4 py-6 bg-white border-b">
+            <h2 className="text-2xl font-semibold mb-2">Message</h2>
+            <p className="text-gray-600">We are glad to see you again!</p>
         </div>
-      </div>
-      {/* End sidebar_menu */}
 
-      {/* <!-- Our Dashbord --> */}
-      <section className="our-dashbord dashbord bgc-f7 pb50">
-        <div className="container-fluid ovh">
-          <div className="row">
-            <div className="col-lg-12 maxw100flex-992">
-              <div className="row">
-                {/* Start Dashboard Navigation */}
-                <div className="col-lg-12">
-                  <div className="dashboard_navigationbar dn db-1024">
-                    <div className="dropdown">
-                      <button
-                        className="dropbtn"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#DashboardOffcanvasMenu"
-                        aria-controls="DashboardOffcanvasMenu"
-                      >
-                        <i className="fa fa-bars pr10"></i> Dashboard Navigation
-                      </button>
+        {/* Chat Container */}
+        <div className="flex flex-1 overflow-hidden">
+            {/* Contact List */}
+            <div className="w-full md:w-80 bg-white border-r flex flex-col">
+                {/* Search */}
+                <div className="p-4 border-b">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="w-full px-4 py-2 pr-8 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF385C]"
+                        />
+                        <button className="absolute right-3 top-1/2 -translate-y-1/2">
+                            🔍
+                        </button>
                     </div>
-                  </div>
                 </div>
-                {/* End Dashboard Navigation */}
 
-                <div className="col-lg-12 mb10">
-                  <div className="breadcrumb_content style2">
-                    <h2 className="breadcrumb_title">Message</h2>
-                    <p>We are glad to see you again!</p>
-                  </div>
+                {/* Contact List */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* Contact Item */}
+                    <div className="p-4 border-b hover:bg-gray-50 cursor-pointer">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0">
+                                <img
+                                    src="/57x57.png"
+                                    alt="Contact"
+                                    className="w-full h-full rounded-full"
+                                />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-medium truncate">Vincent Porter</h3>
+                                    <span className="text-xs text-gray-500">10:51</span>
+                                </div>
+                                <p className="text-sm text-gray-500 truncate">I'm going to office.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              {/* End .row */}
-
-              <ChatBox />
-              {/* End message box */}
-
-              <div className="row mt50">
-                <div className="col-lg-12">
-                  <div className="copyright-widget text-center">
-                    <p>© 2020 Find House. Made with love.</p>
-                  </div>
-                </div>
-              </div>
-              {/* End .row */}
             </div>
-            {/* End .col */}
-          </div>
+
+            {/* Chat Area - Using ChatBox Component */}
+            <div className="hidden md:flex flex-col flex-1">
+                <ChatBox />
+            </div>
         </div>
-      </section>
-    </>
+    </div>
   );
 };
 

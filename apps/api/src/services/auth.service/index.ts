@@ -155,10 +155,9 @@ export const loginCustomerService = async({emailOrUsername}: ILogin) => {
         where: where as any
     });
 
-    if(!user) throw {msg: 'User not found', status: 404};
+    if(!user) throw {msg: 'Wrong email or username', status: 404};
 
     return user;
-
 }
 
 export const loginTenantService = async({emailOrUsername}: ILogin) => {
@@ -217,6 +216,7 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
     })
 
     const user = customer || tenant
+    console.log('Found user:', user); // Debug log
 
     if(!user) throw {msg: 'Invalid email, please try with a valid email', status: 404}
 
@@ -224,8 +224,9 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
     let tokenExpiry = user.tokenExpiry
 
     const currentTime = new Date ()
+    console.log('Current token and expiry:', { resetPasswordToken, tokenExpiry }); // Debug log
 
-    if (!resetPasswordToken && !tokenExpiry) {
+    if (!resetPasswordToken || !tokenExpiry || currentTime > tokenExpiry) {
         resetPasswordToken = jwt.sign({ data: { email } }, ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
         tokenExpiry = addMinutes(currentTime, 5);
 
@@ -264,47 +265,53 @@ export const requestResetPasswordService = async({email}: {email: string}) => {
     });
 }
 
-export const resetPasswordService = async({resetPasswordToken, password}: {resetPasswordToken: string | undefined, password: string}) => {
-    const currentTime = new Date();
+export const resetPasswordService = async({resetPasswordToken, password}: { resetPasswordToken: string | undefined, password: string}) => {
+if (!resetPasswordToken) throw { msg: 'Link Expired', status: 400 };
+  
+if (!password) throw { msg: 'Password is required', status: 400 };
+  
+
+  const currentTime = new Date();
 
     const customer = await prisma.customer.findUnique({
-        where: {
-            resetPasswordToken: resetPasswordToken, tokenExpiry: {gt: currentTime}
-        }
-    })
-    
+      where: {
+        resetPasswordToken: resetPasswordToken,
+        tokenExpiry: { gt: currentTime }
+      }
+    });
+
     const tenant = await prisma.tenant.findUnique({
-        where: {resetPasswordToken: resetPasswordToken, tokenExpiry: {gt: currentTime}}
-    })
+      where: {
+        resetPasswordToken: resetPasswordToken,
+        tokenExpiry: { gt: currentTime }
+      }
+    });
 
-    const user = customer || tenant
+    const user = customer || tenant;
 
-    if(!user) throw {msg: 'Invalid or expired link, please request a new one', status: 406}
-
-    if(user == customer){
+    if (!user) throw { msg: 'Invalid or expired link, please request a new one', status: 406 };
+    
+    if (user === customer) {
         await prisma.customer.update({
-            where: {
-                id: user.id
-            },
-            data: {
-                password: password,
-                resetPasswordToken: null,
-                tokenExpiry: null
-            }
-        })
-    }else if(user == tenant){
+          where: { id: user.id },
+          data: {
+            password: password,
+            resetPasswordToken: null,
+            tokenExpiry: null
+          }
+        });   
+    } else if (user === tenant) {
         await prisma.tenant.update({
-            where: {
-                id: user.id
-            },
-            data: {
-                password: password,
-                resetPasswordToken: null,
-                tokenExpiry: null
-            }
-        })
-    }
-}
+          where: { id: user.id },
+          data: {
+            password: password,
+            resetPasswordToken: null,
+            tokenExpiry: null
+          }
+        });
+    } else throw { msg: 'Invalid Credentials', status: 400 };
+    
+};
 
 export const changeCustomerPasswordService = async({usersId, password, newPassword}:IChangePassword) => {
     const user = await prisma.customer.findUnique({
@@ -414,7 +421,7 @@ export const requestChangeEmailService = async({usersId, authorizationRole, newE
     const emailTemplate = fs.readFileSync(
         './src/public/change-email.html',
         'utf-8'
-      ); // Replace with your actual email template file
+      ); 
       const compiledEmailBody = await compile(emailTemplate);
       const personalizedEmailBody = compiledEmailBody({
         name: user.name || 'User',

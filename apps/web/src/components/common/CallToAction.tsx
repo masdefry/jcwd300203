@@ -7,7 +7,7 @@ const CallToAction = () => {
         <div className="start_partner tac-smd">
           <h2>Become a Tenant Now!</h2>
           {/* <p>We only work with the best companies around the globe</p> */}
-          <p>Ngapain Lama Yagaaaa</p> 
+          <p>Join Forces With Other Tenant To Rent Customers Your Dream Property</p> 
         </div>
       </div>
       {/* End .col */}

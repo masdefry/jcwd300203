@@ -47,7 +47,7 @@ export default function StatisticsChart() {
         const response = await instance.get('/report/sales-report'); // Use GET request
         const result = response.data;
 
-        // console.log("Sales report result: ", result);
+        console.log("Sales report result: ", result);
 
         if (result.success) {
           const monthlyRevenue = Array(12).fill(0); // Initialize monthly revenue array
