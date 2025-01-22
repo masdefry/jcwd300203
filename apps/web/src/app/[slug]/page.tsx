@@ -22,8 +22,6 @@ import { FacilitiesResponse } from "@/features/types/property";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@radix-ui/react-accordion";
 import Script from "next/script";
 
-
-
 // Define more specific types
 type SortOption = "price_asc" | "price_desc" | "name_asc" | "name_desc" | "rating_desc";
 
@@ -56,8 +54,8 @@ interface SelectedFilters {
 }
 
 interface PropertySidebarProps {
-  onSortChange: (option: string) => void;
-  onFilterChange: (type: 'category' | 'facility' | 'roomFacility', id: number, checked: string|boolean) => void;
+  onSortChange: (option: SortOption) => void;
+  onFilterChange: (type: 'category' | 'facility' | 'roomFacility', id: number, checked: boolean) => void;
   selectedFilters: SelectedFilters;
   onPriceRangeChange: (range: [number, number]) => void;
   priceRange: [number, number];
@@ -70,8 +68,6 @@ function PropertySidebar({
   onPriceRangeChange,
   priceRange = [0, 5000000], 
 }: PropertySidebarProps) {
-
-function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { data: facilities } = usePropertyFacilities();
@@ -106,7 +102,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                     type="radio"
                     name="sort"
                     value="price_asc"
-                    onChange={(e) => onSortChange(e.target.value)}
+                    onChange={(e) => onSortChange(e.target.value as SortOption)}
                     className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
                   />
                   <span className="text-sm">Price: Low to High</span>
@@ -116,7 +112,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                     type="radio"
                     name="sort"
                     value="price_desc"
-                    onChange={(e) => onSortChange(e.target.value)}
+                    onChange={(e) => onSortChange(e.target.value as SortOption)}
                     className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
                   />
                   <span className="text-sm">Price: High to Low</span>
@@ -126,7 +122,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                     type="radio"
                     name="sort"
                     value="name_asc"
-                    onChange={(e) => onSortChange(e.target.value)}
+                    onChange={(e) => onSortChange(e.target.value as SortOption)}
                     className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
                   />
                   <span className="text-sm">Name: A to Z</span>
@@ -136,7 +132,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                     type="radio"
                     name="sort"
                     value="name_desc"
-                    onChange={(e) => onSortChange(e.target.value)}
+                    onChange={(e) => onSortChange(e.target.value as SortOption)}
                     className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
                   />
                   <span className="text-sm">Name: Z to A</span>
@@ -146,7 +142,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                     type="radio"
                     name="sort"
                     value="rating_desc"
-                    onChange={(e) => onSortChange(e.target.value)}
+                    onChange={(e) => onSortChange(e.target.value as SortOption)}
                     className="w-4 h-4 text-[#FF385C] focus:ring-[#FF385C]"
                   />
                   <span className="text-sm">Rating: High to Low</span>
@@ -194,7 +190,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                   <label key={category.id} className="flex items-center space-x-3 cursor-pointer">
                     <Checkbox
                       id={`category-${category.id}`}
-                      onCheckedChange={(checked) => onFilterChange('category', category.id, checked)}
+                      onCheckedChange={(checked) => onFilterChange('category', category.id, checked === true)}
                       className="text-[#FF385C] data-[state=checked]:bg-[#FF385C] data-[state=checked]:border-[#FF385C]"
                     />
                     <div className="flex items-center space-x-2">
@@ -229,7 +225,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                   <label key={facility.id} className="flex items-center space-x-3 cursor-pointer">
                     <Checkbox
                       id={`facility-${facility.id}`}
-                      onCheckedChange={(checked) => onFilterChange('facility', facility.id, checked)}
+                      onCheckedChange={(checked) => onFilterChange('facility', facility.id, checked === true)}
                       className="text-[#FF385C] data-[state=checked]:bg-[#FF385C] data-[state=checked]:border-[#FF385C]"
                     />
                     <div className="flex items-center space-x-2">
@@ -261,7 +257,7 @@ function PropertySidebar({ onSortChange, onFilterChange, selectedFilters }){
                   <label key={facility.id} className="flex items-center space-x-3 cursor-pointer">
                     <Checkbox
                       id={`facility-${facility.id}`}
-                      onCheckedChange={(checked) => onFilterChange('facility', facility.id, checked)}
+                      onCheckedChange={(checked) => onFilterChange('facility', facility.id, checked === true)}
                       className="text-[#FF385C] data-[state=checked]:bg-[#FF385C] data-[state=checked]:border-[#FF385C]"
                     />
                     <div className="flex items-center space-x-2">
@@ -495,7 +491,7 @@ export const SearchProperty = () => {
 
       // Clean undefined values
       Object.keys(queryParams).forEach(key => 
-        queryParams[key] === undefined && delete queryParams[key]
+        (queryParams as any)[key] === undefined && delete (queryParams as any)[key]
       );
 
       const res = await instance.get("/property", { params: queryParams });

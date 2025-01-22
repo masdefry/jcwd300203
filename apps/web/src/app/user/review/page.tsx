@@ -83,7 +83,6 @@ const Bookings: React.FC = () => {
     (booking: Booking) => new Date(booking.checkOutDate) < currentDate
   );
 
-  // Pagination calculations
   const getCurrentPageItems = (items: Booking[], page: number) => {
     const start = (page - 1) * itemsPerPage;
     const end = start + itemsPerPage;
@@ -96,28 +95,33 @@ const Bookings: React.FC = () => {
   const paginatedCurrentStays = getCurrentPageItems(currentStays, currentStaysPage);
   const paginatedPastStays = getCurrentPageItems(pastStays, pastStaysPage);
 
-  const renderTableRows = (bookingList: Booking[], isPast: boolean) => {
+  const renderCards = (bookingList: Booking[], isPast: boolean) => {
     return bookingList.map((booking) => (
-      <tr key={booking.id} className="border-b hover:bg-gray-100">
-        <td className="px-4 py-2 text-center">{booking.property.name}</td>
-        <td className="px-4 py-2 text-center">{booking.property.address}</td>
-        <td className="px-4 py-2 text-center">
-          {new Date(booking.checkInDate).toLocaleString()}
-        </td>
-        <td className="px-4 py-2 text-center">
-          {new Date(booking.checkOutDate).toLocaleString()}
-        </td>
-        <td className="px-4 py-2 text-center">
-          {isPast && (
-            <button
-              onClick={() => router.push(`/user/review/${booking.id}`)}
-              className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
-            >
-              Review
-            </button>
-          )}
-        </td>
-      </tr>
+      <div
+        key={booking.id}
+        className="border border-gray-300 shadow-md p-4 rounded-lg mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center"
+      >
+        <div>
+          <h3 className="text-lg font-bold">{booking.property.name}</h3>
+          <p className="text-sm text-gray-600">{booking.property.address}</p>
+          <p className="text-sm">
+            <span className="font-semibold">Check-in:</span>{" "}
+            {new Date(booking.checkInDate).toLocaleString()}
+          </p>
+          <p className="text-sm">
+            <span className="font-semibold">Check-out:</span>{" "}
+            {new Date(booking.checkOutDate).toLocaleString()}
+          </p>
+        </div>
+        {isPast && (
+          <button
+            onClick={() => router.push(`/user/review/${booking.id}`)}
+            className="mt-4 sm:mt-0 px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
+          >
+            Review
+          </button>
+        )}
+      </div>
     ));
   };
 
@@ -127,57 +131,35 @@ const Bookings: React.FC = () => {
         {/* Current Stays */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">Current Stays</h2>
-          <div className="overflow-x-auto w-full">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="px-4 py-2 border text-center">Property Name</th>
-                  <th className="px-4 py-2 border text-center">Location</th>
-                  <th className="px-4 py-2 border text-center">Check-in Date</th>
-                  <th className="px-4 py-2 border text-center">Check-out Date</th>
-                  <th className="px-4 py-2 border text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {renderTableRows(paginatedCurrentStays, false)}
-              </tbody>
-            </table>
-            {currentStays.length > 0 && (
-              <PaginationControls
-                currentPage={currentStaysPage}
-                totalPages={currentStaysTotalPages}
-                onPageChange={setCurrentStaysPage}
-              />
-            )}
-          </div>
+          {paginatedCurrentStays.length > 0 ? (
+            renderCards(paginatedCurrentStays, false)
+          ) : (
+            <p>No current stays available.</p>
+          )}
+          {currentStays.length > 0 && (
+            <PaginationControls
+              currentPage={currentStaysPage}
+              totalPages={currentStaysTotalPages}
+              onPageChange={setCurrentStaysPage}
+            />
+          )}
         </div>
 
         {/* Past Stays */}
         <div>
           <h2 className="text-xl font-bold mb-4">Past Stays</h2>
-          <div className="overflow-x-auto w-full">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="px-4 py-2 border text-center">Property Name</th>
-                  <th className="px-4 py-2 border text-center">Location</th>
-                  <th className="px-4 py-2 border text-center">Check-in Date</th>
-                  <th className="px-4 py-2 border text-center">Check-out Date</th>
-                  <th className="px-4 py-2 border text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {renderTableRows(paginatedPastStays, true)}
-              </tbody>
-            </table>
-            {pastStays.length > 0 && (
-              <PaginationControls
-                currentPage={pastStaysPage}
-                totalPages={pastStaysTotalPages}
-                onPageChange={setPastStaysPage}
-              />
-            )}
-          </div>
+          {paginatedPastStays.length > 0 ? (
+            renderCards(paginatedPastStays, true)
+          ) : (
+            <p>No past stays available.</p>
+          )}
+          {pastStays.length > 0 && (
+            <PaginationControls
+              currentPage={pastStaysPage}
+              totalPages={pastStaysTotalPages}
+              onPageChange={setPastStaysPage}
+            />
+          )}
         </div>
       </div>
 
