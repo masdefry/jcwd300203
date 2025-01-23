@@ -8,20 +8,13 @@ import { toast } from "react-toastify";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { FaStar } from "react-icons/fa";
-
-import Header from "@/components/home/Header";
-import MobileMenu from "@/components/common/header/MobileMenu";
-import PopupSignInUp from "@/components/common/PopupSignInUp";
+import Wrapper from "@/components/layout/Wrapper";
 import Footer from "@/components/common/footer/Footer";
 import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
-import Wrapper from "@/components/layout/Wrapper";
 
-// Validation schema for Formik
+// Validation schema
 const ReviewSchema = Yup.object().shape({
-  rating: Yup.number()
-    .min(1, "Rating must be at least 1")
-    .max(5, "Rating cannot exceed 5")
-    .required("Rating is required"),
+  rating: Yup.number().required("Rating is required").min(1).max(5),
   feedback: Yup.string().required("Feedback is required"),
   comment: Yup.string().required("Comment is required"),
 });
@@ -29,10 +22,9 @@ const ReviewSchema = Yup.object().shape({
 const ReviewForm: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const bookingId = Number(pathname.split("/")[3]); // Extract bookingId from the URL
+  const bookingId = Number(pathname.split("/")[3]);
 
-  // Fetch all orders for the user
-  const { data: orders, isLoading: ordersLoading, error: ordersError } = useQuery({
+  const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
       const res = await instance.get("/orders", {
@@ -42,52 +34,54 @@ const ReviewForm: React.FC = () => {
     },
   });
 
-  // Fetch existing review for the booking
-  const { data: existingReview, isLoading: reviewLoading } = useQuery({
+  const { data: existingReview } = useQuery({
     queryKey: ["review", bookingId],
     queryFn: async () => {
       const res = await instance.get(`/reviews/${bookingId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      return res.data.data; // Existing review data
+      return res.data.data;
     },
-    enabled: !!bookingId, // Only fetch if bookingId exists
-    retry: false, // Avoid retrying if review doesn't exist
+    enabled: !!bookingId,
   });
 
-  // Mutation for submitting/updating a review
-  const { mutate: mutateReview } = useMutation({
+  const { mutate: submitReview } = useMutation({
     mutationFn: async (reviewData: any) => {
       return await instance.post("/reviews", reviewData, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
     },
     onSuccess: () => {
-      toast.success("Review submitted successfully!", { position: "top-center" });
+      toast.success("Review submitted successfully!");
       router.push("/review");
     },
-    onError: (err) => {
-      toast.error("Failed to submit review. Please try again.", { position: "top-center" });
-      console.error(err);
+    onError: () => {
+      toast.error("Failed to submit review.");
     },
   });
 
-  // Star Rating Component
-  const StarRating = ({ setFieldValue, rating }: { setFieldValue: any; rating: number }) => {
+  if (ordersLoading) return <div>Loading...</div>;
+
+  const booking = orders?.find((order: any) => order.id === bookingId);
+
+  if (!booking) return <div>Booking not found.</div>;
+
+  const StarRating = ({ setFieldValue, rating }: any) => {
     const [hover, setHover] = useState(0);
 
     return (
-      <div className="flex space-x-2 mb-4">
+      <div className="flex">
         {[...Array(5)].map((_, index) => {
           const starValue = index + 1;
           return (
-            <label key={starValue} className="cursor-pointer">
+            <label key={starValue}>
               <FaStar
                 size={30}
                 color={starValue <= (hover || rating) ? "#ffc107" : "#e4e5e9"}
+                className="cursor-pointer"
+                onClick={() => setFieldValue("rating", starValue)}
                 onMouseEnter={() => setHover(starValue)}
                 onMouseLeave={() => setHover(0)}
-                onClick={() => setFieldValue("rating", starValue)}
               />
             </label>
           );
@@ -96,32 +90,14 @@ const ReviewForm: React.FC = () => {
     );
   };
 
-  // Loading states
-  if (ordersLoading || reviewLoading) return <div>Loading...</div>;
-  if (ordersError) return <div className="text-red-500">Failed to load orders.</div>;
-
-  // Filter the specific booking by bookingId
-  const booking = orders?.find((order: any) => order.id === bookingId);
-  console.log("orders: ", orders);
-  console.log("booking: ", booking);
-
-  if (!booking) return <div className="text-red-500 text-center">Booking not found.</div>;
-
   return (
     <Wrapper>
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="max-w-xl w-full mx-auto p-6 bg-white shadow-lg rounded-lg">
+        <div className="w-full max-w-lg bg-white rounded-lg shadow-lg p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-2">{booking.property.name}</h1>
-            <p className="text-gray-500">
-              <strong>Address:</strong> {booking.property.address}
-            </p>
+            <h1 className="text-2xl font-bold">{booking.property.name}</h1>
+            <p className="text-gray-500">{booking.property.address}</p>
           </div>
-
-          {/* Review Form */}
-          <h2 className="text-xl font-bold mb-4">
-            {existingReview ? "Update Your Review" : "Leave a Review"}
-          </h2>
           <Formik
             initialValues={{
               rating: existingReview?.rating || 0,
@@ -130,28 +106,28 @@ const ReviewForm: React.FC = () => {
             }}
             validationSchema={ReviewSchema}
             onSubmit={(values) => {
-              mutateReview({
-                bookingId: booking.id,
+              submitReview({
+                bookingId,
                 propertyId: booking.propertyId,
-                comment: values.comment,
-                rating: values.rating,
+                ...values,
               });
             }}
           >
-            {({ isSubmitting, setFieldValue, values }) => (
+            {({ values, setFieldValue, isSubmitting }) => (
               <Form>
-                {/* Star Rating */}
                 <div className="mb-4">
                   <label className="block font-medium mb-2">Rating</label>
                   <StarRating setFieldValue={setFieldValue} rating={values.rating} />
                   <ErrorMessage name="rating" component="div" className="text-red-500" />
                 </div>
-
-                {/* Feedback Dropdown */}
                 <div className="mb-4">
                   <label className="block font-medium mb-2">Feedback</label>
-                  <Field as="select" name="feedback" className="w-full px-3 py-2 border rounded">
-                    <option value="">Select feedback</option>
+                  <Field
+                    as="select"
+                    name="feedback"
+                    className="w-full border rounded px-3 py-2"
+                  >
+                    <option value="">Select Feedback</option>
                     <option value="excellent">Excellent</option>
                     <option value="good">Good</option>
                     <option value="average">Average</option>
@@ -160,25 +136,21 @@ const ReviewForm: React.FC = () => {
                   </Field>
                   <ErrorMessage name="feedback" component="div" className="text-red-500" />
                 </div>
-
-                {/* Comments Input */}
                 <div className="mb-4">
                   <label className="block font-medium mb-2">Comments</label>
                   <Field
                     as="textarea"
                     name="comment"
-                    rows={4}
-                    className="w-full px-3 py-2 border rounded"
+                    rows="4"
+                    className="w-full border rounded px-3 py-2"
                   />
                   <ErrorMessage name="comment" component="div" className="text-red-500" />
                 </div>
-
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full px-4 py-2 text-white rounded ${
-                    isSubmitting ? "bg-gray-500" : "bg-blue-500 hover:bg-blue-600"
+                  className={`w-full bg-blue-500 text-white py-2 rounded ${
+                    isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
                   }`}
                 >
                   {isSubmitting ? "Submitting..." : existingReview ? "Update Review" : "Submit Review"}
@@ -188,22 +160,8 @@ const ReviewForm: React.FC = () => {
           </Formik>
         </div>
       </div>
-
-      {/* Footer */}
-      <section className="footer_one">
-        <div className="container">
-          <div className="row">
-            <Footer />
-          </div>
-        </div>
-      </section>
-
-      {/* Footer Bottom Area */}
-      <section className="footer_middle_area pt40 pb40">
-        <div className="container">
-          <CopyrightFooter />
-        </div>
-      </section>
+      <Footer />
+      <CopyrightFooter />
     </Wrapper>
   );
 };

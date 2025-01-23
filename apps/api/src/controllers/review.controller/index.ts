@@ -89,24 +89,88 @@ export const addReview = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
+// get tenant review
+export const getTenantReviews = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { usersId } = req.body;
+     console.log('userId:',usersId)
+    const reviews = await prisma.review.findMany({
+      where: {
+        property: {
+          tenantId: usersId
+        }
+      },
+      include: {
+        customer: true,
+        property: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.status(200).json({
+      error: false,
+      message: "Reviews retrieved successfully",
+      data: reviews
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Reply to Review
 export const replyToReview = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { usersId, reply, authorizationRole } = req.body;
-      const { reviewId } = req.params;
+  try {
+    const { usersId, reply, authorizationRole } = req.body;
+    const { reviewId } = req.params;
 
-      if(!reviewId) throw {msg: 'Review not found', status:404};
-      if(!usersId || authorizationRole !== 'tenant') throw {msg: 'Something went wrong', status: 401};
-      if(!reply) throw { msg: "Reply cannot be empty", status: 400 };
-  
-      const updatedReview = await replyToReviewService({ usersId, reviewId: Number(reviewId), reply });
-  
-      res.status(200).json({
-        error: false,
-        message: "Reply added successfully",
-        data: updatedReview,
-      });
-    } catch (error) {
-      next(error);
-    }
+    if (!reviewId) throw { msg: "Review not found", status: 404 };
+    if (!usersId || authorizationRole !== "tenant") throw { msg: "Something went wrong", status: 401 };
+    if (!reply) throw { msg: "Reply cannot be empty", status: 400 };
+
+    const updatedReview = await replyToReviewService({
+      usersId,
+      reviewId: Number(reviewId),
+      reply,
+    });
+
+    res.status(200).json({
+      error: false,
+      message: "Reply updated successfully",
+      data: updatedReview,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCustomerReviews = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { usersId } = req.body;
+
+    const reviews = await prisma.review.findMany({
+      where: {
+        customerId: usersId,
+      },
+      include: {
+        property: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(200).json({
+      error: false,
+      message: "Customer reviews retrieved successfully",
+      data: reviews,
+    });
+  } catch (error) {
+    next(error);
+  }
 };

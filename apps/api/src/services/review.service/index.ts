@@ -48,27 +48,27 @@ export const addReviewService = async ({ usersId, propertyId, comment, rating }:
 
 export const replyToReviewService = async ({ usersId, reviewId, reply }: ReplyToReviewParams) => {
     const findTenant = await prisma.tenant.findUnique({
-        where: {
-            id: usersId
-        }
-    })
-    if (!findTenant) throw {msg: 'Unauthorized', status: 401}
-
-    // Fetch the review with property details
+      where: {
+        id: usersId,
+      },
+    });
+    if (!findTenant) throw { msg: "Unauthorized", status: 401 };
+  
     const review = await prisma.review.findUnique({
-        where: { id: reviewId },
-        include: { property: true },
+      where: { id: reviewId },
+      include: { property: true },
     });
-
+  
     if (!review) throw { msg: "Review not found", status: 404 };
-
+  
     if (review.property.tenantId !== usersId) throw { msg: "Unauthorized: You can only reply to reviews of your own properties", status: 403 };
-    
-    // Add the tenant's reply
+  
+    // Add or update the tenant's reply
     const updatedReview = await prisma.review.update({
-        where: { id: reviewId },
-        data: { reply },
+      where: { id: reviewId },
+      data: { reply },
     });
-
+  
     return updatedReview;
-};
+  };
+  

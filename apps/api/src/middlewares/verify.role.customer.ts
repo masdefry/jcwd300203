@@ -4,6 +4,8 @@ export const verifyRoleCustomer = async(req: Request, res: Response, next: NextF
     try {
         const {authorizationRole, usersId} = req.body
 
+        console.log("why is it from here?")
+
         if(authorizationRole !== 'customer') throw {msg: 'User Unauthorized', status: 401}
 
         if(authorizationRole && usersId){
