@@ -144,3 +144,33 @@ export const replyToReview = async (req: Request, res: Response, next: NextFunct
     next(error);
   }
 };
+
+export const getCustomerReviews = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { usersId } = req.body;
+
+    const reviews = await prisma.review.findMany({
+      where: {
+        customerId: usersId,
+      },
+      include: {
+        property: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(200).json({
+      error: false,
+      message: "Customer reviews retrieved successfully",
+      data: reviews,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

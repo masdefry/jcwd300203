@@ -159,15 +159,15 @@ const Navbar = () => {
           </DropdownMenuItem> */}
 
           {/* my messages */}
-          {role === 'tenant' && (
-            <DropdownMenuItem
-              onClick={() => (window.location.href = '/dashboard/messages')}
-            >
-              <Inbox className="mr-2 h-4 w-4" />
-              <span>My Messages</span>
-            </DropdownMenuItem>
-          )}
-
+          <DropdownMenuItem
+            onClick={() =>
+              window.location.href = role === 'tenant' ? '/dashboard/messages' : '/user/messages'
+            }
+          >
+            <Inbox className="mr-2 h-4 w-4" />
+            <span>My Messages</span>
+          </DropdownMenuItem>
+          
           <DropdownMenuSeparator />
 
           {/* Logout Link - Accessible to All Roles */}
