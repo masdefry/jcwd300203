@@ -1,7 +1,8 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility } from './types';
 import { deleteFiles } from '@/utils/delete.files';
 import { calculateDistance } from '@/utils/calculate.distance';
+
 
 export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList) => {
   const guestCount = Number(guest);
@@ -306,7 +307,6 @@ export const getPropertyDetailsService = async ({
 
     const formattedRoomTypes = roomTypes.map((room) => {
         const getPriceForDate = (date: Date) => {
-            // Check if there's a flexible price for this date range
             const flexiblePrice = room.flexiblePrice.find(price => 
                 date >= price.startDate && date <= price.endDate
             );
@@ -314,13 +314,11 @@ export const getPropertyDetailsService = async ({
         };
 
         const isRoomAvailableForDate = (date: Date) => {
-            // Check if room is marked as unavailable
             const isUnavailable = room.unavailability.some(unavailable => 
                 date >= unavailable.startDate && date <= unavailable.endDate
             );
             if (isUnavailable) return 0;
 
-            // Calculate booked rooms for this date
             const bookedRooms = room.bookings
                 .filter(booking => {
                     const checkIn = new Date(booking.checkInDate);
@@ -332,7 +330,6 @@ export const getPropertyDetailsService = async ({
             return Math.max(0, room.qty - bookedRooms);
         };
 
-        // Generate next 30 days of availability and prices
         const now = new Date();
         const next30Days = Array.from({ length: 30 }, (_, i) => {
             const date = new Date();
@@ -352,11 +349,11 @@ export const getPropertyDetailsService = async ({
             guestCapacity: room.guestCapacity,
             basePrice: room.price,
             currentPrice: getPriceForDate(parsedCheckIn || now),
-            images: room.images.map((img) => ({
+            images: room.images.map((img: IBaseImage) => ({
                 id: img.id,
                 url: img.url,
             })),
-            facilities: room.facilities.map((facility) => ({
+            facilities: room.facilities.map((facility: IBaseFacility) => ({
                 id: facility.id,
                 name: facility.name,
                 icon: facility.icon,
@@ -371,7 +368,6 @@ export const getPropertyDetailsService = async ({
         };
     });
 
-    // Calculate average rating
     const averageRating = propertyDetails.reviews.length > 0
         ? (propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length)
         : 0;
@@ -391,12 +387,12 @@ export const getPropertyDetailsService = async ({
               : 0,
           totalReviews: propertyDetails.reviews.length,
           images: propertyDetails.images
-              .filter(img => !img.deletedAt)  // Only show non-deleted images
+              .filter(img => !img.deletedAt)  
               .map((img) => ({
                   id: img.id,
                   url: img.url,
               })),
-          facilities: propertyDetails.facilities.map((facility) => ({
+          facilities: propertyDetails.facilities.map((facility: IBaseFacility) => ({
               id: facility.id,
               name: facility.name,
               icon: facility?.icon || null,
@@ -563,11 +559,11 @@ export const getPropertyDetailsTenantService = async ({
     } : null,
     averageRating,
     totalReviews: propertyDetails.reviews.length,
-    images: propertyDetails.images.map((img) => ({
+    images: propertyDetails.images.map((img: IBaseImage) => ({
       id: img.id,
       url: img.url,
     })),
-    facilities: propertyDetails.facilities.map((facility) => ({
+    facilities: propertyDetails.facilities.map((facility: IBaseFacility) => ({
       id: facility.id,
       name: facility.name,
       icon: facility.icon || null,
@@ -590,11 +586,11 @@ export const getPropertyDetailsTenantService = async ({
       description: roomType.description,
       price: Number(roomType.price),
       guestCapacity: roomType.guestCapacity,
-      images: roomType.images.map((img) => ({
+      images: roomType.images.map((img: IBaseImage) => ({
         id: img.id,
         url: img.url,
       })),
-      facilities: roomType.facilities.map((facility) => ({
+      facilities: roomType.facilities.map((facility: IBaseFacility) => ({
         id: facility.id,
         name: facility.name,
         icon: facility.icon || null,
@@ -1277,11 +1273,11 @@ export const getRoomDetailsByIdService = async ({
     price: roomDetails.price,
     guestCapacity: roomDetails.guestCapacity,
     qty: roomDetails.qty,
-    images: roomDetails.images.map((img) => ({
+    images: roomDetails.images.map((img: IBaseImage) => ({
       id: img.id,
       url: img.url,
     })),
-    facilities: roomDetails.facilities.map((facility) => ({
+    facilities: roomDetails.facilities.map((facility: IBaseFacility) => ({
       id: facility.id,
       name: facility.name,
       icon: facility.icon,
