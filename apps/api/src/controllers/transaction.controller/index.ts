@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createRoomReservationService, uploadPaymentProofService, confirmPaymentService} from "@/services/transaction.service";
+import { createRoomReservationService, uploadPaymentProofService, confirmPaymentService, getAvailableRoomsService} from "@/services/transaction.service";
 import { parseCustomDate } from "@/utils/parse.date";
 import midtransClient from 'midtrans-client'
 import { CoreApi } from "midtrans-client";
@@ -60,18 +60,6 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       data: { Status: status },
     });
 
-    // Restore room qty if the booking is canceled
-    if (status === "CANCELED") {
-      await prisma.roomType.update({
-        where: { id: booking.roomId }, // Use `roomId` from the booking
-        data: {
-          qty: {
-            increment: booking.room_qty, // Increment the qty by the canceled room_qty
-          },
-        },
-      });
-    }
-    
     return res.status(200).json({
       error: false,
       message: `Booking status updated to ${status}`,
@@ -115,7 +103,13 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
     if (parsedCheckInDate >= parsedCheckOutDate) {
       throw { msg: "Check-out date must be after check-in date", status: 400 };
     }
- 
+    
+    // get available room before making the booking
+    const availableRooms = await getAvailableRoomsService(roomId, parsedCheckInDate, parsedCheckOutDate);
+    if (availableRooms < room_qty) {
+      throw { msg: "Not enough rooms available", status: 400 };
+    }
+
     // Call service to create the booking
     const booking = await createRoomReservationService({
       usersId,

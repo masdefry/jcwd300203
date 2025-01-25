@@ -337,39 +337,38 @@ export const createFacilitiesIcons = async(req: Request, res: Response, next: Ne
 // Controller to fetch room details by ID
 export const getRoomDetailsById = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { roomId, checkIn, checkOut } = req.query;
-  
-      // Validate roomId
-      if (!roomId) {
-        return res.status(400).json({ error: "Missing roomId in query parameters." });
-      }
-  
-      // Parse and validate check-in and check-out dates
-      const parsedCheckIn = checkIn ? new Date(checkIn as string) : new Date();
-      const parsedCheckOut = checkOut ? new Date(checkOut as string) : new Date();
-  
-      if (
-        (checkIn && isNaN(parsedCheckIn.getTime())) ||
-        (checkOut && isNaN(parsedCheckOut.getTime()))
-      ) {
-        return res.status(400).json({ error: "Invalid checkIn or checkOut date format." });
-      }
-  
-      // Fetch room details from the service
-      const roomDetails = await getRoomDetailsByIdService({
-        roomId: roomId as string,
-        parsedCheckIn,
-        parsedCheckOut,
-      });
+        const { roomId, checkIn, checkOut } = req.query;
+    
+        // Validate roomId
+        if (!roomId) {
+            return res.status(400).json({ error: "Missing roomId in query parameters." });
+        }
+    
+        // Parse and validate check-in and check-out dates
+        const parsedCheckIn = checkIn ? new Date(checkIn as string) : new Date();
+        const parsedCheckOut = checkOut ? new Date(checkOut as string) : new Date();
+    
+        if (
+            (checkIn && isNaN(parsedCheckIn.getTime())) ||
+            (checkOut && isNaN(parsedCheckOut.getTime()))
+        ) {
+            return res.status(400).json({ error: "Invalid checkIn or checkOut date format." });
+        }
+    
+        // Fetch room details from the service
+        const roomDetails = await getRoomDetailsByIdService({
+            roomId: roomId as string,
+            parsedCheckIn,
+            parsedCheckOut,
+        });
 
-      console.log("roomDetails from controller: ", roomDetails)
-  
-      if (!roomDetails) {
-        return res.status(404).json({ error: "Room not found." });
-      }
-  
-      // Return room details
-      return res.status(200).json({ data: roomDetails });
+        if (!roomDetails) {
+            return res.status(404).json({ error: "Room not found." });
+        }
+    
+        // Return room details
+        return res.status(200).json({data: roomDetails});
+      
     } catch (error) {
       console.error("Error fetching room details:", error);
       return res.status(500).json({ error: "Internal server error." });

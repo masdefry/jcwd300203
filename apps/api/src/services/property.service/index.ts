@@ -1166,14 +1166,13 @@ export const getRoomDetailsByIdService = async ({
   parsedCheckOut,
 }: IGetRoomDetailsById) => {
   const roomIdNumber = Number(roomId);
-
   if (!roomIdNumber) throw { msg: "Invalid room ID", status: 400 };
 
   const roomDetails = await prisma.roomType.findUnique({
     where: { 
       id: roomIdNumber,
       deletedAt: null
-     },
+    },
     include: {
       facilities: true,
       images: true,
@@ -1181,10 +1180,9 @@ export const getRoomDetailsByIdService = async ({
         where: {
           OR: [
             {
-              // Special prices that overlap with any day in the next 30 days
               AND: [
-                { startDate: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } }, // within next 30 days
-                { endDate: { gte: new Date() } } // hasn't ended yet
+                { startDate: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
+                { endDate: { gte: new Date() } }
               ]
             }
           ]
@@ -1194,7 +1192,6 @@ export const getRoomDetailsByIdService = async ({
         where: {
           OR: [
             {
-              // Unavailability periods that overlap with any day in the next 30 days
               AND: [
                 { startDate: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
                 { endDate: { gte: new Date() } }
@@ -1214,15 +1211,23 @@ export const getRoomDetailsByIdService = async ({
           status: {
             some: {
               Status: {
-                in: ['WAITING_FOR_PAYMENT', 'WAITING_FOR_CONFIRMATION', 'CONFIRMED']
+                in: ['WAITING_FOR_CONFIRMATION', 'CONFIRMED']
               }
             }
           }
+        },
+        orderBy: {
+          createdAt: 'desc',
         },
         select: {
           room_qty: true,
           checkInDate: true,
           checkOutDate: true,
+          status: {
+            select: {
+              Status: true,
+            },
+          },
         },
       },
     },
@@ -1230,34 +1235,34 @@ export const getRoomDetailsByIdService = async ({
 
   if (!roomDetails) throw { msg: "Room not found", status: 404 };
 
-  // Calculate availability for the next 30 days
   const next30Days = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
-    date.setHours(0, 0, 0, 0); // Normalize time to start of day
+    date.setHours(0, 0, 0, 0);
 
-    // Calculate total booked rooms for the specific date
-    const bookedRooms = roomDetails.bookings
-      .filter((booking) => {
-        const bookingCheckIn = new Date(booking.checkInDate);
-        const bookingCheckOut = new Date(booking.checkOutDate);
-        return bookingCheckIn <= date && bookingCheckOut >= date;
-      })
-      .reduce((total, booking) => total + booking.room_qty, 0);
-
-    // Check if date falls within any unavailability period
+    const totalBooked = roomDetails.bookings.reduce((total, booking) => {
+      if (
+        (booking.status.some((s) => s.Status === 'WAITING_FOR_CONFIRMATION') ||
+         booking.status.some((s) => s.Status === 'CONFIRMED')) &&
+        booking.checkInDate <= date && 
+        booking.checkOutDate >= date
+      ) {
+        return total + booking.room_qty;
+      }
+      return total;
+    }, 0);
+    
     const isUnavailable = roomDetails.unavailability.some(
-      period => date >= period.startDate && date <= period.endDate
+      (period) => date >= period.startDate && date <= period.endDate
     );
+    
+    let availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - totalBooked, 0);
+    availableRooms = Math.min(availableRooms, roomDetails.qty); // Ensure availableRooms doesn't exceed roomDetails.qty
 
-    // Calculate available rooms
-    const availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - bookedRooms, 0);
-
-    // Check for flexible pricing on this date
     const flexiblePrice = roomDetails.flexiblePrice.find(
-      price => date >= price.startDate && date <= price.endDate
+      (price) => date >= price.startDate && date <= price.endDate  
     )?.customPrice;
-
+  
     return {
       date: date.toDateString(),
       price: flexiblePrice || roomDetails.price,
@@ -1265,19 +1270,18 @@ export const getRoomDetailsByIdService = async ({
     };
   });
 
-  // Rest of the return statement remains the same
   return {
     id: roomDetails.id,
     name: roomDetails.name,
     description: roomDetails.description,
     price: roomDetails.price,
-    guestCapacity: roomDetails.guestCapacity,
+    guestCapacity: roomDetails.guestCapacity, 
     qty: roomDetails.qty,
-    images: roomDetails.images.map((img: IBaseImage) => ({
+    images: roomDetails.images.map((img) => ({
       id: img.id,
       url: img.url,
     })),
-    facilities: roomDetails.facilities.map((facility: IBaseFacility) => ({
+    facilities: roomDetails.facilities.map((facility) => ({
       id: facility.id,
       name: facility.name,
       icon: facility.icon,

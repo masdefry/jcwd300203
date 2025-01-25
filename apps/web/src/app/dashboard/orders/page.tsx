@@ -99,9 +99,7 @@ const MyOrdersPage = () => {
     if (!confirmCancel) return;
 
     try {
-      const response = await instance.post(`/orders/tenant/${orderId}/cancel`, {
-        room_qty: roomQty,
-      });
+      const response = await instance.post(`/orders/tenant/${orderId}/cancel`);
       alert(response.data.message);
       window.location.reload();
     } catch (error: any) {
@@ -177,7 +175,7 @@ const MyOrdersPage = () => {
             >
               View Proof
             </button>
-          )}
+          )}  
 
           {hasProofOfPayment && !isConfirmed && (
             <>

@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { useSearchParams } from 'next/navigation';
 import React from 'react';
-import instance from '@/utils/axiosInstance';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-import Footer from '@/components/common/footer/Footer';
-import CopyrightFooter from '@/components/common/footer/CopyrightFooter';
+import instance from '@/utils/axiosInstance';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'next/navigation';
 import Wrapper from '@/components/layout/Wrapper';
+import { Separator } from '@/components/ui/separator';
+import Footer from '@/components/common/footer/Footer';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import CopyrightFooter from '@/components/common/footer/CopyrightFooter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 enum BookingStatus {
   WAITING_FOR_PAYMENT,
@@ -58,14 +57,6 @@ const loadMidtransScript = () => {
   });
 };
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 const fetchPropertyId = async (
   roomId: string | null,
 ): Promise<number | null> => {
@@ -75,7 +66,7 @@ const fetchPropertyId = async (
 
   try {
     const response = await instance.get(`/property/roomType/propertyId`, {
-      params: { roomId },
+      params: { roomId: parseInt(roomId) },
     });
 
     return response.data?.data?.propertyId || null;
@@ -83,101 +74,6 @@ const fetchPropertyId = async (
     console.error('Failed to fetch property ID:', error);
     throw new Error('Failed to fetch property ID.');
   }
-};
-
-const RoomDetailsCard = () => {
-  const searchParams = useSearchParams();
-  const roomId = searchParams.get('roomId');
-  const checkIn = searchParams.get('checkIn');
-  const checkOut = searchParams.get('checkOut');
-  const [roomData, setRoomData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchRoomDetails = async () => {
-      if (!roomId || !checkIn || !checkOut) {
-        setError('Missing required query parameters.');
-        return;
-      }
-
-      try {
-        // Validate and format check-in and check-out dates
-        const formattedCheckIn = checkIn ? new Date(checkIn.replace(/\//g, "-")) : null;
-        const formattedCheckOut = checkOut ? new Date(checkOut.replace(/\//g, "-")) : null;
-        console.log(formattedCheckIn)
-        console.log(formattedCheckOut)        
-
-        if (!formattedCheckIn || isNaN(formattedCheckIn.getTime())) {
-          setError('Invalid check-in date.');
-          return;
-        }
-
-        if (!formattedCheckOut || isNaN(formattedCheckOut.getTime())) {
-          setError('Invalid check-out date.');
-          return;
-        }
-
-        const response = await instance.get(`/property/roomType/details`, {
-          params: {
-            roomId,
-            checkIn: formattedCheckIn.toISOString(),
-            checkOut: formattedCheckOut.toISOString(),
-          },
-        });
-
-        if (response.data?.data) {
-          setRoomData(response.data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch room details:', error);
-        setError('Failed to fetch room details. Please try again.');
-      }
-    };
-
-    fetchRoomDetails();
-  }, [roomId, checkIn, checkOut]);
-
-  if (error) {
-    return <div className="text-center text-red-500">{error}</div>;
-  }
-
-  if (!roomData) {
-    return (
-      <div className="text-center text-gray-500">Loading room details...</div>
-    );
-  }
-
-  // Calculate total available rooms for the provided check-in and check-out dates
-  const availableRooms = roomData.priceComparison[0]?.availableRooms;
-
-  return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">{roomData.name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground mb-2">
-          {roomData.description || 'No description available.'}
-        </p>
-        <p>
-          <span className="font-semibold">Price: </span>
-          {new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-          }).format(roomData.price)}{' '}
-          / night
-        </p>
-        <p>
-          <span className="font-semibold">Guest Capacity: </span>
-          {roomData.guestCapacity} guests
-        </p>
-        <p>
-          <span className="font-semibold">Available Rooms: </span>
-          {roomData.qty} rooms
-        </p>
-      </CardContent>
-    </Card>
-  );
 };
 
 export default function ReservationPage() {
@@ -190,6 +86,7 @@ export default function ReservationPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [totalPrice, setTotalPrice] = useState<number | null>(null);
+  const [selectedDaysArray, setSelectedDaysArray] = useState<{ date: string; availableRooms: number }[] | null>(null);
   const [priceBreakdown, setPriceBreakdown] = useState<
     { date: string; price: number }[] | null
   >(null);
@@ -250,34 +147,26 @@ export default function ReservationPage() {
       const calculateTotalPrice = (
         priceComparison: any[],
         checkIn: string,
-        checkOut: string,
+        checkOut: string
       ) => {
         const checkInDate = new Date(checkIn);
         const checkOutDate = new Date(checkOut);
-
-        console.log('Price calculation debug:', {
-          checkInDate,
-          checkOutDate,
-          priceComparison: priceComparison.slice(0, 5), // Log first 5 days for debugging
-        });
-
+  
         // Filter the priceComparison array for the selected dates
         const selectedDays = priceComparison.filter((day: any) => {
           const currentDate = new Date(day.date);
           return currentDate >= checkInDate && currentDate < checkOutDate;
         });
-
-        console.log('Selected days for price calculation:', selectedDays);
-
-        // Calculate the total price
+  
+        setSelectedDaysArray(selectedDays); // Keep track of selected days
+      
+        // Calculate the total price based on rooms and days
         const total = selectedDays.reduce((total: number, day: any) => {
           const dayPrice = day.price || 0;
-          return total + dayPrice * (reservationDetails.rooms || 1); // Multiply by the number of rooms
+          return total + dayPrice * reservationDetails.rooms; // Multiply by the number of rooms
         }, 0);
-
-        console.log('Final calculated total:', total);
-
-        // Return the total and a breakdown for each day
+  
+        // Return the total and breakdown
         return {
           total,
           breakdown: selectedDays.map((day: any) => ({
@@ -287,17 +176,18 @@ export default function ReservationPage() {
         };
       };
   
+      // Perform the calculation
       const { total, breakdown } = calculateTotalPrice(
         roomData.priceComparison,
         checkIn,
-        checkOut,
+        checkOut
       );
   
       setTotalPrice(total); // Update total price dynamically
       setPriceBreakdown(breakdown); // Update breakdown dynamically
     }
-  }, [reservationDetails.rooms, roomData, checkIn, checkOut]);   
-
+  }, [reservationDetails.rooms, roomData, checkIn, checkOut]); // Ensure rooms is in the dependency array
+  
   if (error) {
     return <div className="text-center text-red-500">{error}</div>;
   }
@@ -309,6 +199,9 @@ export default function ReservationPage() {
   }
 
   const stayDuration = calculateDuration();
+
+  // console log room data
+  console.log("roomData: ",roomData)
 
   // Formik validation schema
   const validationSchema = Yup.object({
@@ -356,8 +249,18 @@ export default function ReservationPage() {
             </p>
             <p>
               <span className="font-semibold">Available Rooms: </span>
-              {roomData.qty} rooms
             </p>
+            {selectedDaysArray && selectedDaysArray.length > 0 ? (
+              <ul className="list-disc ml-6">
+                {selectedDaysArray.map((day) => (
+                  <li key={day?.date}>
+                    {new Date(day?.date).toLocaleDateString('en-GB')}: {day.availableRooms} rooms available
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Loading or no data available</p>
+            )}
           </CardContent>
         </Card>
 
@@ -426,10 +329,12 @@ export default function ReservationPage() {
                   } else {
                     console.error("Midtrans Snap is not loaded.");
                     alert("Payment system is not initialized. Please try again later.");
+                    updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                   }
                 } catch (error) {
                   console.error("Error initializing payment:", error);
                   alert("Something went wrong during the payment process.");
+                  updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                 }
               } else {
                 console.log("Manual transfer selected. Awaiting confirmation.");
