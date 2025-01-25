@@ -75,6 +75,7 @@ export const getSalesReportService = async ({
   };
 };
 
+// Property Report Service
 export const getPropertyReportService = async ({ tenantId }: { tenantId: number }) => {
   // Fetch all properties with their rooms and bookings for the specific tenant
   const properties = await prisma.property.findMany({
@@ -87,7 +88,7 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
               status: {
                 select: {
                   Status: true,
-                  createdAt: true, 
+                  createdAt: true,
                 },
               },
             },
@@ -107,12 +108,14 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
         const latestStatus = booking.status?.sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0]?.Status;
-
-        return ["CONFIRMED", "WAITING_FOR_CONFIRMATION", "WAITING_FOR_PAYMENT"].includes(latestStatus);
+        return ["CONFIRMED", "WAITING_FOR_CONFIRMATION"].includes(latestStatus);
       });
 
       // Calculate available rooms
-      const availableRoomCount = Math.max(roomType.qty, 0);
+      const totalBookedRooms = activeBookings?.reduce((total, booking) => {
+        return total + booking.room_qty;
+      }, 0) || 0;
+      const availableRoomCount = Math.max(roomType.qty - totalBookedRooms, 0);
 
       // Add "Booked" events for active bookings
       activeBookings?.forEach((booking) => {
@@ -135,7 +138,7 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
           color: "green",
         });
       }
-      
+
       return events;
     });
   });
