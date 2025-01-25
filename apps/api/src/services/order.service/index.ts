@@ -182,51 +182,65 @@ export const getTenantOrderListService = async ({
 };
 
 // cancel order service for user
-export const cancelOrderService = async ({ bookingId, usersId, room_qty }: CancelOrderParams) => { 
-    // Fetch the booking
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { status: true },
-    });
-    
-    if (!booking) throw { msg: "Booking not found", status: 404 };
-    
-  
-    if (booking.customerId !== usersId) throw { msg: "Unauthorized: You can only cancel your own bookings", status: 403 };
-    
-  
-    // Check if proof of payment has been uploaded
-    if (booking.proofOfPayment) throw { msg: "Cannot cancel: Proof of payment has already been uploaded", status: 400 };
-    
-    
-    // Check if payment deadline has passed
-    const paymentDeadline = new Date(booking.createdAt.getTime() + 60 * 60 * 1000); // 1 hour from booking creation    
-    if (new Date() > paymentDeadline) throw { msg: "Cannot cancel: Payment deadline has passed", status: 400 };
-    
-    
-    // Update booking status to "CANCELED"
-    const canceledBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: {
-          create: {
-            Status: BookingStatus.CANCELED,
-          },
-        },
+export const cancelOrderService = async ({
+  bookingId,
+  usersId,
+  room_qty,
+}: CancelOrderParams) => {
+  // Fetch the booking with the latest status
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      status: {
+        orderBy: { createdAt: "desc" }, // Fetch the latest status first
+        take: 1, // Only take the latest status
       },
-    });
+    },
+  });
 
-    // Restore RoomType quantity
-    await prisma.roomType.update({
-      where: { id: booking.roomId },
-      data: {
-        qty: {
-          increment: room_qty, // Increment room quantity
-        },
+  if (!booking) throw { msg: "Booking not found", status: 404 };
+
+  if (booking.customerId !== usersId) {
+    throw { msg: "Unauthorized: You can only cancel your own bookings", status: 403 };
+  }
+
+  if (booking.proofOfPayment) {
+    throw { msg: "Cannot cancel: Proof of payment has already been uploaded", status: 400 };
+  }
+
+  // Check if the payment deadline has passed
+  const paymentDeadline = new Date(booking.createdAt.getTime() + 60 * 60 * 1000); // 1 hour from booking creation
+  if (new Date() > paymentDeadline) {
+    throw { msg: "Cannot cancel: Payment deadline has passed", status: 400 };
+  }
+
+  // Fetch the latest status row
+  const latestStatus = booking.status[0];
+  if (!latestStatus || latestStatus.Status !== "WAITING_FOR_PAYMENT") {
+    throw { msg: "Cannot cancel: Booking is not in 'WAITING_FOR_PAYMENT' status", status: 400 };
+  }
+
+  // Update the status row to "CANCELED"
+  await prisma.status.update({
+    where: { id: latestStatus.id }, // Update the specific status row
+    data: {
+      Status: BookingStatus.CANCELED,
+    },
+  });
+
+  // Restore RoomType quantity
+  await prisma.roomType.update({
+    where: { id: booking.roomId },
+    data: {
+      qty: {
+        increment: room_qty, // Increment room quantity
       },
-    });
-  
-    return canceledBooking;
+    },
+  });
+
+  return {
+    message: `Booking ID ${bookingId} has been successfully canceled.`,
+  };
 };
 
 // cancel order service for tenant

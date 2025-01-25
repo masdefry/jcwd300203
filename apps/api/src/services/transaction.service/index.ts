@@ -125,13 +125,33 @@ export const createRoomReservationService = async ({
     include: { status: true },
   });
 
-  // Decrease the available room count
-  await prisma.roomType.update({
+  return booking;
+};
+
+export const getAvailableRoomsService = async (roomId: number, checkInDate: Date, checkOutDate: Date) => {
+  const room = await prisma.roomType.findUnique({
     where: { id: roomId },
-    data: { qty: { decrement: room_qty } },
   });
 
-  return booking;
+  if (!room) throw { msg: "Room not found", status: 404 };
+
+  const overlappingBookings = await prisma.booking.findMany({
+    where: {
+      roomId,
+      OR: [
+        { status: { some: { Status: "CONFIRMED" } } },
+        { status: { some: { Status: "WAITING_FOR_CONFIRMATION" } } },
+        { status: { some: { Status: "WAITING_FOR_PAYMENT" } } },
+      ],
+      AND: [
+        { checkInDate: { lt: checkOutDate } },
+        { checkOutDate: { gt: checkInDate } },
+      ],
+    },
+  });
+
+  const bookedQty = overlappingBookings.reduce((sum, booking) => sum + booking.room_qty, 0);
+  return room.qty - bookedQty;
 };
 
 /**
@@ -177,17 +197,24 @@ export const scheduleBookingCleanup = () => {
 };
 
 // upload payment proof
-export const uploadPaymentProofService = async ({ bookingId, usersId, file }: UploadPaymentProofParams) => {
-  // Convert usersId to a number
-  usersId = Number(usersId);
-
-  // Validate booking ownership and status
+export const uploadPaymentProofService = async ({
+  bookingId,
+  usersId,
+  file,
+}: {
+  bookingId: number;
+  usersId: number;
+  file: Express.Multer.File;
+}) => {
+  // Step 1: Validate the booking ownership and current status
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { status: {
-        orderBy: { createdAt: "desc" }, // Sort statuses by creation date (latest first)
-        take: 1, // Fetch only the latest status
-      } 
+    include: {
+      customer: true,
+      status: {
+        orderBy: { createdAt: "desc" }, // Get the latest status
+        take: 1, // Only fetch the latest status
+      },
     },
   });
 
@@ -195,24 +222,31 @@ export const uploadPaymentProofService = async ({ bookingId, usersId, file }: Up
     throw { msg: "Unauthorized or invalid booking", status: 403 };
   }
 
-  if (booking.status.some((s) => s.Status !== "WAITING_FOR_PAYMENT")) {
+  const latestStatus = booking.status[0];
+  if (!latestStatus || latestStatus.Status !== "WAITING_FOR_PAYMENT") {
     throw { msg: "Cannot upload proof for this booking", status: 400 };
   }
 
-  // Update booking with proof of payment path
+  // Step 2: Update proof of payment in the `booking` table
   const updatedBooking = await prisma.booking.update({
     where: { id: bookingId },
     data: {
       proofOfPayment: file.filename,
-      status: {
-        create: {
-          Status: "WAITING_FOR_CONFIRMATION",
-        },
-      },
     },
   });
 
-  return updatedBooking;
+  // Step 3: Update the `Status` record for this booking
+  await prisma.status.update({
+    where: { id: latestStatus.id },
+    data: {
+      Status: "WAITING_FOR_CONFIRMATION",
+    },
+  });
+
+  return {
+    message: "Proof of payment uploaded and status updated to WAITING_FOR_CONFIRMATION",
+    booking: updatedBooking,
+  };
 };
 
 // confirm payment service
