@@ -110,7 +110,6 @@ export default function PropertyDetails() {
             rooms: params.rooms.toString(),
           }).toString();
 
-          // Refetch data with new dates
           router.replace(`${pathname}?${queryString}`, { scroll: false });
         }}
       />

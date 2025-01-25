@@ -7,7 +7,7 @@ import { FacilitiesSection } from '@/components/properties/FacilitiesSection';
 import { PropertyDetailsRoomSection } from '@/components/properties/PropertyDetailsRoomSection';
 import { ImageUploadSection } from '@/components/properties/ImageUploadSection';
 import { usePropertyForm } from '@/features/properties/hooks/usePropertyForm';
-import { editPropertyValidationSchema, propertyValidationSchema } from '@/features/schemas/propertyValidationSchema';
+import { editPropertyValidationSchema } from '@/features/schemas/propertyValidationSchema';
 import { usePropertyDetailsTenant } from '@/features/properties/hooks/queries/queryPropertyDetailsTenant';
 import { getImageUrl } from '@/utils/getImageUrl';
 import { useEditProperty } from '@/features/properties/hooks/mutations/mutateEditProperty';
@@ -82,14 +82,11 @@ const PropertyDetailsPage = () => {
       })),
     };
 
-    // Add the property data
     formData.append('data', JSON.stringify(propertyData));
     console.log('Property Data before JSON:', propertyData);
     
-    // Handle main image
     if (values.mainImage instanceof File) formData.append('mainImage', values.mainImage);
 
-    // Handle property images
     const newPropertyImages = values.propertyImages.filter(
       (img: any) => img instanceof File,
     );
@@ -184,23 +181,20 @@ const PropertyDetailsPage = () => {
       images: room.images || [],
       specialPrice: room.flexiblePrices
             ?.filter((sp: any) => {
-              // Keep if it has an ID (existing) or if it's new and has all required fields
               return sp.id || (sp.startDate && sp.endDate && sp.price);
             })
             .map((sp: any) => ({
-              id: sp.id, // Keep the ID for existing special prices
+              id: sp.id, 
               startDate: sp.startDate,
               endDate: sp.endDate,
               price: sp.price,
             })),
-          // Only include unavailability dates that have IDs (existing ones) or new ones
           unavailableDates: room.unavailableDates
             ?.filter((period: any) => {
-              // Keep if it has an ID (existing) or if it's new and has all required fields
               return period.id || (period.startDate && period.endDate);
             })
             .map((period: any) => ({
-              id: period.id, // Keep the ID for existing periods
+              id: period.id, 
               startDate: period.startDate,
               endDate: period.endDate,
               reason: period.reason,
