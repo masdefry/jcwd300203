@@ -14,7 +14,6 @@ interface GetOrderListParams {
 interface CancelOrderParams {
   bookingId: number;
   usersId: number;
-  room_qty: number;
 }
 
 interface GetTenantOrderParams {
@@ -185,7 +184,6 @@ export const getTenantOrderListService = async ({
 export const cancelOrderService = async ({
   bookingId,
   usersId,
-  room_qty,
 }: CancelOrderParams) => {
   // Fetch the booking with the latest status
   const booking = await prisma.booking.findUnique({
@@ -228,47 +226,43 @@ export const cancelOrderService = async ({
     },
   });
 
-  // Restore RoomType quantity
-  await prisma.roomType.update({
-    where: { id: booking.roomId },
-    data: {
-      qty: {
-        increment: room_qty, // Increment room quantity
-      },
-    },
-  });
-
   return {
     message: `Booking ID ${bookingId} has been successfully canceled.`,
   };
 };
 
 // cancel order service for tenant
-export const cancelUserOrderService = async ({ usersId, bookingId, room_qty }: { usersId: number; bookingId: number, room_qty: number }) => {
+export const cancelUserOrderService = async ({
+  bookingId
+}: {
+  bookingId: number;
+}) => {
+  // Fetch the booking with the latest status
   const booking = await prisma.booking.findUnique({
-    where: {id: bookingId},
-    include: { property: true },
-  });
-
-  if (!booking) throw { msg: "Booking not found", status: 404 };
-  
-  // Update the booking status to "CANCELED"
-  const canceledBooking = await prisma.booking.update({
     where: { id: bookingId },
-    data: {
-      status: { create: { Status: BookingStatus.CANCELED } },
-    },
-  });
-
-  // Restore RoomType quantity by adding the canceled room_qty back
-  await prisma.roomType.update({
-    where: { id: booking.roomId },
-    data: {
-      qty: {
-        increment: room_qty,
+    include: {
+      status: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
       },
     },
   });
 
-  return canceledBooking;
+  if (!booking) throw { msg: "Booking not found", status: 404 };
+  
+  // Fetch the latest status row
+  const latestStatus = booking.status[0];
+
+  // Update the latest status row to "CANCELED"
+  const updatedStatus = await prisma.status.update({
+    where: { id: latestStatus.id }, // Update the specific status row
+    data: {
+      Status: BookingStatus.CANCELED,
+    },
+  });
+
+  return {
+    message: `Booking ID ${bookingId} has been successfully canceled.`,
+    updatedStatus,
+  };
 };
