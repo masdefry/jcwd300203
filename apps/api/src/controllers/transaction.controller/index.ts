@@ -60,18 +60,6 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       data: { Status: status },
     });
 
-    // Restore room qty if the booking is canceled
-    if (status === "CANCELED") {
-      await prisma.roomType.update({
-        where: { id: booking.roomId }, // Use `roomId` from the booking
-        data: {
-          qty: {
-            increment: booking.room_qty, // Increment the qty by the canceled room_qty
-          },
-        },
-      });
-    }
-    
     return res.status(200).json({
       error: false,
       message: `Booking status updated to ${status}`,

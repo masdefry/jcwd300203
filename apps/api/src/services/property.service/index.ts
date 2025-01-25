@@ -1256,8 +1256,9 @@ export const getRoomDetailsByIdService = async ({
       (period) => date >= period.startDate && date <= period.endDate
     );
     
-    const availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - totalBooked, 0);
-  
+    let availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - totalBooked, 0);
+    availableRooms = Math.min(availableRooms, roomDetails.qty); // Ensure availableRooms doesn't exceed roomDetails.qty
+
     const flexiblePrice = roomDetails.flexiblePrice.find(
       (price) => date >= price.startDate && date <= price.endDate  
     )?.customPrice;

@@ -329,10 +329,12 @@ export default function ReservationPage() {
                   } else {
                     console.error("Midtrans Snap is not loaded.");
                     alert("Payment system is not initialized. Please try again later.");
+                    updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                   }
                 } catch (error) {
                   console.error("Error initializing payment:", error);
                   alert("Something went wrong during the payment process.");
+                  updateBookingStatus(data.data.booking.id, BookingStatus.CANCELED);
                 }
               } else {
                 console.log("Manual transfer selected. Awaiting confirmation.");
