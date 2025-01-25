@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { useSearchParams } from 'next/navigation';
 import React from 'react';
-import instance from '@/utils/axiosInstance';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-import Footer from '@/components/common/footer/Footer';
-import CopyrightFooter from '@/components/common/footer/CopyrightFooter';
+import instance from '@/utils/axiosInstance';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'next/navigation';
 import Wrapper from '@/components/layout/Wrapper';
+import { Separator } from '@/components/ui/separator';
+import Footer from '@/components/common/footer/Footer';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import CopyrightFooter from '@/components/common/footer/CopyrightFooter';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 enum BookingStatus {
   WAITING_FOR_PAYMENT,
