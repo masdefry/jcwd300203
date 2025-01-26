@@ -29,7 +29,6 @@ export const salesReport = async (req: Request, res: Response, next: NextFunctio
       success: true, 
       data: {
         ...report,
-        totalPages: report.totalPages,
         currentPage: page
       } 
     });
