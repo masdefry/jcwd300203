@@ -1,7 +1,8 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IPropertyListResponse, ILocationConditions, IPropertyFromDB, IPropertyDetailsResponse, IFormattedRoomType, IReview, IPriceAvailability, IRoomTypeFromDB, ITenantPropertyListResponse, IPropertyDetailsTenantResponse, IRoomDetailsResponse, IRoomDetailsFromDB, IDailyAvailability } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IPropertyListResponse, ILocationConditions, IPropertyFromDB, IPropertyDetailsResponse, IFormattedRoomType, IReview, IPriceAvailability, IRoomTypeFromDB, ITenantPropertyListResponse, IPropertyDetailsTenantResponse, IRoomDetailsResponse, IRoomDetailsFromDB, IDailyAvailability, IRoomUnavailabilityFromDB, IRoomBookingFromDB, IPrismaTransaction } from './types';
 import { deleteFiles } from '@/utils/delete.files';
 import { calculateDistance } from '@/utils/calculate.distance';
+import { Decimal } from '@prisma/client/runtime/library';
 
 
 export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList):Promise<IPropertyListResponse[]> => {
@@ -157,7 +158,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
 
     // Calculate average rating
     const averageRating = property.reviews.length > 0
-      ? parseFloat((property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1))
+      ? parseFloat((property.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / property.reviews.length).toFixed(1))
       : 0;
 
     const similarity = search
@@ -187,14 +188,14 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
   // Filter by price range if specified
   let filteredProperties = formattedProperties;
   if (priceMin !== undefined || priceMax !== undefined) {
-    filteredProperties = filteredProperties.filter(prop => 
+    filteredProperties = filteredProperties.filter((prop: IPropertyListResponse)=> 
       (priceMin === undefined || prop.price >= priceMin) &&
       (priceMax === undefined || prop.price <= priceMax)
     );
   }
 
   // Sort properties
-  const sortedProperties = filteredProperties.sort((a, b) => {
+  const sortedProperties = filteredProperties.sort((a: IPropertyListResponse, b: IPropertyListResponse) => {
     if (b.similarity !== a.similarity) {
       return b.similarity - a.similarity;
     }
@@ -370,7 +371,7 @@ export const getPropertyDetailsService = async ({
     });
 
     const averageRating = propertyDetails.reviews.length > 0
-        ? (propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length)
+        ? (propertyDetails.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / propertyDetails.reviews.length)
         : 0;
 
         return {
@@ -384,12 +385,12 @@ export const getPropertyDetailsService = async ({
           mainImage: propertyDetails.mainImage,
           roomCapacity: propertyDetails.roomCapacity,
           averageRating: propertyDetails.reviews.length > 0 
-              ? Number((propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
+              ? Number((propertyDetails.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
               : 0,
           totalReviews: propertyDetails.reviews.length,
           images: propertyDetails.images
-              .filter(img => !img.deletedAt)  
-              .map((img) => ({
+              .filter((img: IBaseImage) => !img.deletedAt)  
+              .map((img: IBaseImage) => ({
                   id: img.id,
                   url: img.url,
               })),
@@ -581,7 +582,7 @@ export const getPropertyDetailsTenantService = async ({
       name: facility.name,
       icon: facility.icon || null,
     })),
-    reviews: propertyDetails.reviews.map((review) => ({
+    reviews: propertyDetails.reviews.map((review: IReview) => ({
       id: review.id,
       rating: review.rating,
       comment: review.comment,
@@ -597,7 +598,7 @@ export const getPropertyDetailsTenantService = async ({
       name: roomType.name,
       quantity: roomType.qty,
       description: roomType.description,
-      price: Number(roomType.price),
+      price: Number(roomType.price.toString()),
       guestCapacity: roomType.guestCapacity,
       images: roomType.images.map((img: IBaseImage) => ({
         id: img.id,
@@ -608,25 +609,25 @@ export const getPropertyDetailsTenantService = async ({
         name: facility.name,
         icon: facility.icon || null,
       })),
-      flexiblePrices: roomType.flexiblePrice.map((price) => ({
+      flexiblePrices: roomType.flexiblePrice.map((price: {id: number, startDate: Date, endDate: Date, customPrice: Decimal}) => ({
         id: price.id,
         startDate: price.startDate,
         endDate: price.endDate,
-        price: Number(price.customPrice),
+        price: Number(price.customPrice.toString())
       })),
-      unavailableDates: roomType.unavailability.map(unavailable => ({
-        id: unavailable.id,          // Add this to make deletion work
+      unavailableDates: roomType.unavailability.map((unavailable: IRoomUnavailabilityFromDB) => ({
+        id: unavailable.id,         
         startDate: unavailable.startDate,
         endDate: unavailable.endDate,
         reason: unavailable.reason || 'Marked as unavailable',
       })),
-      bookedDates: roomType.bookings.map(booking => ({
+      bookedDates: roomType.bookings.map((booking: IRoomBookingFromDB) => ({
         startDate: booking.checkInDate,
         endDate: booking.checkOutDate,
         reason: 'Booked',
         bookedQuantity: booking.room_qty
       })),
-      currentBookings: roomType.bookings.map(booking => ({
+      currentBookings: roomType.bookings.map((booking: IRoomBookingFromDB) => ({
         checkInDate: booking.checkInDate,
         checkOutDate: booking.checkOutDate,
         quantity: booking.room_qty,
@@ -668,7 +669,7 @@ export const deletePropertyService = async ({
 
   const roomTypeIds = roomTypes.map(room => room.id);
 
-  await prisma.$transaction(async (prisma) => {
+  await prisma.$transaction(async (prisma: IPrismaTransaction) => {
     await prisma.property.update({
       where: {
         id: propertyId,
@@ -755,7 +756,7 @@ export const createFacilitiesIconsService = async({name, type, iconFileName}:{na
 
 export const createPropertyService = async({usersId, authorizationRole, propertyData, files}: ICreateProperty) => {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: IPrismaTransaction) => {
       const findTenant = await tx.tenant.findUnique({
         where: {
           id: usersId,
@@ -908,11 +909,9 @@ export const editPropertyService = async({
 
   if (!existingProperty) throw { msg: 'Property not found or unauthorized', status: 404 };
 
-  return await prisma.$transaction(async (tx) => {
-      // Handle image deletions and file cleanup
+  return await prisma.$transaction(async (tx: IPrismaTransaction) => {
       const imagesToBeDeleted: { path: string }[] = [];
 
-      // 1. Update basic property information if provided
       if (name || address || city || categoryId !== undefined || description || roomCapacity !== undefined || mainImage) {
           await tx.property.update({
               where: { id: propertyId },
@@ -945,7 +944,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 3. Add new property images if provided
       if (propertyImages?.length) {
           await tx.propertyImage.createMany({
               data: propertyImages.map(url => ({
@@ -955,7 +953,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 4. Update facilities if provided
       if (facilityIds) {
           await tx.property.update({
               where: { id: propertyId },
@@ -967,7 +964,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 5. Handle room types to delete
       if (roomTypesToDelete.length > 0) {
           const roomsToDelete = existingProperty.roomTypes.filter(room => roomTypesToDelete.includes(room.id));
           roomsToDelete.forEach(room => {
@@ -984,7 +980,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 6. Update existing room types
       for (const room of roomTypesToUpdate) {
           const existingRoom = await tx.roomType.findFirst({
               where: {
@@ -1000,7 +995,6 @@ export const editPropertyService = async({
 
           if (!existingRoom) continue;
 
-          // Update basic room info
           const roomUpdateData: any = {};
           if (room.name) roomUpdateData.name = room.name;
           if (room.price) roomUpdateData.price = parseFloat(room.price as string);
@@ -1015,7 +1009,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Handle special price deletions
           if (room.specialPricesToDelete && room.specialPricesToDelete.length > 0) {
             await tx.flexiblePrice.deleteMany({
                 where: {
@@ -1027,7 +1020,6 @@ export const editPropertyService = async({
             });
         }
 
-          // Handle unavailability deletions
           if (room.unavailabilityToDelete && room.unavailabilityToDelete.length > 0) {
             await tx.roomUnavailability.deleteMany({
                 where: {
@@ -1039,19 +1031,15 @@ export const editPropertyService = async({
             });
         }
 
-          // Update room images if provided
           if (room.images?.length) {
-              // Store old images for deletion
               existingRoom.images.forEach(img => {
                   imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
               });
 
-              // Delete existing images
               await tx.roomImage.deleteMany({
                   where: { roomId: room.id }
               });
 
-              // Add new images
               await tx.roomImage.createMany({
                   data: room.images.map(url => ({
                       url,
@@ -1060,7 +1048,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Update room facilities
           if (room.facilities?.length) {
               await tx.roomType.update({
                   where: { id: room.id },
@@ -1072,7 +1059,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Add new special prices
           if (room.specialPrice?.length) {
             const newSpecialPrices = room.specialPrice
                 .filter(sp => !sp.id)
@@ -1080,7 +1066,7 @@ export const editPropertyService = async({
                     roomTypeId: room.id,
                     startDate: new Date(sp.startDate),
                     endDate: new Date(sp.endDate),
-                    customPrice: Number(sp.price) // Changed from parseFloat
+                    customPrice: Number(sp.price) 
                 }));
         
             if (newSpecialPrices.length > 0) {
@@ -1090,8 +1076,6 @@ export const editPropertyService = async({
             }
         }
         
-
-          // Add new unavailability periods
           if (room.unavailableDates?.length) {
             const newUnavailabilityDates = room.unavailableDates
                 .filter(period => !period.id)
@@ -1110,7 +1094,6 @@ export const editPropertyService = async({
         }
       }
 
-      // 7. Add new room types
       for (const room of roomTypesToAdd) {
           const newRoom = await tx.roomType.create({
               data: {
@@ -1126,7 +1109,6 @@ export const editPropertyService = async({
               }
           });
 
-          // Add room images
           if (room.images?.length) {
               await tx.roomImage.createMany({
                   data: room.images.map(url => ({
@@ -1148,7 +1130,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Add unavailability periods
           if (room.unavailableDates?.length) {
               await tx.roomUnavailability.createMany({
                   data: room.unavailableDates.map(period => ({
@@ -1161,7 +1142,6 @@ export const editPropertyService = async({
           }
       }
 
-      // Delete old image files
       if (imagesToBeDeleted.length > 0) {
           deleteFiles({ imagesUploaded: { images: imagesToBeDeleted } });
       }

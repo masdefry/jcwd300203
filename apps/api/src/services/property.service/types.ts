@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { BookingStatus, Prisma, PrismaClient } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 // Base Interfaces
 export interface IBaseFacility {
@@ -6,6 +6,50 @@ export interface IBaseFacility {
     name: string;
     icon: string | null;
     
+  }
+
+  export interface IPrismaTransaction extends Omit<PrismaClient, '$connect' | 
+  '$disconnect' | 
+  '$on' | 
+  '$transaction' | 
+  '$use' | 
+  '$extends'> {
+    // This extends PrismaClient but omits methods that aren't available in a transaction
+  }
+
+export interface IFlexiblePrice {
+    id: number;
+    startDate: Date;
+    endDate: Date;
+    price: Prisma.Decimal;
+}
+
+export interface IRoomUnavailabilityFromDB {
+    id: number;
+    startDate: Date;
+    endDate: Date;
+    reason: string | null;
+  }
+
+  export interface IBookingStatusFromDB {
+    id: number;
+    createdAt: Date;
+    Status: BookingStatus;
+    bookingId: number;
+  }
+
+  export interface IRoomBookingFromDB {
+    checkInDate: Date;
+    checkOutDate: Date;
+    room_qty: number;
+    status: IBookingStatusFromDB[];
+  }
+
+export interface IFlexiblePriceResponse {
+    id: number;
+    startDate: Date;
+    endDate: Date;
+    price: number;  // Converted to number for response
   }
   
   export interface IBaseImage {
@@ -492,8 +536,10 @@ export interface ITenantPropertyListParams {
     id: number;
     startDate: Date;
     endDate: Date;
-    price: number;
+    price: Prisma.Decimal;
   }
+
+  
   
   export interface IBookedDate {
     startDate: Date;
@@ -506,10 +552,12 @@ export interface ITenantPropertyListParams {
     checkInDate: Date;
     checkOutDate: Date;
     quantity: number;
-    status: {
-      Status: string;
-      createdAt: Date;
-    }[];
+    status: Array<{  // Changed from BookingStatus to array of status objects
+        id: number;
+        createdAt: Date;
+        Status: BookingStatus;
+        bookingId: number;
+      }>;
   }
   
   // Add tenant-specific response interfaces
@@ -518,11 +566,26 @@ export interface ITenantPropertyListParams {
     name: string;
     quantity: number;
     description: string;
-    price: number;
+    price: Prisma.Decimal;
     guestCapacity: number;
     images: IBaseImage[];
     facilities: IBaseFacility[];
     flexiblePrices: IFlexiblePrice[];
+    unavailableDates: IUnavailability[];
+    bookedDates: IBookedDate[];
+    currentBookings: ICurrentBooking[];
+  }
+
+  export interface ITenantRoomTypeResponse {
+    id: number;
+    name: string;
+    quantity: number;
+    description: string;
+    price: number;
+    guestCapacity: number;
+    images: IBaseImage[];
+    facilities: IBaseFacility[];
+    flexiblePrices: IFlexiblePriceResponse[];
     unavailableDates: IUnavailability[];
     bookedDates: IBookedDate[];
     currentBookings: ICurrentBooking[];
@@ -546,7 +609,7 @@ export interface ITenantPropertyListParams {
     images: IBaseImage[];
     facilities: IBaseFacility[];
     reviews: IReview[];
-    roomTypes: ITenantRoomType[];
+    roomTypes: ITenantRoomTypeResponse[];
   }
   
   // Add tenant-specific database interfaces
