@@ -8,7 +8,7 @@
     "build": "tsc && tsc-alias",
     "serve": "cross-env NODE_ENV=production node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "src/app.ts",
+    "start": "node dist/app.js",
     "prisma": "npx prisma"
   },
   "author": "",
