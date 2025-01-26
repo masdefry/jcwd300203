@@ -43,39 +43,30 @@ export default function StatisticsChart() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Axios instance automatically handles the token
-        const response = await instance.get('/report/sales-report'); // Use GET request
+        const response = await instance.get('/report/sales-report?limit=1000'); // Get all records
         const result = response.data;
-
-        console.log("Sales report result: ", result);
-
+        
         if (result.success) {
-          const monthlyRevenue = Array(12).fill(0); // Initialize monthly revenue array
-
-          // Loop through bookings and sum revenue per month
+          const monthlyRevenue = Array(12).fill(0);
           result.data.bookings.forEach((booking: any) => {
-            const month = new Date(booking.checkIn).getMonth(); // Extract month (0-11)
-            monthlyRevenue[month] += booking.revenue; // Sum revenue for the respective month
+            const month = new Date(booking.checkIn).getMonth();
+            monthlyRevenue[month] += Number(booking.revenue);
           });
-
-          // Update chart data
+          
           setChartData({
             labels,
-            datasets: [
-              {
-                label: 'Monthly Revenue',
-                data: monthlyRevenue,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-              },
-            ],
+            datasets: [{
+              label: 'Monthly Revenue',
+              data: monthlyRevenue,
+              borderColor: 'rgb(255, 99, 132)',
+              backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            }],
           });
         }
       } catch (error) {
         console.error('Error fetching sales data:', error);
       }
     };
-
     fetchData();
   }, []);
 
