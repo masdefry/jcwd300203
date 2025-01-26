@@ -1,10 +1,10 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IReview, IPropertyListResponse, ILocationConditions, IPropertyFromDB } from './types';
 import { deleteFiles } from '@/utils/delete.files';
 import { calculateDistance } from '@/utils/calculate.distance';
 
 
-export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList) => {
+export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList):Promise<IPropertyListResponse[]> => {
   const guestCount = Number(guest);
   const currentDate = new Date();
 
@@ -12,7 +12,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
   const parsedLng = longitude ? parseFloat(longitude) : undefined;
   const parsedRadius = radius ? parseFloat(radius) : undefined;
 
-  const locationConditions: { AND?: Array<{ latitude: { gte: string, lte: string } } | { longitude: { gte: string, lte: string } }> } = {};
+  const locationConditions: ILocationConditions = {};
   if (parsedLat && parsedLng && parsedRadius) {
     locationConditions['AND'] = [
       {
@@ -41,7 +41,6 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
           in: categories
         }
       } : {}),
-      // Add facilities filter
       ...(facilities?.length ? {
         facilities: {
           some: {
@@ -123,7 +122,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
     }
   });
 
-  const formattedProperties = properties.map((property) => {
+  const formattedProperties = properties.map((property: IPropertyFromDB) => {
     let isAvailable = false;
     let price: number | null = null;
 
@@ -568,7 +567,7 @@ export const getPropertyDetailsTenantService = async ({
       name: facility.name,
       icon: facility.icon || null,
     })),
-    reviews: propertyDetails.reviews.map((review) => ({
+    reviews: propertyDetails.reviews.map((review: IReview) => ({
       id: review.id,
       rating: review.rating,
       comment: review.comment,
