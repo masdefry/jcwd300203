@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import instance from "@/utils/axiosInstance";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { FaStar } from "react-icons/fa";
@@ -92,6 +92,19 @@ const ReviewForm: React.FC = () => {
 
   return (
     <Wrapper>
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="w-full max-w-lg bg-white rounded-lg shadow-lg p-8">
           <div className="mb-6">
@@ -170,7 +183,6 @@ const ReviewForm: React.FC = () => {
         </div>
       </section>
       
-      {/* copyright footer */}
       <section className="footer_middle_area pt40 pb40">
         <div className="container">
           <CopyrightFooter />
