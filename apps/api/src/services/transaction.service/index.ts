@@ -161,39 +161,40 @@ export const getAvailableRoomsService = async (roomId: number, checkInDate: Date
 export const scheduleBookingCleanup = () => {
   cron.schedule("*/1 * * * *", async () => {
     console.log("Running booking cleanup task...");
-
     try {
-      // Fetch bookings that have expired, no proof of payment, and are NOT already cancelled
       const expiredBookings = await prisma.booking.findMany({
         where: {
           proofOfPayment: null,
-          expiryDate: { lte: new Date() },
+          checkOutDate: { lt: new Date() },
           status: {
-            none: { Status: BookingStatus.CANCELED },
-          },
+            some: {
+              Status: {
+                in: [BookingStatus.WAITING_FOR_PAYMENT, BookingStatus.WAITING_FOR_CONFIRMATION]
+              }
+            },
+            none: { 
+              Status: BookingStatus.CANCELED 
+            }
+          }
         },
         include: {
           status: {
-            orderBy: { createdAt: "desc" }, // Fetch the latest status first
-            take: 1, // Only take the latest status
+            orderBy: { createdAt: "desc" },
+            take: 1,
           },
         },
       });
 
       for (const booking of expiredBookings) {
         const latestStatus = booking.status[0];
-
-        if (latestStatus && latestStatus.Status !== BookingStatus.CANCELED) {
-          // Update the latest status row to CANCELED
+        if (latestStatus) {
           await prisma.status.update({
-            where: { id: latestStatus.id }, // Update the specific status row
+            where: { id: latestStatus.id },
             data: { Status: BookingStatus.CANCELED },
           });
-
           console.log(`Booking ID ${booking.id} status updated to CANCELED.`);
         }
       }
-
       console.log("Booking cleanup task completed.");
     } catch (error) {
       console.error("Error running booking cleanup task:", error);

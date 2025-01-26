@@ -90,11 +90,6 @@ const Navbar = () => {
               Orders
             </Link>
 
-            {/* My Messages */}
-            {/* <Link href="/dashboard/messages" className={baseClasses}>
-              Messages
-            </Link> */}
-
             {/* Create Listing */}
             <Link href="/dashboard/calendar" className={baseClasses}>
               Calendar 
@@ -265,23 +260,6 @@ const Navbar = () => {
                 </span>
               </Link>
 
-              {/* My Messages Link */}
-              {/* <Link
-                href={role === "tenant" ? "/dashboard/messages" : "/user/messages"}
-                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span
-                  className={`text-lg ${
-                    location.pathname === (role === "tenant" ? "/dashboard/messages" : "/user/messages")
-                      ? "text-[#f15b5b]"
-                      : ""
-                  }`}
-                >
-                  My Messages
-                </span>
-              </Link> */}
-
               {/* My Reviews Link */}
               {role !== "tenant" && (
                 <Link
@@ -324,30 +302,6 @@ const Navbar = () => {
               >
                 <span className={`text-lg ${location.pathname === '/properties' ? 'text-[#f15b5b]' : ''}`}>Properties</span>
               </Link>
-              {/* {role === 'tenant' && (
-                <Link 
-                  href="/dashboard"
-                  className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span className={`text-lg ${location.pathname === '/dashboard' ? 'text-[#f15b5b]' : ''}`}>Dashboard</span>
-                </Link>
-              )}
-              <div className="flex items-center justify-between py-3 hover:text-[#f15b5b] cursor-pointer">
-                <span className="text-lg">Blog</span>
-                <ChevronRight className="h-5 w-5" />
-              </div>
-              <div className="flex items-center justify-between py-3 hover:text-[#f15b5b] cursor-pointer">
-                <span className="text-lg">Pages</span>
-                <ChevronRight className="h-5 w-5" />
-              </div>
-              <Link 
-                href="/contact"
-                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span className={`text-lg ${location.pathname === '/contact' ? 'text-[#f15b5b]' : ''}`}>Contact</span>
-              </Link> */}
             </nav>
           </div>
         </div>
