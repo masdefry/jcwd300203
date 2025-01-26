@@ -1,5 +1,5 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IReview, IPropertyListResponse, ILocationConditions, IPropertyFromDB } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IPropertyListResponse, ILocationConditions, IPropertyFromDB, IPropertyDetailsResponse, IFormattedRoomType, IReview, IPriceAvailability, IRoomTypeFromDB, ITenantPropertyListResponse, IPropertyDetailsTenantResponse, IRoomDetailsResponse, IRoomDetailsFromDB, IDailyAvailability } from './types';
 import { deleteFiles } from '@/utils/delete.files';
 import { calculateDistance } from '@/utils/calculate.distance';
 
@@ -85,7 +85,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
                       status: {
                         some: {
                           Status: {
-                            in: ['WAITING_FOR_PAYMENT', 'WAITING_FOR_CONFIRMATION', 'CONFIRMED']
+                            in: ['WAITING_FOR_CONFIRMATION', 'CONFIRMED']
                           }
                         }
                       }
@@ -232,7 +232,7 @@ export const getPropertyDetailsService = async ({
   parsedCheckIn: Date | undefined;
   parsedCheckOut: Date | undefined;
   guestCount?: number
-}) => {
+}):Promise<IPropertyDetailsResponse> => {
   const propertyId = Number(id);
     const currentDate = new Date();
 
@@ -288,7 +288,7 @@ export const getPropertyDetailsService = async ({
                             status: {
                                 some: {
                                     Status: {
-                                        in: ['WAITING_FOR_PAYMENT', 'WAITING_FOR_CONFIRMATION', 'CONFIRMED']
+                                        in: ['WAITING_FOR_CONFIRMATION', 'CONFIRMED']
                                     }
                                 }
                             }
@@ -304,12 +304,14 @@ export const getPropertyDetailsService = async ({
         },
     });
 
-    const formattedRoomTypes = roomTypes.map((room) => {
+    const formattedRoomTypes: IFormattedRoomType[] = roomTypes.map((room: IRoomTypeFromDB) => {
         const getPriceForDate = (date: Date) => {
             const flexiblePrice = room.flexiblePrice.find(price => 
                 date >= price.startDate && date <= price.endDate
             );
-            return flexiblePrice ? flexiblePrice.customPrice : room.price;
+            return flexiblePrice 
+                ? flexiblePrice.customPrice
+                : room.price
         };
 
         const isRoomAvailableForDate = (date: Date) => {
@@ -330,7 +332,7 @@ export const getPropertyDetailsService = async ({
         };
 
         const now = new Date();
-        const next30Days = Array.from({ length: 30 }, (_, i) => {
+        const next30Days: IPriceAvailability[] = Array.from({ length: 30 }, (_, i) => {
             const date = new Date();
             date.setDate(now.getDate() + i);
             return {
@@ -396,7 +398,7 @@ export const getPropertyDetailsService = async ({
               name: facility.name,
               icon: facility?.icon || null,
           })),
-          reviews: propertyDetails.reviews.map((review) => ({
+          reviews: propertyDetails.reviews.map((review: IReview) => ({
               id: review.id,
               rating: review.rating,
               comment: review.comment,
@@ -408,10 +410,22 @@ export const getPropertyDetailsService = async ({
               },
           })),
           roomTypes: formattedRoomTypes.map(room => ({
-              ...room,
-              basePrice: Number(room.basePrice),
-              currentPrice: Number(room.currentPrice)
-          })),
+            id: room.id,
+            name: room.name,
+            quantity: room.quantity,
+            description: room.description,
+            guestCapacity: room.guestCapacity,
+            basePrice: Number(room.basePrice.toString()),  // Convert Decimal to number
+            currentPrice: Number(room.currentPrice.toString()),  // Convert Decimal to number
+            images: room.images,
+            facilities: room.facilities,
+            availability: room.availability,
+            priceComparison: room.priceComparison.map(pc => ({
+                date: pc.date,
+                price: Number(pc.price.toString()),  // Convert Decimal to number
+                availableRooms: pc.availableRooms
+            }))
+        })),
       };
 };
 
@@ -421,7 +435,7 @@ export const getPropertiesListTenantService = async ({
 }: {
   usersId: number;
   authorizationRole: string;
-}) => {
+}): Promise<ITenantPropertyListResponse[]> => {
   const tenant = await prisma.tenant.findUnique({
     where: {
       id: usersId,
@@ -453,7 +467,7 @@ export const getPropertyDetailsTenantService = async ({
   usersId: number;
   authorizationRole: string;
   id: string;
-}) => {
+}):Promise<IPropertyDetailsTenantResponse> => {
   const propertyId = Number(id);
 
   const tenant = await prisma.tenant.findUnique({
@@ -540,7 +554,7 @@ export const getPropertyDetailsTenantService = async ({
   });
 
   const averageRating = propertyDetails.reviews.length > 0
-    ? Number((propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
+    ? Number((propertyDetails.reviews.reduce((sum: number, review) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
     : 0;
 
   return {
@@ -567,7 +581,7 @@ export const getPropertyDetailsTenantService = async ({
       name: facility.name,
       icon: facility.icon || null,
     })),
-    reviews: propertyDetails.reviews.map((review: IReview) => ({
+    reviews: propertyDetails.reviews.map((review) => ({
       id: review.id,
       rating: review.rating,
       comment: review.comment,
@@ -1163,7 +1177,7 @@ export const getRoomDetailsByIdService = async ({
   roomId,
   parsedCheckIn,
   parsedCheckOut,
-}: IGetRoomDetailsById) => {
+}: IGetRoomDetailsById): Promise<IRoomDetailsResponse> => {
   const roomIdNumber = Number(roomId);
   if (!roomIdNumber) throw { msg: "Invalid room ID", status: 400 };
 
@@ -1230,11 +1244,11 @@ export const getRoomDetailsByIdService = async ({
         },
       },
     },
-  });
+  }) as IRoomDetailsFromDB | null;
 
   if (!roomDetails) throw { msg: "Room not found", status: 404 };
 
-  const next30Days = Array.from({ length: 30 }, (_, i) => {
+  const next30Days: IDailyAvailability[] = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
     date.setHours(0, 0, 0, 0);
@@ -1256,7 +1270,7 @@ export const getRoomDetailsByIdService = async ({
     );
     
     let availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - totalBooked, 0);
-    availableRooms = Math.min(availableRooms, roomDetails.qty); // Ensure availableRooms doesn't exceed roomDetails.qty
+    availableRooms = Math.min(availableRooms, roomDetails.qty); 
 
     const flexiblePrice = roomDetails.flexiblePrice.find(
       (price) => date >= price.startDate && date <= price.endDate  
