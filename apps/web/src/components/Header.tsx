@@ -260,6 +260,17 @@ const Navbar = () => {
                 </span>
               </Link>
 
+              {/* My Orders Link */}
+              <Link 
+                href={role === 'tenant' ? '/dashboard/messages' : '/user/messages'}
+                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard/orders' : '/user/dashboard') ? 'text-[#f15b5b]' : ''}`}>
+                  {role === 'tenant' ? 'My Messages' : 'My Messages'}
+                </span>
+              </Link>
+
               {/* My Reviews Link */}
               {role !== "tenant" && (
                 <Link
@@ -289,7 +300,7 @@ const Navbar = () => {
                       location.pathname === '/dashboard/calendar' ? 'text-[#f15b5b]' : ''
                     }`}
                   >
-                    View Calendar
+                    My Calendar
                   </span>
                 </Link>
               )}

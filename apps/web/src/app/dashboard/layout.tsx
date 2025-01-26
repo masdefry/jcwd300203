@@ -41,8 +41,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </header>
 
             {/* Main Content */}
-            <main className="pt-20 container mx-auto px-6">
-                {children}
+            <main className="pt-20">
+                <div className="container mx-auto px-6">
+                    {children}
+                </div>
             </main>
 
             {/* Footer sections */}
