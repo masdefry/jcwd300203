@@ -276,6 +276,23 @@ const Navbar = () => {
                   </span>
                 </Link>
               )}
+
+              {/* My Calendar Link - Visible only for tenants */}
+              {role === 'tenant' && (
+                <Link
+                  href="/dashboard/calendar" 
+                  className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span
+                    className={`text-lg ${
+                      location.pathname === '/dashboard/calendar' ? 'text-[#f15b5b]' : ''
+                    }`}
+                  >
+                    View Calendar
+                  </span>
+                </Link>
+              )}
                             
               {/* Create Listing Link */}
               {role === "tenant" && (
