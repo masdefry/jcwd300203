@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
-import { DateSelectArg, EventClickArg, EventContentArg, EventInput } from '@fullcalendar/core';
+import { EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -8,17 +8,6 @@ import PageContent from '@/components/PageContent';
 import { fetchPropertyReport } from './event-utils';
 
 const Calendar = () => {
-  // const [editable, setEditable] = React.useState(false);
-  // const handleDateSelect = (selectInfo: DateSelectArg) => {
-  //   console.log(selectInfo);
-  //   setEditable(true);
-  // };
-
-  // const handleEventClick = (clickInfo: EventClickArg) => {
-  //   console.log(clickInfo);
-  //   setEditable(true);
-  // };
-
   const [events, setEvents] = useState<EventInput[]>([]);
 
   useEffect(() => {
@@ -47,7 +36,7 @@ const Calendar = () => {
   }, []);
 
   return (
-    <PageContent className="calendar-app">
+    <PageContent className="calendar-app mb-16">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         headerToolbar={{
@@ -63,34 +52,9 @@ const Calendar = () => {
         dayMaxEvents
         nextDayThreshold={'09:00:00'}
         events={events}
-        // select={handleDateSelect}
-        // eventContent={renderEventContent} // custom render function
-        // eventClick={handleEventClick}
       />
-      {/* <EventModal
-        open={editable}
-        onClose={() => setEditable(false)}
-        onAddEvent={() => {
-          setEditable(false);
-        }}
-      /> */}
     </PageContent>
   );
 };
-
-// function renderEventContent(eventContent: EventContentArg) {
-//   const { timeText, event } = eventContent;
-//   return (
-//     <>
-//       {timeText && (
-//         <>
-//           <div className="fc-daygrid-event-dot"></div>
-//           <div className="fc-event-time">{eventContent.timeText}</div>
-//         </>
-//       )}
-//       <div className="fc-event-title">{event.title}</div>
-//     </>
-//   );
-// }
 
 export default Calendar;

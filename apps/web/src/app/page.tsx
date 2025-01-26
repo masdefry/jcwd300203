@@ -1,9 +1,4 @@
 'use client';
-import Image from 'next/image'
-import styles from './page.module.css'
-import Header from '@/components/home/Header'
-import MobileMenu from '@/components/common/header/MobileMenu'
-import PopupSignInUp from '@/components/common/PopupSignInUp'
 import HeroSlider from '@/components/home/HeroSlider'
 import FeaturedProperties from '@/components/home/FeaturedProperties'
 import FindProperties from '@/components/home/FindProperties'
@@ -14,23 +9,10 @@ import CallToAction from '@/components/common/CallToAction'
 import Footer from '@/components/common/footer/Footer'
 import CopyrightFooter from '@/components/common/footer/CopyrightFooter'
 import Wrapper from '@/components/layout/Wrapper'
-import authStore from '@/zustand/authStore'
+
 export default function Home() {
-  const token = authStore((state) => state.token)
-  const role = authStore((state) => state.role)
-  console.log('Token :', token)
-  console.log('Role :', role)
   return (
     <Wrapper>
-      {/* <!-- Main Header Nav --> */}
-      {/* <Header /> */}
-
-      {/* <!--  Mobile Menu --> */}
-      {/* <MobileMenu /> */}
-
-      {/* <!-- Modal --> */}
-      {/* <PopupSignInUp /> */}
-
       {/* <!-- Home Design --> */}
       <section className="p0">
         <div className="container-fluid p0">
@@ -68,7 +50,7 @@ export default function Home() {
             <div className="col-lg-6 offset-lg-3">
               <div className="main-title text-center">
                 <h2>Find Properties in These Cities</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p>Discover your perfect getaway with stunning properties in Jakarta, Bali, Lombok, and Labuan Bajo.</p>
               </div>
             </div>
           </div>
@@ -102,7 +84,7 @@ export default function Home() {
             <div className="col-lg-6 offset-lg-3">
               <div className="main-title text-center">
                 <h2>Articles & Tips</h2>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p>Stay informed, inspired, and empowered with expert insights tailored to your lifestyle and property goals.</p>
               </div>
             </div>
           </div>
