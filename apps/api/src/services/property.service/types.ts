@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 // Base Interfaces
 export interface IBaseFacility {
     id: number;
@@ -214,4 +215,102 @@ export interface IBaseFacility {
   export interface ICategory {
     name: string;
     iconFileName: string;
+  }
+
+  export interface IGetPropertyList {
+    parsedCheckIn: Date | undefined;
+    parsedCheckOut: Date | undefined;
+    search: string | undefined;
+    guest: string | undefined;
+    sortBy: string;
+    sortOrder: string;
+    offset: number;
+    pageSize: number;
+    priceMin?: number;
+    priceMax?: number;
+    categories?: number[];
+    facilities?: number[];
+    minRating?: number;
+    latitude?: string;
+    longitude?: string;
+    radius?: string;
+  }
+  
+  // Database types from Prisma
+  export interface IPropertyFromDB {
+    id: number;
+    name: string;
+    address: string;
+    city: string;
+    latitude: string | null;
+    longitude: string | null;
+    mainImage: string;
+    category: {
+      id: number;
+      name: string;
+      icon: string;
+      createdAt: Date;
+      updatedAt: Date;
+      deletedAt: Date | null;
+    } | null;
+    facilities: Array<{
+      id: number;
+      name: string;
+      icon: string | null;
+    }>;
+    reviews: Array<{
+      rating: number;
+    }>;
+    roomTypes: Array<{
+      qty: number;
+      price: Prisma.Decimal;
+      flexiblePrice: Array<{
+        customPrice: Prisma.Decimal;
+      }>;
+    }>;
+  }
+  
+  
+  // Response interface
+  export interface IPropertyListResponse {
+    id: number;
+    name: string;
+    category: string | null;
+    categoryIcon: string | null;
+    address: string;
+    city: string;
+    mainImage: string;
+    facilities: Array<{
+      id: number;
+      name: string;
+      icon: string | null;
+    }>;
+    price: number;
+    averageRating: number;
+    totalReviews: number;
+    isAvailable: boolean;
+    similarity: number;
+  }
+  
+  // Location conditions type
+  export interface ILocationConditions {
+    AND?: Array<{
+      latitude: {
+        gte: string;
+        lte: string;
+      };
+    } | {
+      longitude: {
+        gte: string;
+        lte: string;
+      };
+    }>;
+  }
+  
+  // Helper function return type
+  export interface ICalculateDistanceParams {
+    lat1: number;
+    lon1: number;
+    lat2: number;
+    lon2: number;
   }
