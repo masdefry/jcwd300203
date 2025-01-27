@@ -89,7 +89,7 @@ export const createRoomReservationService = async ({
     },
   });
 
-  const alreadyBookedQty = overlappingBookings.reduce((sum, booking) => sum + booking.room_qty, 0);
+  const alreadyBookedQty = overlappingBookings.reduce((sum: number, booking: any) => sum + booking.room_qty, 0);
 
   if (room.qty - alreadyBookedQty < room_qty)
     throw { msg: "Not enough rooms available", status: 400 };
@@ -150,7 +150,7 @@ export const getAvailableRoomsService = async (roomId: number, checkInDate: Date
     },
   });
 
-  const bookedQty = overlappingBookings.reduce((sum, booking) => sum + booking.room_qty, 0);
+  const bookedQty = overlappingBookings.reduce((sum: number, booking: any) => sum + booking.room_qty, 0);
   return room.qty - bookedQty;
 };
 
