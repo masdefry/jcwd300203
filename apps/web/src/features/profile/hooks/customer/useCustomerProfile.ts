@@ -1,15 +1,15 @@
-import { queryCustomerProfile } from './queries/queryCustomerProfile';
-import { mutateEditProfile } from './mutations/mutateEditProfile';
-import { mutateChangePassword } from './mutations/mutateChangePassword';
-import { mutateChangeEmail } from './mutations/mutateChangeEmail';
-import { mutateRequestVerification } from './mutations/mutateRequestVerification';
+import { useQueryCustomerProfile } from './queries/queryCustomerProfile';
+import { useEditProfile } from './mutations/mutateEditProfile';
+import { useChangePassword } from './mutations/mutateChangePassword';
+import { useChangeEmail } from './mutations/mutateChangeEmail';
+import { useRequestVerification } from './mutations/mutateRequestVerification';
 
 export const useCustomerProfile = () => {
-  const { data: profile, isLoading } = queryCustomerProfile();
-  const editProfileMutation = mutateEditProfile();
-  const changePasswordMutation = mutateChangePassword();
-  const changeEmailMutation = mutateChangeEmail();
-  const requestVerificationMutation = mutateRequestVerification();
+  const { data: profile, isLoading } = useQueryCustomerProfile();
+  const editProfileMutation = useEditProfile();
+  const changePasswordMutation = useChangePassword();
+  const changeEmailMutation = useChangeEmail();
+  const requestVerificationMutation = useRequestVerification();
 
   return {
     profile,

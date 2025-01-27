@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import instance from '@/utils/axiosInstance';
 import { IChangePasswordInput } from '@/features/types/profile';
 
-export const mutateChangePassword = () => {
+export const useChangePassword = () => {
   return useMutation({
     mutationFn: async (data: IChangePasswordInput) => {
       const response = await instance.patch('/auth/password/tenant', data);

@@ -3,7 +3,7 @@ import instance from "@/utils/axiosInstance";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-export const mutateChangeEmail = () => {
+export const useChangeEmail = () => {
     return useMutation({
       mutationFn: async (data: IChangeEmailInput) => {
         const response = await instance.post('/auth/request/email', data);

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import instance from '@/utils/axiosInstance';
 import { ICustomerProfile } from '@/features/types/profile';
 
-export const queryCustomerProfile = () => {
+export const useQueryCustomerProfile = () => {
   return useQuery<ICustomerProfile>({
     queryKey: ['customerProfile'],
     queryFn: async () => {

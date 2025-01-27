@@ -11,13 +11,14 @@ import Footer from '@/components/common/footer/Footer';
 import CopyrightFooter from '@/components/common/footer/CopyrightFooter';
 import Wrapper from '@/components/layout/Wrapper';
 
+
 const validationSchema = Yup.object({
   email: Yup.string()
     .email('Invalid email address')
     .required('Email is required'),
 });
 
-const registerUserForm = () => {
+const RegisterUserForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {mutate: mutateVerifyUserEmail} = useMutation({
@@ -152,4 +153,4 @@ const registerUserForm = () => {
   );
 };
 
-export default registerUserForm;
+export default RegisterUserForm;

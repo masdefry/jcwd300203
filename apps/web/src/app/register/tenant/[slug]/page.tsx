@@ -45,68 +45,7 @@ export default function RegisterPage({ params }: any) {
   const router = useRouter();
   const pathname = usePathname();
   const token = pathname.split('/')[3];
-
-  const saveStepData = (step: number, data: any) => {
-    try {
-      const key = `register_tenant_step${step}`; 
-      console.log(`Saving step ${step} data:`, data);
-      sessionStorage.setItem(key, JSON.stringify(data));
-   
-      const saved = sessionStorage.getItem(key);
-      console.log(`Verified save for step ${step}:`, JSON.parse(saved || '{}'));
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
-  };
   const valid = isTokenValid(token);
-
-  if (!valid) return <NotFound />;
-
-  const getStepData = (step: number) => {
-    try {
-      const key = `register_tenant_step${step}`;
-      const data = sessionStorage.getItem(key);
-      console.log(`Getting step ${step} data:`, data);
-      return data ? JSON.parse(data) : {};
-    } catch (error) {
-      console.error('Error getting data:', error);
-      return {};
-    }
-  };
-
-  const clearStepData = () => {
-    sessionStorage.removeItem('registerStep1');
-    sessionStorage.removeItem('registerStep2');
-  };
-
-  useEffect(() => {
-    clearStepData();
-
-    return () => {
-      if (profilePreview) URL.revokeObjectURL(profilePreview);
-      if (idCardPreview) URL.revokeObjectURL(idCardPreview);
-      clearStepData();
-    };
-  }, [profilePreview, idCardPreview]);
-
-  const handleImageChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    setImage: (file: File | null) => void,
-    setPreview: (url: string | null) => void,
-  ) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
-      setImage(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (profilePreview) URL.revokeObjectURL(profilePreview);
-      if (idCardPreview) URL.revokeObjectURL(idCardPreview);
-    };
-  }, [profilePreview, idCardPreview]);
 
   const { mutate: mutateRegisterTenant } = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -128,6 +67,71 @@ export default function RegisterPage({ params }: any) {
       setIsSubmitting(false);
     },
   });
+
+  useEffect(() => {
+    clearStepData();
+
+    return () => {
+      if (profilePreview) URL.revokeObjectURL(profilePreview);
+      if (idCardPreview) URL.revokeObjectURL(idCardPreview);
+      clearStepData();
+    };
+  }, [profilePreview, idCardPreview]);
+
+  useEffect(() => {
+    return () => {
+      if (profilePreview) URL.revokeObjectURL(profilePreview);
+      if (idCardPreview) URL.revokeObjectURL(idCardPreview);
+    };
+  }, [profilePreview, idCardPreview]);
+
+  const saveStepData = (step: number, data: any) => {
+    try {
+      const key = `register_tenant_step${step}`; 
+      console.log(`Saving step ${step} data:`, data);
+      sessionStorage.setItem(key, JSON.stringify(data));
+   
+      const saved = sessionStorage.getItem(key);
+      console.log(`Verified save for step ${step}:`, JSON.parse(saved || '{}'));
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
+  };
+  
+  if (!valid) return <NotFound />;
+
+  const getStepData = (step: number) => {
+    try {
+      const key = `register_tenant_step${step}`;
+      const data = sessionStorage.getItem(key);
+      console.log(`Getting step ${step} data:`, data);
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      console.error('Error getting data:', error);
+      return {};
+    }
+  };
+
+  const clearStepData = () => {
+    sessionStorage.removeItem('registerStep1');
+    sessionStorage.removeItem('registerStep2');
+  };
+
+
+  const handleImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    setImage: (file: File | null) => void,
+    setPreview: (url: string | null) => void,
+  ) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  
+
 
   const steps = {
     1: (
