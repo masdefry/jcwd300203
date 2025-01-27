@@ -58,7 +58,6 @@ const ConfirmVerifyAccountPage = () => {
       }
     }
   }, [token]);
-  
   const decodeToken = (token: string) => {
     try {
       const decoded: any = jwt.decode(token);
