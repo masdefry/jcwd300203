@@ -622,6 +622,8 @@ export interface ITenantPropertyListParams {
     description: string;
     address: string;
     city: string;
+    latitude: string | null;
+    longitude: string | null;
     mainImage: string;
     roomCapacity: number;
     category: {

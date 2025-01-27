@@ -123,6 +123,12 @@ export interface FacilitiesResponse {
       endDate: string;
       reason: string;
     }>;
+    currentBookings?: Array<{  
+      checkInDate: Date,
+        checkOutDate: Date,
+        quantity: number,
+        status: string
+    }>;
 }
   
   export interface RoomTypeForm {

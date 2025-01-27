@@ -563,6 +563,8 @@ export const getPropertyDetailsTenantService = async ({
     name: propertyDetails.name,
     description: propertyDetails.description,
     address: propertyDetails.address,
+    latitude: propertyDetails.latitude,
+    longitude: propertyDetails.longitude,
     city: propertyDetails.city,
     mainImage: propertyDetails.mainImage,
     roomCapacity: propertyDetails.roomCapacity,
