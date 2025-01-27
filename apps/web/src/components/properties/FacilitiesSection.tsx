@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import Image from 'next/image';
 import {
   Select,
   SelectContent,
@@ -87,10 +88,11 @@ export const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
           {filteredFacilities.map((facility) => (
             <SelectItem key={facility.id} value={facility.id.toString()}>
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src={`http://localhost:4700/images/${facility.icon}`}
                   alt={facility.name}
-                  className="w-4 h-4"
+                  width={16} // Matches the `w-4` class (4 * 4px = 16px)
+                  height={16} // Matches the `h-4` class (4 * 4px = 16px)
                 />
                 <span>{facility.name}</span>
               </div>
@@ -114,10 +116,11 @@ export const FacilitiesSection: React.FC<FacilitiesSectionProps> = ({
               key={facility.id}
               className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1"
             >
-              <img
+              <Image
                 src={`http://localhost:4700/images/${facility.icon}`}
                 alt={facility.name}
-                className="w-4 h-4"
+                width={16} // Matches the `w-4` class (4 * 4px = 16px)
+                height={16} // Matches the `h-4` class (4 * 4px = 16px)
               />
               <span>{facility.name}</span>
               <button

@@ -1,9 +1,7 @@
 "use client"
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import instance from "@/utils/axiosInstance";
 import StatisticsChart from "@/components/dashboard/my-dashboard/StatisticsChart";
-import PropertyCalendar from "@/components/dashboard/my-dashboard/PropertyCalendar";
 import authStore from "@/zustand/authStore";
 import { useRouter } from "next/navigation";
 
@@ -114,7 +112,7 @@ const MyDashboard = () => {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 mb-12">
       {/* Header Section - Made responsive */}
       <div className="bg-[#f15b5b] text-white py-4 sm:py-6 px-4 sm:px-8">
         <h1 className="text-xl sm:text-2xl text-white font-bold">Good Morning, {tenantName}</h1>

@@ -2,10 +2,7 @@
 import { useState, useEffect } from "react";
 import instance from "@/utils/axiosInstance";
 import Wrapper from "@/components/layout/Wrapper";
-import Footer from "@/components/common/footer/Footer";
-import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
-import SidebarMenu from "@/components/common/header/dashboard/SidebarMenu";
-import MobileMenu from "@/components/common/header/MobileMenu";
+import Image from "next/image";
 
 type Status = {
   Status: string;
@@ -136,10 +133,12 @@ const MyOrdersPage = () => {
         key={order.id}
         className="flex flex-col md:flex-row items-start md:items-center bg-white shadow rounded-lg p-4 mb-4 border hover:shadow-md transition-shadow"
       >
-        <img
+        <Image
           src={order.property?.img || "/placeholder.jpg"}
           alt={order.property?.name || "Property"}
-          className="w-full md:w-24 h-24 object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
+          width={96}
+          height={96}
+          className="object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
         />
 
         <div className="flex-1">
@@ -224,24 +223,7 @@ const MyOrdersPage = () => {
   return (
     <Wrapper>
       {/* Main container with flex layout */}
-      <div className="flex min-h-screen relative">
-        {/* Sidebar - Fixed on desktop, sliding on mobile
-        <div
-          className={`w-72 bg-[#13213c] min-h-screen fixed md:static z-40 transition-transform duration-300 ease-in-out ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          }`}
-        >
-          <SidebarMenu />
-        </div> */}
-
-        {/* Mobile overlay */}
-        {/* {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )} */}
-
+      <div className="flex min-h-screen relative mb-12">
         {/* Main content */}
         <div className="flex-1 min-h-screen bg-gray-100">
           {/* Content area */}
@@ -297,23 +279,6 @@ const MyOrdersPage = () => {
           </div>
 
           {/* Pagination Controls */}
-          {/* <div className="flex items-center justify-end mb-4"> */}
-            {/* <label htmlFor="itemsPerPage" className="mr-2">
-              Items per page:
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={handlePageLimitChange}
-              className="px-4 py-2 border rounded-md"
-            >
-              <option value={1}>1</option> */}
-              {/* <option value={10}>10</option> */}
-              {/* <option value={20}>20</option> */}
-            {/* </select> */}
-          {/* </div> */}
-
-          {/* Pagination Controls */}
           <div className="flex justify-center mt-8">
             <div className="flex items-center space-x-2">
               <button
@@ -335,21 +300,6 @@ const MyOrdersPage = () => {
               </button>
             </div>
           </div>
-
-          {/* Footer sections */}
-          {/* <section className="footer_one">
-            <div className="container">
-              <div className="row">
-                <Footer />
-              </div>
-            </div>
-          </section>
-
-          <section className="footer_middle_area pt40 pb40">
-            <div className="container">
-              <CopyrightFooter />
-            </div>
-          </section> */}
         </div>
       </div>
 
@@ -363,9 +313,11 @@ const MyOrdersPage = () => {
             >
               Close
             </button>
-            <img
+            <Image
               src={selectedProof}
               alt="Proof of Payment"
+              width={600}
+              height={400}
               className="w-full h-auto rounded-lg"
             />
           </div>
