@@ -16,6 +16,7 @@ import FacilitiesList from '@/components/properties/FacilitiesList';
 import { Card } from '@/components/ui/card';
 import authStore from '@/zustand/authStore';
 import PropertyMap from '@/components/properties/PropertyMap';
+import { useMemo } from 'react';
 
 export default function PropertyDetails() {
   const router = useRouter();
@@ -28,26 +29,43 @@ export default function PropertyDetails() {
   const guests = searchParams.get('guests') || '2';
   const rooms = searchParams.get('rooms') || '1';
 
-  // Parse dates
-  const { checkIn: defaultCheckIn, checkOut: defaultCheckOut } = getDefaultDates();
-  const parsedCheckIn = checkIn ? new Date(checkIn) : defaultCheckIn;
-  const parsedCheckOut = checkOut ? new Date(checkOut) : defaultCheckOut;
+ // Parse dates using useMemo
+ const { checkIn: defaultCheckIn, checkOut: defaultCheckOut } = getDefaultDates();
+ const parsedCheckIn = useMemo(() => 
+   checkIn ? new Date(checkIn) : defaultCheckIn,
+   [checkIn, defaultCheckIn]
+ );
+ 
+ const parsedCheckOut = useMemo(() => 
+   checkOut ? new Date(checkOut) : defaultCheckOut,
+   [checkOut, defaultCheckOut]
+ );
 
-  const initialRender = useRef(true);
+ const initialRender = useRef(true);
 
-useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false;
-      if (!checkIn || !checkOut) {
-        const params = new URLSearchParams(searchParams);
-        params.set('checkIn', format(parsedCheckIn, 'yyyy-MM-dd'));
-        params.set('checkOut', format(parsedCheckOut, 'yyyy-MM-dd'));
-        params.set('guests', guests);
-        params.set('rooms', rooms);
-        router.replace(`${pathname}?${params.toString()}`);
-      }
-    }
-  }, [checkIn, checkOut, guests, rooms, parsedCheckIn, parsedCheckOut, pathname, router, searchParams]);
+ useEffect(() => {
+   if (initialRender.current) {
+     initialRender.current = false;
+     if (!checkIn || !checkOut) {
+       const params = new URLSearchParams(searchParams);
+       params.set('checkIn', format(parsedCheckIn, 'yyyy-MM-dd'));
+       params.set('checkOut', format(parsedCheckOut, 'yyyy-MM-dd'));
+       params.set('guests', guests);
+       params.set('rooms', rooms);
+       router.replace(`${pathname}?${params.toString()}`);
+     }
+   }
+ }, [
+   checkIn, 
+   checkOut, 
+   guests, 
+   rooms, 
+   parsedCheckIn, 
+   parsedCheckOut, 
+   pathname, 
+   router, 
+   searchParams
+ ]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['propertyDetails', id, parsedCheckIn, parsedCheckOut],
