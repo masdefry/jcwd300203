@@ -19,8 +19,8 @@ interface CategorySelectProps {
   categories: Category[] | undefined;
   isLoading: boolean;
   name: string;
-  error?: string;
-  touched?: boolean;
+  error?: string;  // Only accept string for error
+  touched?: boolean | undefined;  // Make touched optional and accept undefined
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({

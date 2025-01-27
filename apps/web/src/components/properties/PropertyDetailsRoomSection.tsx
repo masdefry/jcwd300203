@@ -220,10 +220,10 @@ export const PropertyDetailsRoomSection: React.FC<
                         const updatedRoomTypes = [...values.roomTypes];
                         // Initialize the array if it doesn't exist
                         if (!updatedRoomTypes[index].specialPrice) {
-                          updatedRoomTypes[index].specialPrice = [];
+                          updatedRoomTypes[index]!.specialPrice = [];
                         }
                         // Add new special price
-                        updatedRoomTypes[index].specialPrice.push({
+                        updatedRoomTypes[index]!.specialPrice.push({
                           startDate: new Date(),
                           endDate: new Date(),
                           price: '',
