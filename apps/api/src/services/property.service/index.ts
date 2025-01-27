@@ -1031,7 +1031,7 @@ export const editPropertyService = async({
         }
 
           if (room.images?.length) {
-              existingRoom.images.forEach(img => {
+              existingRoom.images.forEach((img: {id: number; createdAt: Date; deletedAt: Date | null; url: string; roomId: number;}) => {
                   imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
               });
 
@@ -1040,7 +1040,7 @@ export const editPropertyService = async({
               });
 
               await tx.roomImage.createMany({
-                  data: room.images.map(url => ({
+                  data: room.images.map((url: string) => ({
                       url,
                       roomId: room.id
                   }))
