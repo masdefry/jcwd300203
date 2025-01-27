@@ -175,14 +175,16 @@ export default function ReservationPage() {
           })),
         };
       };
-  
+      
+      console.log("selected days: ", )
+
       // Perform the calculation
       const { total, breakdown } = calculateTotalPrice(
         roomData.priceComparison,
         checkIn,
         checkOut
       );
-  
+      
       setTotalPrice(total); // Update total price dynamically
       setPriceBreakdown(breakdown); // Update breakdown dynamically
     }
