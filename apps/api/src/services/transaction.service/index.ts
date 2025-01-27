@@ -2,7 +2,6 @@ import { prisma } from "@/connection"
 import { BookingStatus } from "@prisma/client"; // Import Prisma enum type
 import cron from "node-cron";
 import path from "path";
-import fs from "fs";
 import { sendEmail } from "@/utils/emailSender";
 
 interface RoomReservationParams {
@@ -15,7 +14,7 @@ interface RoomReservationParams {
   paymentMethod: "MANUAL" | "GATEWAY";
 }
 
-// upload payment proof params
+// upload payment proof params 
 interface UploadPaymentProofParams {
   bookingId: number;
   usersId: number;
