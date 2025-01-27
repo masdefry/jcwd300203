@@ -2,7 +2,7 @@ import instance from "@/utils/axiosInstance";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-export const mutateRequestVerification = () => {
+export const useRequestVerification = () => {
     return useMutation({
       mutationFn: async () => {
         const response = await instance.post('/auth/request/verify/customer');

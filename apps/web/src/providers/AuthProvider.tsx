@@ -1,11 +1,12 @@
 'use client';
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import instance from "@/utils/axiosInstance";
 import authStore from "@/zustand/authStore";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import LoadingWithSpinner from "@/components/Loading";
+import NotFound from "@/components/404";
 
 interface DecodedToken{
     data: {
@@ -71,9 +72,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                     profileImage: res?.data?.data?.profileImage,
                     isVerified: res?.data?.data?.isVerified
                 });
-                console.log('Role from keepauth: ', res?.data?.data?.role)
-                console.log('Verification from keepauth:', res?.data?.data?.isVerified) 
-                console.log('response: ', res?.data?.data)
             } catch (err) {
                 console.log(err);
                 authLogout();
@@ -91,7 +89,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [token, router, setKeepAuth, authLogout]);
 
-    useEffect(() => {
+    const handleAuthNavigation= useCallback(() => {
         const authRoutes = ['/login/user', '/login/tenant', '/register/user', '/register/tenant', '/forget-password'];
 
         if (isLoading) return; // Wait until loading is complete
@@ -162,9 +160,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             setErrorMessage(null);
         }
         
-    }, [isLoading, token, pathname, role]);
+    }, [isLoading, token, pathname, role, router]);
 
-
+    useEffect(() => {
+        handleAuthNavigation()
+    },[handleAuthNavigation])
 
     useEffect(() => {
         if (!isAuthorized && !hasTriggered) {
@@ -185,15 +185,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     if (!isAuthorized) {
         return (
             <div className="h-screen w-full flex items-center justify-center bg-gray-50 flex-col animate-fadeInOpacity duration-1000">
-                <h1 className="text-2xl text-red-500 font-bold pb-5 animate-fadeInUp transition-all duration-1000">
-                    Oopsie, something went wrong
-                </h1>
-                <div className="animate-fadeInOpacity transition-opacity duration-1000 pb-10">
-                    <p className="text-red-500 text-lg text-center">{errorMessage} | 401</p>
-                </div>
-                <button className="bg-blue-500 rounded-lg p-3 text-white text-lg font-semibold transition-all transform hover:scale-105 hover:bg-blue-600 hover:shadow-lg duration-300 ease-in-out">
-                    <a href="/">Back to Homepage</a>
-                </button>
+                <NotFound/>
             </div>
         );
     }

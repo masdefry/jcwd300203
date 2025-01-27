@@ -10,7 +10,6 @@ import { PropertyEditForm } from '@/components/properties/PropertyEditForm';
 
 const PropertyDetailsPage = () => {
   const { property, isLoading, propertyId } = usePropertyDetailsTenant();
-  // console.log('property:',property)
   const [isEditing, setIsEditing] = useState(false);
 
   if (isLoading) return <LoadingWithSpinner />;

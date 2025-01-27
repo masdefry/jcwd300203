@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { format } from 'date-fns';
 import { Heart, Share } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -33,16 +33,21 @@ export default function PropertyDetails() {
   const parsedCheckIn = checkIn ? new Date(checkIn) : defaultCheckIn;
   const parsedCheckOut = checkOut ? new Date(checkOut) : defaultCheckOut;
 
-  useEffect(() => {
-    if (!checkIn || !checkOut) {
-      const params = new URLSearchParams(searchParams);
-      params.set('checkIn', format(parsedCheckIn, 'yyyy-MM-dd'));
-      params.set('checkOut', format(parsedCheckOut, 'yyyy-MM-dd'));
-      params.set('guests', guests);
-      params.set('rooms', rooms);
-      router.replace(`${pathname}?${params.toString()}`);
+  const initialRender = useRef(true);
+
+useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      if (!checkIn || !checkOut) {
+        const params = new URLSearchParams(searchParams);
+        params.set('checkIn', format(parsedCheckIn, 'yyyy-MM-dd'));
+        params.set('checkOut', format(parsedCheckOut, 'yyyy-MM-dd'));
+        params.set('guests', guests);
+        params.set('rooms', rooms);
+        router.replace(`${pathname}?${params.toString()}`);
+      }
     }
-  }, [checkIn, checkOut]);
+  }, [checkIn, checkOut, guests, rooms, parsedCheckIn, parsedCheckOut, pathname, router, searchParams]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['propertyDetails', id, parsedCheckIn, parsedCheckOut],

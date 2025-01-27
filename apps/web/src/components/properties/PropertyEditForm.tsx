@@ -10,7 +10,7 @@ import { getImageUrl } from '@/utils/getImageUrl';
 import { useEffect, useRef } from 'react';
 
 interface PropertyEditFormProps {
-  property: any; // Type this based on your property type
+  property: any; 
   onEditComplete?: () => void;
 }
 
@@ -120,7 +120,7 @@ export function PropertyEditForm({ property, onEditComplete }: PropertyEditFormP
       if (property.mainImage) {
         handleImagePreview.setMainImage(getImageUrl(property.mainImage));
       }
-
+  
       if (property.images?.length) {
         const propertyImagesWithUrls = property.images.map((img: any) => ({
           ...img,
@@ -128,7 +128,7 @@ export function PropertyEditForm({ property, onEditComplete }: PropertyEditFormP
         }));
         handleImagePreview.setPropertyImages(propertyImagesWithUrls);
       }
-
+  
       if (property.roomTypes?.length) {
         property.roomTypes.forEach((room: any, index: number) => {
           if (room.images?.length) {
@@ -140,9 +140,10 @@ export function PropertyEditForm({ property, onEditComplete }: PropertyEditFormP
           }
         });
       }
-
+  
       initialPreviewsSet.current = true;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property]);
 
   const getInitialValues = () => ({
