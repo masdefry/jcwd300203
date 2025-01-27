@@ -1229,40 +1229,38 @@ export const getRoomDetailsByIdService = async ({
 
   if (!roomDetails) throw { msg: "Room not found", status: 404 };
 
-  const next30Days: IDailyAvailability[] = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
+  // Calculate the number of days between check-in and check-out
+  if (!parsedCheckOut) throw { msg: "Check-out date is required", status: 400 };
+  if (!parsedCheckIn) throw { msg: "Check-in date is required", status: 400 };
+  const numDays = Math.ceil((parsedCheckOut.getTime() - parsedCheckIn.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Generate the list of available rooms for the entire duration
+  const priceComparison: IDailyAvailability[] = [];
+  for (let i = 0; i <= numDays; i++) {
+    const date = new Date(parsedCheckIn.getTime() + i * 24 * 60 * 60 * 1000);
     date.setHours(0, 0, 0, 0);
 
     const totalBooked = roomDetails.bookings.reduce((total, booking) => {
-      if (
-        (booking.status.some((s) => s.Status === 'WAITING_FOR_CONFIRMATION') ||
-         booking.status.some((s) => s.Status === 'CONFIRMED')) &&
-        booking.checkInDate <= date && 
-        booking.checkOutDate >= date
-      ) {
-        return total + booking.room_qty;
-      }
-      return total;
+      return total + booking.room_qty;
     }, 0);
-    
+
     const isUnavailable = roomDetails.unavailability.some(
       (period) => date >= period.startDate && date <= period.endDate
     );
-    
+
     let availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - totalBooked, 0);
-    availableRooms = Math.min(availableRooms, roomDetails.qty); 
+    availableRooms = Math.min(availableRooms, roomDetails.qty);
 
     const flexiblePrice = roomDetails.flexiblePrice.find(
-      (price) => date >= price.startDate && date <= price.endDate  
+      (price) => date >= price.startDate && date <= price.endDate
     )?.customPrice;
-  
-    return {
+
+    priceComparison.push({
       date: date.toDateString(),
       price: flexiblePrice || roomDetails.price,
       availableRooms,
-    };
-  });
+    });
+  }
 
   return {
     id: roomDetails.id,
@@ -1280,7 +1278,7 @@ export const getRoomDetailsByIdService = async ({
       name: facility.name,
       icon: facility.icon,
     })),
-    priceComparison: next30Days,
+    priceComparison: priceComparison,
   };
 };
 
