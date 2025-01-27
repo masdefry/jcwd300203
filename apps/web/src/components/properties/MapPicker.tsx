@@ -19,19 +19,16 @@ export const MapPicker = () => {
       let city = '';
       let detailedAddress = '';
   
-      // First try to get city from address components
       results[0].address_components?.forEach(component => {
-        // Try different types that could represent a city
         if (
-          component.types.includes('locality') || // most common for city
-          component.types.includes('administrative_area_level_2') || // sometimes used for city
-          component.types.includes('sublocality_level_1') // used in some countries
+          component.types.includes('locality') || 
+          component.types.includes('administrative_area_level_2') || 
+          component.types.includes('sublocality_level_1') 
         ) {
           city = component.long_name;
         }
       });
   
-      // If no city found, try administrative_area_level_2 as fallback
       if (!city) {
         const adminArea = results[0].address_components?.find(
           component => component.types.includes('administrative_area_level_2')
@@ -41,10 +38,8 @@ export const MapPicker = () => {
         }
       }
   
-      // Create detailed address
       detailedAddress = results[0].formatted_address;
   
-      // Update form fields
       setFieldValue('address', detailedAddress);
       if (city) {
         setFieldValue('city', city);
@@ -66,8 +61,8 @@ export const MapPicker = () => {
       const initialLocation = values.latitude && values.longitude 
         ? { lat: Number(values.latitude), lng: Number(values.longitude) }
         : defaultLocation;
-
-      const mapInstance = new google.maps.Map(mapRef.current, {
+        if (!mapRef.current) return; 
+      const mapInstance = new google.maps.Map(mapRef.current!, {
         zoom: 13,
         center: initialLocation,
       });

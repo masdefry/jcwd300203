@@ -12,7 +12,7 @@ import { FilterType, Property, SelectedFilters, SortOption } from "@/features/ty
 import PropertySidebar from "@/components/properties/PropertySidebar";
 import PropertyCard from "@/components/properties/PropertyCard";
 
-export const SearchPropertyPage = () => {
+export default function SearchPropertyPage () {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
@@ -191,4 +191,3 @@ export const SearchPropertyPage = () => {
   );
 };
 
-export default SearchPropertyPage;

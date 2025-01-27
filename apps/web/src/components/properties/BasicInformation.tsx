@@ -8,7 +8,7 @@ import { MapPicker } from './MapPicker';
 
 export const BasicInformation: React.FC = () => {
   const { data: categories, isLoading } = useQueryPropertyCategories();
-  const { touched } = useFormikContext();
+  const { touched, errors } = useFormikContext<any>();
 
   return (
     <div className="space-y-4">
@@ -35,8 +35,7 @@ export const BasicInformation: React.FC = () => {
           categories={categories}
           isLoading={isLoading}
           name="categoryId"
-          error={<ErrorMessage name="categoryId" component="div" />}
-          touched={touched.categoryId}
+
         />
         <ErrorMessage
           name="categoryId"
