@@ -1,6 +1,11 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 import type { Decimal } from "@prisma/client/runtime/library";
-import type { BookingStatus } from "@prisma/client";
+
+type BookingStatus = 
+  | 'WAITING_FOR_PAYMENT'
+  | 'WAITING_FOR_CONFIRMATION'
+  | 'CONFIRMED'
+  | 'CANCELED';
 
 // Base Interfaces
 export interface IBaseFacility {
