@@ -1,7 +1,7 @@
 'use client';
 
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Nunito } from 'next/font/google';
 import { ToastContainer } from 'react-toastify';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -24,18 +24,21 @@ if (typeof window !== 'undefined') {
 
 const inter = Inter({ subsets: ['latin'] });
 
+const nunito = Nunito({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-nunito', // This creates a CSS variable
+});
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${nunito.variable}`}>
       <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css?family=Nunito:400,400i,500,600,700&display=swap"
-        />
         <link rel="icon" href="./favicon.ico" />
         {/* Include Midtrans Snap script */}
         <Script
