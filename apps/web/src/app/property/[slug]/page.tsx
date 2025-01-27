@@ -42,7 +42,7 @@ export default function PropertyDetails() {
       params.set('rooms', rooms);
       router.replace(`${pathname}?${params.toString()}`);
     }
-  }, [checkIn, checkOut]);
+  }, [checkIn, checkOut, guests, parsedCheckIn, parsedCheckOut, pathname, rooms, router]);
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['propertyDetails', id, parsedCheckIn, parsedCheckOut],

@@ -81,6 +81,10 @@ export const createRoomReservation = async (req: Request, res: Response, next: N
   try {
     const { usersId, propertyId, checkInDate, checkOutDate, room_qty, paymentMethod } = req.body;
     
+    // print both check in date and checkout date
+    console.log("check in date: ", checkInDate)
+    console.log("check out date: ", checkOutDate)
+
     // convert roomId to integer
     const roomId = parseInt(req.body.roomId, 10); // Ensure roomId is an integer
     if (isNaN(roomId)) {

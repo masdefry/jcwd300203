@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
@@ -34,6 +34,25 @@ const validationSchemas = {
 };
 
 export default function RegisterPage({ params }: any) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Determine token and validate it
+  const token = useMemo(() => {
+    const pathToken = pathname.split('/')[3];
+    return pathToken || params.slug;
+  }, [pathname, params.slug]);
+
+  const isValidToken = useMemo(() => {
+    return isTokenValid(token);
+  }, [token]);
+
+  // If token is invalid, return NotFound component early
+  if (!isValidToken) {
+    return <NotFound />;
+  }
+  
+  // state and hooks
   const [currentStep, setCurrentStep] = useState(1);
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [idCardImage, setIdCardImage] = useState<File | null>(null);
@@ -42,10 +61,7 @@ export default function RegisterPage({ params }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const profileImageRef = useRef<HTMLInputElement>(null);
   const idCardImageRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-  const pathname = usePathname();
-  const token = pathname.split('/')[3];
-
+  
   const saveStepData = (step: number, data: any) => {
     try {
       const key = `register_tenant_step${step}`; 
@@ -58,10 +74,7 @@ export default function RegisterPage({ params }: any) {
       console.error('Error saving data:', error);
     }
   };
-  const valid = isTokenValid(token);
-
-  if (!valid) return <NotFound />;
-
+  
   const getStepData = (step: number) => {
     try {
       const key = `register_tenant_step${step}`;
@@ -87,7 +100,7 @@ export default function RegisterPage({ params }: any) {
       if (idCardPreview) URL.revokeObjectURL(idCardPreview);
       clearStepData();
     };
-  }, [profilePreview, idCardPreview]);
+  }, []); // empty dependency array
 
   const handleImageChange = (
     event: React.ChangeEvent<HTMLInputElement>,

@@ -152,7 +152,7 @@ const PropertyDetailsPage = () => {
 
       initialPreviewsSet.current = true;
     }
-  }, [property]);
+  }, [property, handleImagePreview]);
 
   if (isLoading) return <LoadingWithSpinner />;
 

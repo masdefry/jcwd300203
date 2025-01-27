@@ -15,6 +15,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import CopyrightFooter from '@/components/common/footer/CopyrightFooter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 
 enum BookingStatus {
   WAITING_FOR_PAYMENT,
@@ -90,13 +91,13 @@ export default function ReservationPage() {
   const [priceBreakdown, setPriceBreakdown] = useState<
     { date: string; price: number }[] | null
   >(null);
-
   const searchParams = useSearchParams();
   const roomId = searchParams.get('roomId');
   const checkIn = searchParams.get('checkIn');
   const checkOut = searchParams.get('checkOut');
   const router = useRouter(); // Initialize useRouter
-
+  const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
+  
   // Calculate the duration of stay
   const calculateDuration = () => {
     if (!checkIn || !checkOut) return null;
@@ -147,7 +148,8 @@ export default function ReservationPage() {
       const calculateTotalPrice = (
         priceComparison: any[],
         checkIn: string,
-        checkOut: string
+        checkOut: string,
+        rooms: number
       ) => {
         const checkInDate = new Date(checkIn);
         const checkOutDate = new Date(checkOut);
@@ -163,7 +165,7 @@ export default function ReservationPage() {
         // Calculate the total price based on rooms and days
         const total = selectedDays.reduce((total: number, day: any) => {
           const dayPrice = day.price || 0;
-          return total + dayPrice * reservationDetails.rooms; // Multiply by the number of rooms
+          return total + dayPrice * rooms; // Multiply by the number of rooms
         }, 0);
   
         // Return the total and breakdown
@@ -182,7 +184,8 @@ export default function ReservationPage() {
       const { total, breakdown } = calculateTotalPrice(
         roomData.priceComparison,
         checkIn,
-        checkOut
+        checkOut,
+        reservationDetails.rooms
       );
       
       setTotalPrice(total); // Update total price dynamically
@@ -216,6 +219,7 @@ export default function ReservationPage() {
         `Maximum ${roomData.guestCapacity} guests allowed`
       ),
     rooms: Yup.number()
+      .typeError('Number of rooms is required')
       .required('Number of rooms is required')
       .integer('Number of rooms must be an integer')
       .min(1, 'At least 1 room is required')
@@ -251,18 +255,14 @@ export default function ReservationPage() {
             </p>
             <p>
               <span className="font-semibold">Available Rooms: </span>
+              {selectedDaysArray && selectedDaysArray.length > 0 ? (
+                <>
+                  {selectedDaysArray[0]?.availableRooms} rooms available
+                </>
+              ) : (
+                <span>Loading or no data available</span>
+              )}
             </p>
-            {selectedDaysArray && selectedDaysArray.length > 0 ? (
-              <ul className="list-disc ml-6">
-                {selectedDaysArray.map((day) => (
-                  <li key={day?.date}>
-                    {new Date(day?.date).toLocaleDateString('en-GB')}: {day.availableRooms} rooms available
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>Loading or no data available</p>
-            )}
           </CardContent>
         </Card>
 
@@ -392,6 +392,14 @@ export default function ReservationPage() {
                       step="1" // Restrict to integers
                       className="w-full border rounded p-2"
                       placeholder="Enter number of rooms"
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        const rooms = parseInt(event.target.value);
+                        setFieldValue('rooms', rooms);
+                        setReservationDetails((prevDetails) => ({
+                          ...prevDetails,
+                          rooms: rooms,
+                        }));
+                      }}
                     />
                     <ErrorMessage
                       name="rooms"
@@ -401,25 +409,56 @@ export default function ReservationPage() {
                   </div>
 
                   {/* Price Breakdown */}
-                  <div>
+                  <div className="flex items-center justify-between">
                     <Label>Price Breakdown (flexible pricing)</Label>
-                    <ul className="list-disc ml-6 text-muted-foreground">
-                      {priceBreakdown && priceBreakdown.length > 0 ? (
-                        priceBreakdown.map((day) => (
-                          <li key={day.date}>
-                            {new Date(day.date).toLocaleDateString('en-GB')}:{' '}
-                            {new Intl.NumberFormat('id-ID', {
-                              style: 'currency',
-                              currency: 'IDR',
-                            }).format(day.price)}{' '}
-                            / night
-                          </li>
-                        ))
-                      ) : (
-                        <p>No breakdown available.</p>
-                      )}
-                    </ul>
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-blue-500 text-white rounded text-sm"
+                      onClick={() => setShowPriceBreakdown(!showPriceBreakdown)}
+                    >
+                      {showPriceBreakdown ? 'Hide' : 'Show'}
+                    </button>
                   </div>
+
+                  {/* show price breakdown table component */}
+                  {showPriceBreakdown && (
+                    <Table className="w-full">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="px-4 py-2 text-left">Date</th>
+                          <th className="px-4 py-2 text-right">Price / Night</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {priceBreakdown && priceBreakdown.length > 0 ? (
+                          priceBreakdown.map((day, index) => (
+                            <tr
+                              key={day.date}
+                              className={`border-b hover:bg-gray-50 ${
+                                index % 2 === 0 ? 'bg-gray-50' : ''
+                              }`}
+                            >
+                              <td className="px-4 py-3 text-left">
+                                {new Date(day.date).toLocaleDateString('en-GB')}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                {new Intl.NumberFormat('id-ID', {
+                                  style: 'currency',
+                                  currency: 'IDR',
+                                }).format(day.price)}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={2} className="px-4 py-3 text-center">
+                              No breakdown available.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </Table>
+                  )}                    
 
                   {/* Total Price */}
                   <div>
