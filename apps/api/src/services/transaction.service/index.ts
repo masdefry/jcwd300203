@@ -15,6 +15,7 @@ interface RoomReservationParams {
   paymentMethod: "MANUAL" | "GATEWAY";
 }
 
+// upload payment proof params
 interface UploadPaymentProofParams {
   bookingId: number;
   usersId: number;
