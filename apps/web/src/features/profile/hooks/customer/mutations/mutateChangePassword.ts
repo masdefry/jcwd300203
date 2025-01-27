@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 
-export const mutateChangePassword = () => {
+export const useChangePassword = () => {
     return useMutation({
       mutationFn: async (data: IChangePasswordInput) => {
         const response = await instance.patch('/auth/password/customer', data);

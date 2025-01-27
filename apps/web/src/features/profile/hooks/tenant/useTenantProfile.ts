@@ -1,15 +1,15 @@
-import { queryTenantProfile } from './queries/queryTenantProfile';
-import { mutateEditProfile } from './mutations/mutateEditProfile';
-import { mutateChangePassword } from './mutations/mutateChangePassword';
-import { mutateChangeEmail } from './mutations/mutateChangeEmail';
-import { mutateUpdateIdCard } from './mutations/mutateUpdateIdCard';
+import { useQueryTenantProfile } from './queries/queryTenantProfile';
+import { useEditProfile } from './mutations/mutateEditProfile';
+import { useChangePassword } from './mutations/mutateChangePassword';
+import { useChangeEmail } from './mutations/mutateChangeEmail';
+import { useUpdateIdCard } from './mutations/mutateUpdateIdCard';
 
 export const useTenantProfile = () => {
-  const { data: profile, isLoading } = queryTenantProfile();
-  const editProfileMutation = mutateEditProfile();
-  const changePasswordMutation = mutateChangePassword();
-  const changeEmailMutation = mutateChangeEmail();
-  const updateIdCardMutation = mutateUpdateIdCard();
+  const { data: profile, isLoading } = useQueryTenantProfile();
+  const editProfileMutation = useEditProfile();
+  const changePasswordMutation = useChangePassword();
+  const changeEmailMutation = useChangeEmail();
+  const updateIdCardMutation = useUpdateIdCard();
 
   return {
     profile,

@@ -17,31 +17,6 @@ const ConfirmVerifyAccountPage = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'idle'>('idle');
   const router = useRouter();
   const name = authStore((state) => state.name);
-  const valid = isTokenValid(token)
-  if(!valid) return <NotFound/>
-  const decodeToken = (token: string) => {
-    try {
-      const decoded: any = jwt.decode(token);
-      if (!decoded || !decoded.data || !decoded.data.id || !decoded.data.role) {
-        throw new Error('Invalid token data');
-      }
-      return {
-        id: decoded.data.id,
-        role: decoded.data.role,
-      };
-    } catch (error) {
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      try {
-        decodeToken(token); 
-      } catch (error) {
-        setStatus('error');
-      }
-    }
-  }, [token]);
 
   const { mutate: mutateVerifyAccount } = useMutation({
     mutationFn: async () => {
@@ -73,11 +48,38 @@ const ConfirmVerifyAccountPage = () => {
       errorHandler(err)
     },
   });
-
+  
+  useEffect(() => {
+    if (token) {
+      try {
+        decodeToken(token); 
+      } catch (error) {
+        setStatus('error');
+      }
+    }
+  }, [token]);
+  const decodeToken = (token: string) => {
+    try {
+      const decoded: any = jwt.decode(token);
+      if (!decoded || !decoded.data || !decoded.data.id || !decoded.data.role) {
+        throw new Error('Invalid token data');
+      }
+      return {
+        id: decoded.data.id,
+        role: decoded.data.role,
+      };
+    } catch (error) {
+    }
+  };
+  
+  
+  const valid = isTokenValid(token)
+  if(!valid) return <NotFound/>
+  
   const handleVerifyAccount = () => {
     mutateVerifyAccount();
   };
-
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md">

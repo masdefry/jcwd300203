@@ -41,9 +41,7 @@ export default function RegistrationForm({ params }: any) {
   const router = useRouter();
   const pathname = usePathname();
   const token = pathname.split('/')[3]
-  const valid = isTokenValid(token);
-  if(!valid) return <NotFound/>
-
+  
   const { mutate: mutateVerifyUserEmail } = useMutation({
     mutationFn: async ({ username, name, password }: any) => {
       return instance.patch(
@@ -70,7 +68,10 @@ export default function RegistrationForm({ params }: any) {
       setIsSubmitting(false);
     },
   });
-
+  
+  const valid = isTokenValid(token);
+  if(!valid) return <NotFound/>
+  
   const getStepData = (step: number) => {
     try {
       const key = `register_user_step${step}`;

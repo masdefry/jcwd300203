@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFormikContext } from 'formik';
 
 interface AddressComponents {
@@ -14,7 +14,7 @@ export const MapPicker = () => {
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
   const { values, setFieldValue } = useFormikContext<any>();
 
-  const updateAddressFields = (results: google.maps.GeocoderResult[]) => {
+  const updateAddressFields = useCallback((results: google.maps.GeocoderResult[]) => {
     if (results[0]) {
       let city = '';
       let detailedAddress = '';
@@ -56,7 +56,7 @@ export const MapPicker = () => {
         setFieldValue('longitude', results[0].geometry.location.lng().toString());
       }
     }
-  };
+  }, [setFieldValue]);
 
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
@@ -145,7 +145,7 @@ export const MapPicker = () => {
     };
 
     initMap();
-  }, []);
+  }, [values.address, values.latitude, values.longitude, setFieldValue, updateAddressFields]);
 
   return (
     <div className="space-y-4">

@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import instance from '@/utils/axiosInstance';
 import { IEditProfileInput } from '@/features/types/profile';
 
-export const mutateEditProfile = () => {
+export const useEditProfile = () => {
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -1,5 +1,43 @@
 import { FormikErrors, FormikTouched, FormikHelpers } from 'formik';
 
+export type SortOption = "price_asc" | "price_desc" | "name_asc" | "name_desc" | "rating_desc";
+
+export type FilterType = 'category' | 'facility' | 'roomFacility';
+
+export interface Property {
+  id: number;
+  name: string;
+  price: number;
+  area: number;
+  mainImage: string;
+  category: string;
+  address: string;
+  city: string;
+  checkIn: string;
+  checkOut: string;
+  facilities: any[];
+  rating?: number;
+}
+
+export interface PropertyCardProps extends Property {
+  id: number;
+}
+
+
+export interface SelectedFilters {
+  categories: number[];
+  facilities: number[];
+  roomFacilities: number[]; // Added room facilities
+}
+
+export interface PropertySidebarProps {
+  onSortChange: (option: SortOption) => void;
+  onFilterChange: (type: 'category' | 'facility' | 'roomFacility', id: number, checked: boolean) => void;
+  selectedFilters: SelectedFilters;
+  onPriceRangeChange: (range: [number, number]) => void;
+  priceRange: [number, number];
+}
+
 export interface Facility {
   id: number;
   name: string;
@@ -122,6 +160,12 @@ export interface FacilitiesResponse {
       startDate: string;
       endDate: string;
       reason: string;
+    }>;
+    currentBookings?: Array<{  
+      checkInDate: Date,
+        checkOutDate: Date,
+        quantity: number,
+        status: string
     }>;
 }
   

@@ -17,7 +17,7 @@ const validationSchema = Yup.object({
     .required('Email is required'),
 });
 
-const registerUserForm = () => {
+const RegisterUserForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {mutate: mutateVerifyUserEmail} = useMutation({
@@ -154,4 +154,4 @@ const registerUserForm = () => {
   );
 };
 
-export default registerUserForm;
+export default RegisterUserForm;

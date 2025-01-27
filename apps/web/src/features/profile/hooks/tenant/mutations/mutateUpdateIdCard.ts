@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import instance from '@/utils/axiosInstance';
 import { IUploadIdCardInput } from '@/features/types/profile';
 
-export const mutateUpdateIdCard = () => {
+export const useUpdateIdCard = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
