@@ -50,7 +50,7 @@ const index = () => {
                                     <h3 className="text-sm font-medium truncate">Vincent Porter</h3>
                                     <span className="text-xs text-gray-500">10:51</span>
                                 </div>
-                                <p className="text-sm text-gray-500 truncate">I'm going to office.</p>
+                                <p className="text-sm text-gray-500 truncate">I&apos;m going to office.</p>
                             </div>
                         </div>
                     </div>
