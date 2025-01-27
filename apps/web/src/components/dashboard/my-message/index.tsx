@@ -2,6 +2,7 @@ import Header from "../../common/header/dashboard/Header";
 import SidebarMenu from "../../common/header/dashboard/SidebarMenu";
 import MobileMenu from "../../common/header/MobileMenu";
 import ChatBox from "./ChatBox";
+import Image from "next/image";
 
 const index = () => {
   return (
@@ -36,10 +37,12 @@ const index = () => {
                     <div className="p-4 border-b hover:bg-gray-50 cursor-pointer">
                         <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0">
-                                <img
+                                <Image
                                     src="/57x57.png"
                                     alt="Contact"
-                                    className="w-full h-full rounded-full"
+                                    width={57} // Set the exact width
+                                    height={57} // Set the exact height
+                                    className="rounded-full"
                                 />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -47,7 +50,7 @@ const index = () => {
                                     <h3 className="text-sm font-medium truncate">Vincent Porter</h3>
                                     <span className="text-xs text-gray-500">10:51</span>
                                 </div>
-                                <p className="text-sm text-gray-500 truncate">I'm going to office.</p>
+                                <p className="text-sm text-gray-500 truncate">I&apos;m going to office.</p>
                             </div>
                         </div>
                     </div>

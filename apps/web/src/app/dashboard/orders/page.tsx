@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import instance from "@/utils/axiosInstance";
 import Wrapper from "@/components/layout/Wrapper";
+import Image from "next/image";
 
 type Status = {
   Status: string;
@@ -132,10 +133,12 @@ const MyOrdersPage = () => {
         key={order.id}
         className="flex flex-col md:flex-row items-start md:items-center bg-white shadow rounded-lg p-4 mb-4 border hover:shadow-md transition-shadow"
       >
-        <img
+        <Image
           src={order.property?.img || "/placeholder.jpg"}
           alt={order.property?.name || "Property"}
-          className="w-full md:w-24 h-24 object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
+          width={96}
+          height={96}
+          className="object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
         />
 
         <div className="flex-1">
@@ -310,9 +313,11 @@ const MyOrdersPage = () => {
             >
               Close
             </button>
-            <img
+            <Image
               src={selectedProof}
               alt="Proof of Payment"
+              width={600}
+              height={400}
               className="w-full h-auto rounded-lg"
             />
           </div>

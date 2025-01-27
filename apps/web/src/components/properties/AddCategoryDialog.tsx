@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -90,7 +91,13 @@ export const AddCategoryDialog: React.FC = () => {
             <div className="flex items-center gap-4">
               {categoryIconPreview ? (
                 <div className="relative">
-                  <img src={categoryIconPreview} alt="Icon preview" className="w-12 h-12 object-contain" />
+                  <Image
+                    src={categoryIconPreview}
+                    alt="Icon preview"
+                    width={48} // Set the width to match the `w-12` class (12 * 4px = 48px)
+                    height={48} // Set the height to match the `h-12` class (12 * 4px = 48px)
+                    className="object-contain"
+                  />
                   <button
                     type="button"
                     onClick={() => {

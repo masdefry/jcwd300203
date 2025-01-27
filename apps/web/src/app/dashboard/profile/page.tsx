@@ -10,6 +10,7 @@ import { FileUploadButton } from '@/components/profile/SharedComponents';
 import { useState } from 'react';
 import { AvatarWithFallback } from '@/components/profile/AvatarWithFallback';
 import authStore from '@/zustand/authStore';
+import Image from 'next/image';
 
 export default function TenantProfilePage() {
   const {
@@ -88,10 +89,13 @@ export default function TenantProfilePage() {
                 <CardContent>
                   {profile.idCardImage && (
                     <div className="mb-4">
-                      <img
+                      <Image
                         src={`http://localhost:4700/images/${profile.idCardImage}`}
                         alt="ID Card"
+                        width={400} 
+                        height={300}
                         className="max-w-md rounded-lg shadow-md"
+                        layout="intrinsic"
                       />
                     </div>
                   )}

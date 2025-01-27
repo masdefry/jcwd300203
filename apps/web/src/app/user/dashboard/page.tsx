@@ -4,6 +4,7 @@ import instance from "@/utils/axiosInstance";
 import Wrapper from "@/components/layout/Wrapper";
 import Footer from "@/components/common/footer/Footer";
 import CopyrightFooter from "@/components/common/footer/CopyrightFooter";
+import Image from "next/image";
 
 type Status = {
   Status: string;
@@ -125,10 +126,13 @@ const MyBookingsPage = () => {
         className="flex flex-col md:flex-row items-start md:items-center bg-white shadow rounded-lg p-4 mb-4 border hover:shadow-md transition-shadow"
       >
         {/* Property Image */}
-        <img
+        <Image
           src={order.property?.img || "/placeholder.jpg"}
           alt={order.property?.name || "Property"}
-          className="w-full md:w-24 h-24 object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
+          layout="intrinsic"
+          width={96} // Set a base width
+          height={96} // Set a base height
+          className="object-cover rounded-lg mb-4 md:mb-0 mr-0 md:mr-4"
         />
 
         {/* Booking Details */}
