@@ -1,10 +1,11 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IPropertyListResponse, ILocationConditions, IPropertyFromDB, IPropertyDetailsResponse, IFormattedRoomType, IReview, IPriceAvailability, IRoomTypeFromDB, ITenantPropertyListResponse, IPropertyDetailsTenantResponse, IRoomDetailsResponse, IRoomDetailsFromDB, IDailyAvailability, IRoomUnavailabilityFromDB, IRoomBookingFromDB, IPrismaTransaction, IRoomTypeDetail, IRoomTypeResponse, ITenantRoomTypeResponse, IRoomWithImages } from './types';
 import { deleteFiles } from '@/utils/delete.files';
 import { calculateDistance } from '@/utils/calculate.distance';
+import { Decimal } from '@prisma/client/runtime/library';
 
 
-export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList) => {
+export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, search, guest, sortBy, sortOrder, offset, pageSize, priceMin, priceMax, categories, facilities, minRating, latitude, longitude, radius}: IGetPropertyList):Promise<IPropertyListResponse[]> => {
   const guestCount = Number(guest);
   const currentDate = new Date();
 
@@ -12,7 +13,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
   const parsedLng = longitude ? parseFloat(longitude) : undefined;
   const parsedRadius = radius ? parseFloat(radius) : undefined;
 
-  const locationConditions: { AND?: Array<{ latitude: { gte: string, lte: string } } | { longitude: { gte: string, lte: string } }> } = {};
+  const locationConditions: ILocationConditions = {};
   if (parsedLat && parsedLng && parsedRadius) {
     locationConditions['AND'] = [
       {
@@ -41,7 +42,6 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
           in: categories
         }
       } : {}),
-      // Add facilities filter
       ...(facilities?.length ? {
         facilities: {
           some: {
@@ -86,7 +86,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
                       status: {
                         some: {
                           Status: {
-                            in: ['WAITING_FOR_PAYMENT', 'WAITING_FOR_CONFIRMATION', 'CONFIRMED']
+                            in: ['WAITING_FOR_CONFIRMATION', 'CONFIRMED']
                           }
                         }
                       }
@@ -123,7 +123,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
     }
   });
 
-  const formattedProperties = properties.map((property) => {
+  const formattedProperties = properties.map((property: IPropertyFromDB) => {
     let isAvailable = false;
     let price: number | null = null;
 
@@ -158,7 +158,7 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
 
     // Calculate average rating
     const averageRating = property.reviews.length > 0
-      ? parseFloat((property.reviews.reduce((sum, review) => sum + review.rating, 0) / property.reviews.length).toFixed(1))
+      ? parseFloat((property.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / property.reviews.length).toFixed(1))
       : 0;
 
     const similarity = search
@@ -188,14 +188,14 @@ export const getPropertiesListService = async ({parsedCheckIn, parsedCheckOut, s
   // Filter by price range if specified
   let filteredProperties = formattedProperties;
   if (priceMin !== undefined || priceMax !== undefined) {
-    filteredProperties = filteredProperties.filter(prop => 
+    filteredProperties = filteredProperties.filter((prop: IPropertyListResponse)=> 
       (priceMin === undefined || prop.price >= priceMin) &&
       (priceMax === undefined || prop.price <= priceMax)
     );
   }
 
   // Sort properties
-  const sortedProperties = filteredProperties.sort((a, b) => {
+  const sortedProperties = filteredProperties.sort((a: IPropertyListResponse, b: IPropertyListResponse) => {
     if (b.similarity !== a.similarity) {
       return b.similarity - a.similarity;
     }
@@ -233,7 +233,7 @@ export const getPropertyDetailsService = async ({
   parsedCheckIn: Date | undefined;
   parsedCheckOut: Date | undefined;
   guestCount?: number
-}) => {
+}):Promise<IPropertyDetailsResponse> => {
   const propertyId = Number(id);
     const currentDate = new Date();
 
@@ -289,7 +289,7 @@ export const getPropertyDetailsService = async ({
                             status: {
                                 some: {
                                     Status: {
-                                        in: ['WAITING_FOR_PAYMENT', 'WAITING_FOR_CONFIRMATION', 'CONFIRMED']
+                                        in: ['WAITING_FOR_CONFIRMATION', 'CONFIRMED']
                                     }
                                 }
                             }
@@ -305,12 +305,14 @@ export const getPropertyDetailsService = async ({
         },
     });
 
-    const formattedRoomTypes = roomTypes.map((room) => {
+    const formattedRoomTypes: IFormattedRoomType[] = roomTypes.map((room: IRoomTypeFromDB) => {
         const getPriceForDate = (date: Date) => {
             const flexiblePrice = room.flexiblePrice.find(price => 
                 date >= price.startDate && date <= price.endDate
             );
-            return flexiblePrice ? flexiblePrice.customPrice : room.price;
+            return flexiblePrice 
+                ? flexiblePrice.customPrice
+                : room.price
         };
 
         const isRoomAvailableForDate = (date: Date) => {
@@ -331,7 +333,7 @@ export const getPropertyDetailsService = async ({
         };
 
         const now = new Date();
-        const next30Days = Array.from({ length: 30 }, (_, i) => {
+        const next30Days: IPriceAvailability[] = Array.from({ length: 30 }, (_, i) => {
             const date = new Date();
             date.setDate(now.getDate() + i);
             return {
@@ -369,7 +371,7 @@ export const getPropertyDetailsService = async ({
     });
 
     const averageRating = propertyDetails.reviews.length > 0
-        ? (propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length)
+        ? (propertyDetails.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / propertyDetails.reviews.length)
         : 0;
 
         return {
@@ -383,12 +385,12 @@ export const getPropertyDetailsService = async ({
           mainImage: propertyDetails.mainImage,
           roomCapacity: propertyDetails.roomCapacity,
           averageRating: propertyDetails.reviews.length > 0 
-              ? Number((propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
+              ? Number((propertyDetails.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
               : 0,
           totalReviews: propertyDetails.reviews.length,
           images: propertyDetails.images
-              .filter(img => !img.deletedAt)  
-              .map((img) => ({
+              .filter((img: IBaseImage) => !img.deletedAt)  
+              .map((img: IBaseImage) => ({
                   id: img.id,
                   url: img.url,
               })),
@@ -397,7 +399,7 @@ export const getPropertyDetailsService = async ({
               name: facility.name,
               icon: facility?.icon || null,
           })),
-          reviews: propertyDetails.reviews.map((review) => ({
+          reviews: propertyDetails.reviews.map((review: IReview) => ({
               id: review.id,
               rating: review.rating,
               comment: review.comment,
@@ -409,10 +411,22 @@ export const getPropertyDetailsService = async ({
               },
           })),
           roomTypes: formattedRoomTypes.map(room => ({
-              ...room,
-              basePrice: Number(room.basePrice),
-              currentPrice: Number(room.currentPrice)
-          })),
+            id: room.id,
+            name: room.name,
+            quantity: room.quantity,
+            description: room.description,
+            guestCapacity: room.guestCapacity,
+            basePrice: Number(room.basePrice.toString()),  // Convert Decimal to number
+            currentPrice: Number(room.currentPrice.toString()),  // Convert Decimal to number
+            images: room.images,
+            facilities: room.facilities,
+            availability: room.availability,
+            priceComparison: room.priceComparison.map(pc => ({
+                date: pc.date,
+                price: Number(pc.price.toString()),  // Convert Decimal to number
+                availableRooms: pc.availableRooms
+            }))
+        })),
       };
 };
 
@@ -422,7 +436,7 @@ export const getPropertiesListTenantService = async ({
 }: {
   usersId: number;
   authorizationRole: string;
-}) => {
+}): Promise<ITenantPropertyListResponse[]> => {
   const tenant = await prisma.tenant.findUnique({
     where: {
       id: usersId,
@@ -454,7 +468,7 @@ export const getPropertyDetailsTenantService = async ({
   usersId: number;
   authorizationRole: string;
   id: string;
-}) => {
+}):Promise<IPropertyDetailsTenantResponse> => {
   const propertyId = Number(id);
 
   const tenant = await prisma.tenant.findUnique({
@@ -541,7 +555,7 @@ export const getPropertyDetailsTenantService = async ({
   });
 
   const averageRating = propertyDetails.reviews.length > 0
-    ? Number((propertyDetails.reviews.reduce((sum, review) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
+    ? Number((propertyDetails.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
     : 0;
 
   return {
@@ -568,7 +582,7 @@ export const getPropertyDetailsTenantService = async ({
       name: facility.name,
       icon: facility.icon || null,
     })),
-    reviews: propertyDetails.reviews.map((review) => ({
+    reviews: propertyDetails.reviews.map((review: IReview) => ({
       id: review.id,
       rating: review.rating,
       comment: review.comment,
@@ -579,12 +593,12 @@ export const getPropertyDetailsTenantService = async ({
         profileImage: review.customer.profileImage || null,
       },
     })),
-    roomTypes: propertyRoom.map((roomType) => ({
+    roomTypes: propertyRoom.map((roomType: IRoomTypeDetail): ITenantRoomTypeResponse => ({
       id: roomType.id,
       name: roomType.name,
       quantity: roomType.qty,
       description: roomType.description,
-      price: Number(roomType.price),
+      price: Number(roomType.price.toString()),
       guestCapacity: roomType.guestCapacity,
       images: roomType.images.map((img: IBaseImage) => ({
         id: img.id,
@@ -595,25 +609,25 @@ export const getPropertyDetailsTenantService = async ({
         name: facility.name,
         icon: facility.icon || null,
       })),
-      flexiblePrices: roomType.flexiblePrice.map((price) => ({
+      flexiblePrices: roomType.flexiblePrice.map((price: {id: number, startDate: Date, endDate: Date, customPrice: Decimal}) => ({
         id: price.id,
         startDate: price.startDate,
         endDate: price.endDate,
-        price: Number(price.customPrice),
+        price: Number(price.customPrice.toString())
       })),
-      unavailableDates: roomType.unavailability.map(unavailable => ({
-        id: unavailable.id,          // Add this to make deletion work
+      unavailableDates: roomType.unavailability.map((unavailable: IRoomUnavailabilityFromDB) => ({
+        id: unavailable.id,         
         startDate: unavailable.startDate,
         endDate: unavailable.endDate,
         reason: unavailable.reason || 'Marked as unavailable',
       })),
-      bookedDates: roomType.bookings.map(booking => ({
+      bookedDates: roomType.bookings.map((booking: IRoomBookingFromDB) => ({
         startDate: booking.checkInDate,
         endDate: booking.checkOutDate,
         reason: 'Booked',
         bookedQuantity: booking.room_qty
       })),
-      currentBookings: roomType.bookings.map(booking => ({
+      currentBookings: roomType.bookings.map((booking: IRoomBookingFromDB) => ({
         checkInDate: booking.checkInDate,
         checkOutDate: booking.checkOutDate,
         quantity: booking.room_qty,
@@ -653,9 +667,9 @@ export const deletePropertyService = async ({
     },
   });
 
-  const roomTypeIds = roomTypes.map(room => room.id);
+  const roomTypeIds = roomTypes.map((room: {id: number}) => room.id);
 
-  await prisma.$transaction(async (prisma) => {
+  await prisma.$transaction(async (prisma: IPrismaTransaction) => {
     await prisma.property.update({
       where: {
         id: propertyId,
@@ -742,7 +756,7 @@ export const createFacilitiesIconsService = async({name, type, iconFileName}:{na
 
 export const createPropertyService = async({usersId, authorizationRole, propertyData, files}: ICreateProperty) => {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: IPrismaTransaction) => {
       const findTenant = await tx.tenant.findUnique({
         where: {
           id: usersId,
@@ -895,11 +909,9 @@ export const editPropertyService = async({
 
   if (!existingProperty) throw { msg: 'Property not found or unauthorized', status: 404 };
 
-  return await prisma.$transaction(async (tx) => {
-      // Handle image deletions and file cleanup
+  return await prisma.$transaction(async (tx: IPrismaTransaction) => {
       const imagesToBeDeleted: { path: string }[] = [];
 
-      // 1. Update basic property information if provided
       if (name || address || city || categoryId !== undefined || description || roomCapacity !== undefined || mainImage) {
           await tx.property.update({
               where: { id: propertyId },
@@ -917,10 +929,9 @@ export const editPropertyService = async({
           });
       }
 
-      // 2. Handle property images deletion
       if (imagesToDelete.length > 0) {
-          const imagesToRemove = existingProperty.images.filter(img => imagesToDelete.includes(img.id));
-          imagesToRemove.forEach(img => {
+          const imagesToRemove = existingProperty.images.filter((img: {id: number}) => imagesToDelete.includes(img.id));
+          imagesToRemove.forEach((img: {url: string}) => {
               imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
           });
 
@@ -932,7 +943,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 3. Add new property images if provided
       if (propertyImages?.length) {
           await tx.propertyImage.createMany({
               data: propertyImages.map(url => ({
@@ -942,7 +952,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 4. Update facilities if provided
       if (facilityIds) {
           await tx.property.update({
               where: { id: propertyId },
@@ -954,11 +963,10 @@ export const editPropertyService = async({
           });
       }
 
-      // 5. Handle room types to delete
       if (roomTypesToDelete.length > 0) {
-          const roomsToDelete = existingProperty.roomTypes.filter(room => roomTypesToDelete.includes(room.id));
-          roomsToDelete.forEach(room => {
-              room.images.forEach(img => {
+          const roomsToDelete = existingProperty.roomTypes.filter((room: {id: number}) => roomTypesToDelete.includes(room.id));
+          roomsToDelete.forEach((room: IRoomWithImages) => {
+              room.images.forEach((img: {url: string}) => {
                   imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
               });
           });
@@ -971,7 +979,6 @@ export const editPropertyService = async({
           });
       }
 
-      // 6. Update existing room types
       for (const room of roomTypesToUpdate) {
           const existingRoom = await tx.roomType.findFirst({
               where: {
@@ -987,7 +994,6 @@ export const editPropertyService = async({
 
           if (!existingRoom) continue;
 
-          // Update basic room info
           const roomUpdateData: any = {};
           if (room.name) roomUpdateData.name = room.name;
           if (room.price) roomUpdateData.price = parseFloat(room.price as string);
@@ -1002,7 +1008,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Handle special price deletions
           if (room.specialPricesToDelete && room.specialPricesToDelete.length > 0) {
             await tx.flexiblePrice.deleteMany({
                 where: {
@@ -1014,7 +1019,6 @@ export const editPropertyService = async({
             });
         }
 
-          // Handle unavailability deletions
           if (room.unavailabilityToDelete && room.unavailabilityToDelete.length > 0) {
             await tx.roomUnavailability.deleteMany({
                 where: {
@@ -1026,28 +1030,23 @@ export const editPropertyService = async({
             });
         }
 
-          // Update room images if provided
           if (room.images?.length) {
-              // Store old images for deletion
-              existingRoom.images.forEach(img => {
+              existingRoom.images.forEach((img: {id: number; createdAt: Date; deletedAt: Date | null; url: string; roomId: number;}) => {
                   imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
               });
 
-              // Delete existing images
               await tx.roomImage.deleteMany({
                   where: { roomId: room.id }
               });
 
-              // Add new images
               await tx.roomImage.createMany({
-                  data: room.images.map(url => ({
+                  data: room.images.map((url: string) => ({
                       url,
                       roomId: room.id
                   }))
               });
           }
 
-          // Update room facilities
           if (room.facilities?.length) {
               await tx.roomType.update({
                   where: { id: room.id },
@@ -1059,7 +1058,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Add new special prices
           if (room.specialPrice?.length) {
             const newSpecialPrices = room.specialPrice
                 .filter(sp => !sp.id)
@@ -1067,7 +1065,7 @@ export const editPropertyService = async({
                     roomTypeId: room.id,
                     startDate: new Date(sp.startDate),
                     endDate: new Date(sp.endDate),
-                    customPrice: Number(sp.price) // Changed from parseFloat
+                    customPrice: Number(sp.price) 
                 }));
         
             if (newSpecialPrices.length > 0) {
@@ -1077,8 +1075,6 @@ export const editPropertyService = async({
             }
         }
         
-
-          // Add new unavailability periods
           if (room.unavailableDates?.length) {
             const newUnavailabilityDates = room.unavailableDates
                 .filter(period => !period.id)
@@ -1097,7 +1093,6 @@ export const editPropertyService = async({
         }
       }
 
-      // 7. Add new room types
       for (const room of roomTypesToAdd) {
           const newRoom = await tx.roomType.create({
               data: {
@@ -1113,7 +1108,6 @@ export const editPropertyService = async({
               }
           });
 
-          // Add room images
           if (room.images?.length) {
               await tx.roomImage.createMany({
                   data: room.images.map(url => ({
@@ -1135,7 +1129,6 @@ export const editPropertyService = async({
               });
           }
 
-          // Add unavailability periods
           if (room.unavailableDates?.length) {
               await tx.roomUnavailability.createMany({
                   data: room.unavailableDates.map(period => ({
@@ -1148,7 +1141,6 @@ export const editPropertyService = async({
           }
       }
 
-      // Delete old image files
       if (imagesToBeDeleted.length > 0) {
           deleteFiles({ imagesUploaded: { images: imagesToBeDeleted } });
       }
@@ -1164,7 +1156,7 @@ export const getRoomDetailsByIdService = async ({
   roomId,
   parsedCheckIn,
   parsedCheckOut,
-}: IGetRoomDetailsById) => {
+}: IGetRoomDetailsById): Promise<IRoomDetailsResponse> => {
   const roomIdNumber = Number(roomId);
   if (!roomIdNumber) throw { msg: "Invalid room ID", status: 400 };
 
@@ -1231,11 +1223,11 @@ export const getRoomDetailsByIdService = async ({
         },
       },
     },
-  });
+  }) as IRoomDetailsFromDB | null;
 
   if (!roomDetails) throw { msg: "Room not found", status: 404 };
 
-  const next30Days = Array.from({ length: 30 }, (_, i) => {
+  const next30Days: IDailyAvailability[] = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() + i);
     date.setHours(0, 0, 0, 0);
@@ -1257,7 +1249,7 @@ export const getRoomDetailsByIdService = async ({
     );
     
     let availableRooms = isUnavailable ? 0 : Math.max(roomDetails.qty - totalBooked, 0);
-    availableRooms = Math.min(availableRooms, roomDetails.qty); // Ensure availableRooms doesn't exceed roomDetails.qty
+    availableRooms = Math.min(availableRooms, roomDetails.qty); 
 
     const flexiblePrice = roomDetails.flexiblePrice.find(
       (price) => date >= price.startDate && date <= price.endDate  
