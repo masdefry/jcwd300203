@@ -9,6 +9,7 @@ import { useDeleteProperty } from '@/features/properties/hooks/mutations/mutateD
 import { DeletePropertyDialog } from '@/components/properties/DeletePropertyDialog';
 import { useState } from 'react';
 import LoadingWithSpinner from '@/components/Loading';
+import Image from 'next/image';
 
 const PropertyList = () => {
   const { data: properties, isLoading, error, isError } = useGetProperties();
@@ -66,9 +67,11 @@ const PropertyList = () => {
             <Card key={property.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="p-0">
                 <div className="relative h-48 w-full overflow-hidden rounded-t-lg">
-                  <img
+                  <Image
                     src={`http://localhost:4700/images/${property.mainImage}` || '/api/placeholder/400/300'}
                     alt={property.name}
+                    width={400} 
+                    height={300} 
                     className="w-full h-full object-cover"
                   />
                   <Badge className="absolute top-4 right-4 bg-blue-500">

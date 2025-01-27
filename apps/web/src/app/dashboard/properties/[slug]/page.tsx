@@ -16,6 +16,7 @@ import NotFound from '@/components/404';
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { any } from 'cypress/types/bluebird';
+import Image from 'next/image';
 
 const PropertyDetailsPage = () => {
   const { property, isLoading, propertyId } = usePropertyDetailsTenant();
@@ -348,10 +349,12 @@ const PropertyDetailsPage = () => {
                 <h3 className="text-lg font-semibold mb-4">Property Images</h3>
                 <div className="grid grid-cols-4 gap-4">
                   {property.images.map((img) => (
-                    <img
+                    <Image
                       key={img.id}
                       src={getImageUrl(img.url)}
                       alt="Property"
+                      width={128}
+                      height={128}
                       className="rounded-lg w-full h-32 object-cover"
                     />
                   ))}
@@ -407,14 +410,7 @@ const PropertyDetailsPage = () => {
                     <div key={room.id} className="border rounded-lg p-4">
                       <h4 className="font-semibold mb-2">{room.name}</h4>
                       <div className="space-y-2">
-                        {room.currentBookings.map((booking: any, idx: number) => (
-                          <div key={idx} className="bg-gray-50 p-3 rounded">
-                            <p>Check In: {new Date(booking.checkInDate).toLocaleDateString()}</p>
-                            <p>Check Out: {new Date(booking.checkOutDate).toLocaleDateString()}</p>
-                            <p>Rooms Booked: {booking.quantity}</p>
-                            <p>Status: {booking.status}</p>
-                          </div>
-                        ))}
+                        <p>No bookings available for this room type.</p>
                       </div>
                     </div>
                   ))}
@@ -431,9 +427,11 @@ const PropertyDetailsPage = () => {
                         <div className="flex items-center gap-4 mb-4">
                           <div className="flex-shrink-0">
                             {review.customer.profileImage ? (
-                              <img
+                              <Image
                                 src={getImageUrl(review.customer.profileImage)}
                                 alt={review.customer.name}
+                                width={40} // Set width for the profile image
+                                height={40} // Set height for the profile image
                                 className="w-10 h-10 rounded-full"
                               />
                             ) : (

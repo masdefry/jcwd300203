@@ -1,5 +1,6 @@
 import React from 'react';
 import { Field } from 'formik';
+import Image from 'next/image';
 import {
   Select,
   SelectContent,
@@ -61,10 +62,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             <SelectTrigger>
               {field.value ? (
                 <div className="flex items-center gap-2">
-                  <img
+                  <Image
                     src={`http://localhost:4700/images/${categories?.find(c => c.id === Number(field.value))?.icon}`}
                     alt="category icon"
-                    className="w-4 h-4"
+                    width={16} 
+                    height={16} 
+                    className=""
                   />
                   <span>{categories?.find(c => c.id === Number(field.value))?.name}</span>
                 </div>
@@ -76,11 +79,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id.toString()}>
                   <div className="flex items-center gap-2">
-                    <img
+                    <Image
                       src={`http://localhost:4700/images/${category.icon}`}
                       alt={category.name}
-                      className="w-4 h-4"
-                    />
+                      width={16} // Matches the `w-4` class (4 * 4px = 16px)
+                      height={16} // Matches the `h-4` class (4 * 4px = 16px)
+                    /> 
                     <span>{category.name}</span>
                   </div>
                 </SelectItem>

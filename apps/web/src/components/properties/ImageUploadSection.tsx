@@ -1,5 +1,6 @@
 import React from 'react';
 import { Upload, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface ImageUploadSectionProps {
   title: string;
@@ -29,10 +30,12 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
         <div className="flex items-center justify-center w-full">
           <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
             {preview && !multiple ? (
-              <img
+              <Image
                 src={preview}
                 alt="Preview"
                 className="h-full object-contain"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             ) : (
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -58,10 +61,12 @@ export const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
           <div className="grid grid-cols-4 gap-4 mt-4">
             {previewList.map((preview, index) => (
               <div key={index} className="relative">
-                <img
+                <Image
                   src={preview}
                   alt={`Preview ${index + 1}`}
                   className="w-full h-24 object-cover rounded"
+                  width={0} // Automatically adjusts width based on the container
+                  height={96} // Matches `h-24` (24 * 4px = 96px)
                 />
                 <button
                   type="button"
