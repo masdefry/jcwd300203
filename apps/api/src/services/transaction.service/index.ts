@@ -1,7 +1,6 @@
 import { prisma } from "@/connection"
 import { BookingStatus } from "@prisma/client"; // Import Prisma enum type
 import cron from "node-cron";
-import path from "path";
 import { sendEmail } from "@/utils/emailSender";
 
 interface RoomReservationParams {
