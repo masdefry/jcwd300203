@@ -1,5 +1,6 @@
-import { Prisma, type PrismaClient, BookingStatus } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import type { Decimal } from "@prisma/client/runtime/library";
+import type { BookingStatus } from "@prisma/client";
 
 // Base Interfaces
 export interface IBaseFacility {
