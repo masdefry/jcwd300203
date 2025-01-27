@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -83,7 +84,13 @@ export const AddFacilityDialog: React.FC<AddFacilityDialogProps> = ({ type }) =>
             <div className="flex items-center gap-4">
               {facilityIconPreview ? (
                 <div className="relative">
-                  <img src={facilityIconPreview} alt="Icon preview" className="w-12 h-12 object-contain" />
+                  <Image
+                    src={facilityIconPreview}
+                    alt="Icon preview"
+                    width={48} // Matches the `w-12` class (12 * 4px = 48px)
+                    height={48} // Matches the `h-12` class (12 * 4px = 48px)
+                    className="object-contain"
+                  />
                   <button
                     type="button"
                     onClick={() => {

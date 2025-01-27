@@ -229,7 +229,7 @@ export default function LoginForm() {
                   </div>
       
                   <p className="text-center text-sm text-gray-600">
-                    Don't have an account?{' '}
+                    Don&apos;t have an account?{' '}
                     <a href="/register/user" className="font-medium text-[#f15b5b] hover:text-[#e54949]">
                       Sign Up
                     </a>

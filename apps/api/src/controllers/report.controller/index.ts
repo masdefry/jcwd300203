@@ -18,9 +18,9 @@ export const salesReport = async (req: Request, res: Response, next: NextFunctio
     const { startDate, endDate, sortBy } = req.query;
     const report = await getSalesReportService({ 
       tenantId, 
-      startDate, 
-      endDate, 
-      sortBy, 
+      startDate: startDate ? new Date(startDate as string) : undefined, 
+      endDate: endDate ? new Date(endDate as string) : undefined, 
+      sortBy: sortBy === "asc" || sortBy === "desc" ? sortBy : undefined,
       page, 
       limit 
     });

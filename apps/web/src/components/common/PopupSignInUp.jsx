@@ -4,7 +4,7 @@ const PopupSignInUp = () => {
   return (
     <div
       className="sign_up_modal modal fade bd-example-modal-lg"
-      tabIndex={-1}
+      tabIndex="-1"
       role="dialog"
       aria-hidden="true"
     >

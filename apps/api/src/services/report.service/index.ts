@@ -8,7 +8,14 @@ export const getSalesReportService = async ({
   sortBy,
   page = 1,
   limit = 1000
-}: any) => {
+}: {
+  tenantId: number;
+  startDate?: Date;
+  endDate?: Date;
+  sortBy?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+}) => {
   if (!tenantId) throw { msg: "Tenant ID is required", status: 400 };
 
   const currentYear = new Date().getFullYear();
@@ -48,13 +55,13 @@ export const getSalesReportService = async ({
     })
   ]);
 
-  const totalRevenue = bookings.reduce((sum, booking) => 
+  const totalRevenue = bookings.reduce((sum: number, booking: any) => 
     sum + Number(booking.price || 0), 0
   );
 
   return {
     totalRevenue,
-    bookings: bookings.map(booking => ({
+    bookings: bookings.map((booking: any) => ({
       propertyName: booking.property.name,
       customer: booking.customer.name,
       checkIn: booking.checkInDate,
@@ -91,21 +98,21 @@ export const getPropertyReportService = async ({ tenantId }: { tenantId: number 
     },
   });
 
-  const calendarEvents = properties.flatMap((property) => {
-    return property.roomTypes.flatMap((roomType) => {
+  const calendarEvents = properties.flatMap((property: any) => {
+    return property.roomTypes.flatMap((roomType: any) => {
       const events = [];
-      const activeBookings = roomType.bookings?.filter((booking) => {
-        const latestStatus = booking.status?.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      const activeBookings = roomType.bookings?.filter((booking: any) => {
+        const latestStatus: BookingStatus = booking.status?.sort(
+          (a: { createdAt: Date }, b: { createdAt: Date }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0]?.Status;
         return ["CONFIRMED", "WAITING_FOR_CONFIRMATION"].includes(latestStatus);
       });
-      const totalBookedRooms = activeBookings?.reduce((total, booking) => {
+      const totalBookedRooms = activeBookings?.reduce((total: number, booking: any) => {
         return total + booking.room_qty;
       }, 0) || 0;
       const availableRoomCount = Math.max(roomType.qty - totalBookedRooms, 0);
 
-      activeBookings?.forEach((booking) => {
+      activeBookings?.forEach((booking: any)=> {
         events.push({
           title: `Booked: ${property.name} - Room ${roomType.name}`,
           start: booking.checkInDate,

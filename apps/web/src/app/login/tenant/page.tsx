@@ -152,7 +152,7 @@ const LoginForm = () => {
                       </button>
     
                       <p className="text-center text-sm text-gray-600">
-                        Don't have an account?{' '}
+                        Don&apos;t have an account?{' '}
                         <a href="/register/tenant" className="font-medium text-[#f15b5b] hover:text-[#e54949]">
                           Register here
                         </a>

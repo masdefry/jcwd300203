@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -260,6 +259,17 @@ const Navbar = () => {
                 </span>
               </Link>
 
+              {/* My Orders Link */}
+              <Link 
+                href={role === 'tenant' ? '/dashboard/messages' : '/user/messages'}
+                className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className={`text-lg ${location.pathname === (role === 'tenant' ? '/dashboard/orders' : '/user/dashboard') ? 'text-[#f15b5b]' : ''}`}>
+                  {role === 'tenant' ? 'My Messages' : 'My Messages'}
+                </span>
+              </Link>
+
               {/* My Reviews Link */}
               {role !== "tenant" && (
                 <Link
@@ -273,6 +283,23 @@ const Navbar = () => {
                     }`}
                   >
                     My Reviews
+                  </span>
+                </Link>
+              )}
+
+              {/* My Calendar Link - Visible only for tenants */}
+              {role === 'tenant' && (
+                <Link
+                  href="/dashboard/calendar" 
+                  className="flex items-center justify-between py-3 hover:text-[#f15b5b]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span
+                    className={`text-lg ${
+                      location.pathname === '/dashboard/calendar' ? 'text-[#f15b5b]' : ''
+                    }`}
+                  >
+                    My Calendar
                   </span>
                 </Link>
               )}
