@@ -1,5 +1,5 @@
 import { prisma } from '@/connection';
-import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IPropertyListResponse, ILocationConditions, IPropertyFromDB, IPropertyDetailsResponse, IFormattedRoomType, IReview, IPriceAvailability, IRoomTypeFromDB, ITenantPropertyListResponse, IPropertyDetailsTenantResponse, IRoomDetailsResponse, IRoomDetailsFromDB, IDailyAvailability, IRoomUnavailabilityFromDB, IRoomBookingFromDB, IPrismaTransaction } from './types';
+import { ICreateProperty, IEditProperty, IGetPropertyList, IGetRoomDetailsById, IBaseImage, IBaseFacility, IPropertyListResponse, ILocationConditions, IPropertyFromDB, IPropertyDetailsResponse, IFormattedRoomType, IReview, IPriceAvailability, IRoomTypeFromDB, ITenantPropertyListResponse, IPropertyDetailsTenantResponse, IRoomDetailsResponse, IRoomDetailsFromDB, IDailyAvailability, IRoomUnavailabilityFromDB, IRoomBookingFromDB, IPrismaTransaction, IRoomTypeDetail, IRoomTypeResponse, ITenantRoomTypeResponse, IRoomWithImages } from './types';
 import { deleteFiles } from '@/utils/delete.files';
 import { calculateDistance } from '@/utils/calculate.distance';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -555,7 +555,7 @@ export const getPropertyDetailsTenantService = async ({
   });
 
   const averageRating = propertyDetails.reviews.length > 0
-    ? Number((propertyDetails.reviews.reduce((sum: number, review) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
+    ? Number((propertyDetails.reviews.reduce((sum: number, review: {rating: number}) => sum + review.rating, 0) / propertyDetails.reviews.length).toFixed(1))
     : 0;
 
   return {
@@ -593,7 +593,7 @@ export const getPropertyDetailsTenantService = async ({
         profileImage: review.customer.profileImage || null,
       },
     })),
-    roomTypes: propertyRoom.map((roomType) => ({
+    roomTypes: propertyRoom.map((roomType: IRoomTypeDetail): ITenantRoomTypeResponse => ({
       id: roomType.id,
       name: roomType.name,
       quantity: roomType.qty,
@@ -667,7 +667,7 @@ export const deletePropertyService = async ({
     },
   });
 
-  const roomTypeIds = roomTypes.map(room => room.id);
+  const roomTypeIds = roomTypes.map((room: {id: number}) => room.id);
 
   await prisma.$transaction(async (prisma: IPrismaTransaction) => {
     await prisma.property.update({
@@ -929,10 +929,9 @@ export const editPropertyService = async({
           });
       }
 
-      // 2. Handle property images deletion
       if (imagesToDelete.length > 0) {
-          const imagesToRemove = existingProperty.images.filter(img => imagesToDelete.includes(img.id));
-          imagesToRemove.forEach(img => {
+          const imagesToRemove = existingProperty.images.filter((img: {id: number}) => imagesToDelete.includes(img.id));
+          imagesToRemove.forEach((img: {url: string}) => {
               imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
           });
 
@@ -965,9 +964,9 @@ export const editPropertyService = async({
       }
 
       if (roomTypesToDelete.length > 0) {
-          const roomsToDelete = existingProperty.roomTypes.filter(room => roomTypesToDelete.includes(room.id));
-          roomsToDelete.forEach(room => {
-              room.images.forEach(img => {
+          const roomsToDelete = existingProperty.roomTypes.filter((room: {id: number}) => roomTypesToDelete.includes(room.id));
+          roomsToDelete.forEach((room: IRoomWithImages) => {
+              room.images.forEach((img: {url: string}) => {
                   imagesToBeDeleted.push({ path: `src/public/images/${img.url}` });
               });
           });

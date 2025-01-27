@@ -1,5 +1,6 @@
-import { BookingStatus, Prisma, PrismaClient } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma, type PrismaClient, BookingStatus } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
+
 // Base Interfaces
 export interface IBaseFacility {
     id: number;
@@ -14,14 +15,13 @@ export interface IBaseFacility {
   '$transaction' | 
   '$use' | 
   '$extends'> {
-    // This extends PrismaClient but omits methods that aren't available in a transaction
   }
 
 export interface IFlexiblePrice {
     id: number;
     startDate: Date;
     endDate: Date;
-    price: Prisma.Decimal;
+    price: Decimal;
 }
 
 export interface IRoomUnavailabilityFromDB {
@@ -79,6 +79,25 @@ export interface IFlexiblePriceResponse {
     searchType?: 'city' | 'radius' | 'both';
   }
   
+  export interface IRoomTypeDetail {
+    id: number;
+    name: string;
+    qty: number;
+    description: string;
+    price: Decimal;
+    guestCapacity: number;
+    images: IBaseImage[];
+    facilities: IBaseFacility[];
+    flexiblePrice: Array<{
+      id: number;
+      startDate: Date;
+      endDate: Date;
+      customPrice: Decimal;
+    }>;
+    unavailability: IRoomUnavailabilityFromDB[];
+    bookings: IRoomBookingFromDB[];
+  }
+
   export interface ITenantPropertyListResponse {
     id: number;
     name: string;
@@ -192,12 +211,12 @@ export interface IFlexiblePriceResponse {
   // Availability and Pricing Interfaces
   export interface IPriceAvailability {
     date: string;
-    price: Prisma.Decimal;  // Keep as Decimal until final conversion
+    price: Decimal;  // Keep as Decimal until final conversion
     availableRooms: number;
   }
   export interface IDailyAvailability {
     date: string;
-    price: Prisma.Decimal;
+    price: Decimal;
     availableRooms: number;
   }
 
@@ -205,7 +224,7 @@ export interface IFlexiblePriceResponse {
     id: number;
     name: string;
     description: string;
-    price: Prisma.Decimal;
+    price: Decimal;
     guestCapacity: number;
     qty: number;
     images: Array<{
@@ -220,7 +239,7 @@ export interface IFlexiblePriceResponse {
     flexiblePrice: Array<{
       startDate: Date;
       endDate: Date;
-      customPrice: Prisma.Decimal;
+      customPrice: Decimal;
     }>;
     unavailability: Array<{
       startDate: Date;
@@ -241,7 +260,7 @@ export interface IRoomDetailsResponse {
     id: number;
     name: string;
     description: string;
-    price: Prisma.Decimal;
+    price: Decimal;
     guestCapacity: number;
     qty: number;
     images: IBaseImage[];
@@ -260,13 +279,13 @@ export interface IRoomDetailsResponse {
     qty: number;
     description: string;
     guestCapacity: number;
-    price: Prisma.Decimal;
+    price: Decimal;
     images: IBaseImage[];
     facilities: IBaseFacility[];
     flexiblePrice: Array<{
       startDate: Date;
       endDate: Date;
-      customPrice: Prisma.Decimal;
+      customPrice: Decimal;
     }>;
     unavailability: Array<{
       startDate: Date;
@@ -442,9 +461,9 @@ export interface IRoomDetailsResponse {
     }>;
     roomTypes: Array<{
       qty: number;
-      price: Prisma.Decimal;
+      price: Decimal;
       flexiblePrice: Array<{
-        customPrice: Prisma.Decimal;
+        customPrice: Decimal;
       }>;
     }>;
   }
@@ -496,7 +515,7 @@ export interface IRoomDetailsResponse {
 
   export interface IPriceComparison {
     date: string;
-    price: Prisma.Decimal;
+    price: Decimal;
     availableRooms: number;
   }
 
@@ -513,8 +532,8 @@ export interface IRoomDetailsResponse {
     quantity: number;
     description: string;
     guestCapacity: number;
-    basePrice: Prisma.Decimal;
-    currentPrice: Prisma.Decimal;
+    basePrice: Decimal;
+    currentPrice: Decimal;
     images: IBaseImage[];
     facilities: IBaseFacility[];
     availability: IRoomAvailability;
@@ -536,7 +555,7 @@ export interface ITenantPropertyListParams {
     id: number;
     startDate: Date;
     endDate: Date;
-    price: Prisma.Decimal;
+    price: Decimal;
   }
 
   
@@ -566,7 +585,7 @@ export interface ITenantPropertyListParams {
     name: string;
     quantity: number;
     description: string;
-    price: Prisma.Decimal;
+    price: Decimal;
     guestCapacity: number;
     images: IBaseImage[];
     facilities: IBaseFacility[];
@@ -618,7 +637,7 @@ export interface ITenantPropertyListParams {
     name: string;
     qty: number;
     description: string;
-    price: Prisma.Decimal;
+    price: Decimal;
     guestCapacity: number;
     images: IBaseImage[];
     facilities: IBaseFacility[];
@@ -626,7 +645,7 @@ export interface ITenantPropertyListParams {
       id: number;
       startDate: Date;
       endDate: Date;
-      customPrice: Prisma.Decimal;
+      customPrice: Decimal;
     }>;
     unavailability: Array<{
       id: number;
@@ -644,3 +663,66 @@ export interface ITenantPropertyListParams {
       }[];
     }>;
   }
+
+// For reduce callbacks
+interface IReduceCallbacks {
+  review: {
+    rating: number;
+  };
+  booking: {
+    room_qty: number;
+  };
+}
+
+// For sort parameters
+interface ISortParams {
+  a: IPropertyListResponse;
+  b: IPropertyListResponse;
+}
+
+// For map parameters
+interface IMapParams {
+  prop: IPropertyListResponse;
+  img: IBaseImage;
+  review: IReview;
+  facility: IBaseFacility;
+  roomType: IRoomTypeFromDB;
+  price: {
+    startDate: Date;
+    endDate: Date;
+    customPrice: Decimal;
+  };
+  unavailable: {
+    startDate: Date;
+    endDate: Date;
+  };
+  booking: {
+    checkInDate: Date;
+    checkOutDate: Date;
+    room_qty: number;
+    status: {
+      Status: string;
+    }[];
+  };
+}
+
+export interface IRoomWithImages {
+    id: number;
+    images: Array<{
+      id: number;
+      createdAt: Date;
+      deletedAt: Date | null;
+      url: string;
+      roomId: number;
+    }>;
+    flexiblePrice: Array<{
+      id: number;
+      createdAt: Date;
+      updatedAt: Date;
+      endDate: Date;
+      startDate: Date;
+      roomTypeId: number;
+      customPrice: Decimal;
+    }>;
+  }
+
