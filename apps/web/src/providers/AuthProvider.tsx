@@ -25,11 +25,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const [isAuthorized, setIsAuthorized] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [hasTriggered, setHasTriggered] = useState(false);
+    const [token, setToken] = useState<string | null>(null);
 
     const setKeepAuth = authStore((state: any) => state.setKeepAuth);
     const authLogout = authStore((state: any) => state.setAuthLogout);
-    const token = localStorage?.getItem('authToken');
-
+   
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+          setToken(localStorage?.getItem("authToken"));
+        }
+      }, []);
+    
     const getRole = (token: string): string => {
         try {
             const decoded = jwtDecode<DecodedToken>(token);
