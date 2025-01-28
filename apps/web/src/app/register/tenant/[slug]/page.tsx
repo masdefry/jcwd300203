@@ -33,6 +33,7 @@ const validationSchemas = {
   }),
 };
 
+// register page
 export default function RegisterPage({ params }: any) {
   const [currentStep, setCurrentStep] = useState(1);
   const [profileImage, setProfileImage] = useState<File | null>(null);
