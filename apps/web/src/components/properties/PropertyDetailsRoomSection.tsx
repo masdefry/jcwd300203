@@ -8,6 +8,14 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { PropertyDetailsRoomSectionProps } from '@/features/types/property';
 
+interface UnavailabilityPeriod {
+  id?: number;
+  startDate: Date | null;
+  endDate: Date | null;
+  reason: string;
+  type: 'BLOCKED';
+}
+
 export const PropertyDetailsRoomSection: React.FC<
   PropertyDetailsRoomSectionProps
 > = ({
@@ -218,12 +226,13 @@ export const PropertyDetailsRoomSection: React.FC<
                       className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       onClick={() => {
                         const updatedRoomTypes = [...values.roomTypes];
-                        // Initialize the array if it doesn't exist
-                        if (!updatedRoomTypes[index].specialPrice) {
-                          updatedRoomTypes[index]!.specialPrice = [];
-                        }
-                        // Add new special price
-                        updatedRoomTypes[index]!.specialPrice.push({
+                        const currentRoom = updatedRoomTypes[index];
+                        if (!currentRoom) return;
+
+                        currentRoom.specialPrice =
+                          currentRoom.specialPrice || [];
+
+                        currentRoom.specialPrice.push({
                           startDate: new Date(),
                           endDate: new Date(),
                           price: '',
@@ -259,25 +268,33 @@ export const PropertyDetailsRoomSection: React.FC<
                                     const updatedRoomTypes = [
                                       ...values.roomTypes,
                                     ];
-                                    if (!updatedRoomTypes[index].specialPrice) {
-                                      updatedRoomTypes[index].specialPrice = [];
+
+                                    // Early return if room doesn't exist
+                                    if (!updatedRoomTypes[index]) {
+                                      return;
                                     }
-                                    if (
-                                      !updatedRoomTypes[index].specialPrice[
-                                        priceIndex
-                                      ]
-                                    ) {
-                                      updatedRoomTypes[index].specialPrice[
-                                        priceIndex
-                                      ] = {
-                                        startDate: null,
+
+                                    const currentRoom = updatedRoomTypes[index];
+
+                                    // Initialize specialPrice array if needed
+                                    if (!currentRoom.specialPrice) {
+                                      currentRoom.specialPrice = [];
+                                    }
+
+                                    // Initialize or update the special price at priceIndex
+                                    if (!currentRoom.specialPrice[priceIndex]) {
+                                      currentRoom.specialPrice[priceIndex] = {
+                                        startDate: date, // Use the selected date
                                         endDate: null,
                                         price: '',
                                       };
+                                    } else {
+                                      currentRoom.specialPrice[priceIndex] = {
+                                        ...currentRoom.specialPrice[priceIndex],
+                                        startDate: date, // Use the selected date
+                                      };
                                     }
-                                    updatedRoomTypes[index].specialPrice[
-                                      priceIndex
-                                    ].startDate = date;
+
                                     setFieldValue(
                                       'roomTypes',
                                       updatedRoomTypes,
@@ -303,25 +320,35 @@ export const PropertyDetailsRoomSection: React.FC<
                                     const updatedRoomTypes = [
                                       ...values.roomTypes,
                                     ];
-                                    if (!updatedRoomTypes[index].specialPrice) {
-                                      updatedRoomTypes[index].specialPrice = [];
+
+                                    // Check if room exists at index
+                                    if (!updatedRoomTypes[index]) {
+                                      return;
                                     }
-                                    if (
-                                      !updatedRoomTypes[index].specialPrice[
-                                        priceIndex
-                                      ]
-                                    ) {
-                                      updatedRoomTypes[index].specialPrice[
-                                        priceIndex
-                                      ] = {
+
+                                    // Store reference to current room
+                                    const currentRoom = updatedRoomTypes[index];
+
+                                    // Initialize specialPrice array if it doesn't exist
+                                    if (!currentRoom.specialPrice) {
+                                      currentRoom.specialPrice = [];
+                                    }
+
+                                    // Initialize or update the special price at priceIndex
+                                    if (!currentRoom.specialPrice[priceIndex]) {
+                                      currentRoom.specialPrice[priceIndex] = {
                                         startDate: null,
-                                        endDate: null,
+                                        endDate: date,
                                         price: '',
                                       };
+                                    } else {
+                                      // Just update the endDate
+                                      currentRoom.specialPrice[priceIndex] = {
+                                        ...currentRoom.specialPrice[priceIndex],
+                                        endDate: date,
+                                      };
                                     }
-                                    updatedRoomTypes[index].specialPrice[
-                                      priceIndex
-                                    ].endDate = date;
+
                                     setFieldValue(
                                       'roomTypes',
                                       updatedRoomTypes,
@@ -354,26 +381,32 @@ export const PropertyDetailsRoomSection: React.FC<
                                   const updatedRoomTypes = [
                                     ...values.roomTypes,
                                   ];
-                                  if (specialPrice.id) {
-                                    // Initialize the delete array if it doesn't exist
-                                    if (
-                                      !updatedRoomTypes[index]
-                                        .specialPricesToDelete
-                                    ) {
-                                      updatedRoomTypes[
-                                        index
-                                      ].specialPricesToDelete = [];
+                                  if (!updatedRoomTypes[index]) {
+                                    return;
+                                  }
+                                  // Get reference to current room
+                                  const currentRoom = updatedRoomTypes[index];
+
+                                  if (specialPrice?.id) {
+                                    // Use optional chaining
+                                    // Initialize specialPricesToDelete as an array if it doesn't exist
+                                    if (!currentRoom.specialPricesToDelete) {
+                                      currentRoom.specialPricesToDelete = [];
                                     }
-                                    updatedRoomTypes[
-                                      index
-                                    ].specialPricesToDelete.push(
+
+                                    // Now we can safely push to the array
+                                    currentRoom.specialPricesToDelete.push(
                                       specialPrice.id,
                                     );
+
+                                    // Update Formik values
                                     setFieldValue(
                                       'roomTypes',
                                       updatedRoomTypes,
                                     );
                                   }
+
+                                  // Call removePrice after everything is set
                                   removePrice(priceIndex);
                                 }}
                                 className="text-red-500 hover:text-red-700 mb-1"
@@ -398,20 +431,28 @@ export const PropertyDetailsRoomSection: React.FC<
                       className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       onClick={() => {
                         const updatedRoomTypes = [...values.roomTypes];
+
+                        if (!updatedRoomTypes[index]) {
+                          return;
+                        }
+
+                        const currentRoom = updatedRoomTypes[index];
+
                         const newUnavailabilityPeriod = {
                           startDate: new Date(),
                           endDate: new Date(),
                           reason: '',
-                          type: 'BLOCKED', // Add type to match response structure
+                          type: 'BLOCKED' as const,
                         };
 
-                        if (!updatedRoomTypes[index].unavailableDates) {
-                          updatedRoomTypes[index].unavailableDates = [];
+                        if (!currentRoom.unavailableDates) {
+                          currentRoom.unavailableDates = [];
                         }
 
-                        updatedRoomTypes[index].unavailableDates.push(
+                        currentRoom.unavailableDates.push(
                           newUnavailabilityPeriod,
                         );
+
                         setFieldValue('roomTypes', updatedRoomTypes);
                       }}
                     >
@@ -443,30 +484,38 @@ export const PropertyDetailsRoomSection: React.FC<
                                           : null
                                       }
                                       onChange={(date) => {
-                                        const updatedRoomTypes = [
-                                          ...values.roomTypes,
-                                        ];
-                                        if (
-                                          !updatedRoomTypes[index]
-                                            .unavailableDates
-                                        ) {
-                                          updatedRoomTypes[
-                                            index
-                                          ].unavailableDates = [];
+                                        const updatedRoomTypes = [...values.roomTypes];
+                                        
+                                        // Check if room exists at index
+                                        if (!updatedRoomTypes[index]) {
+                                          return;
                                         }
-
-                                        updatedRoomTypes[
-                                          index
-                                        ].unavailableDates[periodIndex] = {
-                                          ...updatedRoomTypes[index]
-                                            .unavailableDates[periodIndex],
-                                          startDate: date,
-                                        };
-
-                                        setFieldValue(
-                                          'roomTypes',
-                                          updatedRoomTypes,
-                                        );
+                                      
+                                        // Get reference to current room
+                                        const currentRoom = updatedRoomTypes[index];
+                                      
+                                        // Initialize unavailableDates if it doesn't exist
+                                        if (!currentRoom.unavailableDates) {
+                                          currentRoom.unavailableDates = [];
+                                        }
+                                      
+                                        // Initialize period if it doesn't exist
+                                        if (!currentRoom.unavailableDates[periodIndex]) {
+                                          currentRoom.unavailableDates[periodIndex] = {
+                                            startDate: date,
+                                            endDate: null,
+                                            reason: '',
+                                            type: 'BLOCKED' as const
+                                          } as UnavailabilityPeriod;
+                                        } else {
+                                          // Update existing period
+                                          currentRoom.unavailableDates[periodIndex] = {
+                                            ...currentRoom.unavailableDates[periodIndex],
+                                            startDate: date
+                                          };
+                                        }
+                                      
+                                        setFieldValue('roomTypes', updatedRoomTypes);
                                       }}
                                       className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                                       dateFormat="MMMM d, yyyy h:mm aa"
@@ -488,30 +537,38 @@ export const PropertyDetailsRoomSection: React.FC<
                                           : null
                                       }
                                       onChange={(date) => {
-                                        const updatedRoomTypes = [
-                                          ...values.roomTypes,
-                                        ];
-                                        if (
-                                          !updatedRoomTypes[index]
-                                            .unavailableDates
-                                        ) {
-                                          updatedRoomTypes[
-                                            index
-                                          ].unavailableDates = [];
+                                        const updatedRoomTypes = [...values.roomTypes];
+                                        
+                                        // Check if room exists at index
+                                        if (!updatedRoomTypes[index]) {
+                                          return;
                                         }
-
-                                        updatedRoomTypes[
-                                          index
-                                        ].unavailableDates[periodIndex] = {
-                                          ...updatedRoomTypes[index]
-                                            .unavailableDates[periodIndex],
-                                          endDate: date,
-                                        };
-
-                                        setFieldValue(
-                                          'roomTypes',
-                                          updatedRoomTypes,
-                                        );
+                                      
+                                        // Get reference to current room
+                                        const currentRoom = updatedRoomTypes[index];
+                                      
+                                        // Initialize unavailableDates if it doesn't exist
+                                        if (!currentRoom.unavailableDates) {
+                                          currentRoom.unavailableDates = [];
+                                        }
+                                      
+                                        // Initialize period if it doesn't exist
+                                        if (!currentRoom.unavailableDates[periodIndex]) {
+                                          currentRoom.unavailableDates[periodIndex] = {
+                                            startDate: null,
+                                            endDate: date,
+                                            reason: '',
+                                            type: 'BLOCKED' as const,
+                                          } as UnavailabilityPeriod;
+                                        } else {
+                                          // Update existing period's endDate
+                                          currentRoom.unavailableDates[periodIndex] = {
+                                            ...currentRoom.unavailableDates[periodIndex],
+                                            endDate: date,
+                                          };
+                                        }
+                                      
+                                        setFieldValue('roomTypes', updatedRoomTypes);
                                       }}
                                       className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                                       dateFormat="MMMM d, yyyy h:mm aa"
@@ -540,29 +597,29 @@ export const PropertyDetailsRoomSection: React.FC<
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const updatedRoomTypes = [
-                                        ...values.roomTypes,
-                                      ];
-                                      if (period.id) {
-                                        // Track the ID to delete
-                                        if (
-                                          !updatedRoomTypes[index]
-                                            .unavailabilityToDelete
-                                        ) {
-                                          updatedRoomTypes[
-                                            index
-                                          ].unavailabilityToDelete = [];
-                                        }
-                                        updatedRoomTypes[
-                                          index
-                                        ].unavailabilityToDelete.push(
-                                          period.id,
-                                        );
-                                        setFieldValue(
-                                          'roomTypes',
-                                          updatedRoomTypes,
-                                        );
+                                      const updatedRoomTypes = [...values.roomTypes];
+                                      
+                                      // Check if room exists at index
+                                      if (!updatedRoomTypes[index]) {
+                                        return;
                                       }
+                                    
+                                      // Get reference to current room
+                                      const currentRoom = updatedRoomTypes[index];
+                                    
+                                      if (period.id) {
+                                        // Initialize unavailabilityToDelete array if it doesn't exist
+                                        if (!currentRoom.unavailabilityToDelete) {
+                                          currentRoom.unavailabilityToDelete = [];
+                                        }
+                                    
+                                        // Now we can safely push to the array
+                                        currentRoom.unavailabilityToDelete.push(period.id);
+                                        
+                                        // Update Formik values
+                                        setFieldValue('roomTypes', updatedRoomTypes);
+                                      }
+                                      
                                       // Remove from the current array regardless of whether it has an ID
                                       removeUnavailability(periodIndex);
                                     }}

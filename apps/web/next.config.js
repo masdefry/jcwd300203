@@ -9,8 +9,16 @@ const nextConfig = {
             net: false,
             tls: false,
         };
+
+        // Disable minification to avoid the Unicode error
+        config.optimization = {
+            minimize: false, // Disable Webpack minification
+        };
+
         return config;
+        
     },
+    swcMinify: false, // Disable SWC minification
     // Add these configurations for script loading
     async headers() {
         return [

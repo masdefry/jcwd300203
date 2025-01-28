@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
 import LoadingWithSpinner from "@/components/Loading";
-import NotFound from "@/components/404";
+import NotFound from "@/app/not-found";
 
 interface DecodedToken{
     data: {
@@ -182,13 +182,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         );
     }
 
-    if (!isAuthorized) {
-        return (
-            <div className="h-screen w-full flex items-center justify-center bg-gray-50 flex-col animate-fadeInOpacity duration-1000">
-                <NotFound/>
-            </div>
-        );
-    }
+    if (!isAuthorized) return <NotFound/>
 
     if (!isAuthorized) return null;
 
