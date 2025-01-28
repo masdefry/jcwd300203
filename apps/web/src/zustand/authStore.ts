@@ -16,7 +16,8 @@ const authStore = create(persist((set) => ({
 }),
 {
     name: 'authToken',
-    partialize: (state: any) => ({token: state.token})
+    partialize: (state: any) => ({token: state.token}),
+    skipHydration: true
 }
 ))
 
